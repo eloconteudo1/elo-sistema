@@ -1110,7 +1110,7 @@ let authUser = null;      // supabase auth user
 // Timer state
 const T = {
   clients: [], tasks: [], todayEntries: [],
-  activeEntry: null, scheduledTasks: [], paymentAlerts: [],
+  activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
   settings: { daily_goal_minutes: 480 },
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
@@ -1315,13 +1315,19 @@ async function initHome() {
 }
 
 async function loadHomeData() {
-  const [cl, tk, te, st, pa, sg] = await Promise.all([
+  const now = new Date();
+  // Appointments: fetch from today onwards (next 60 days)
+  const todayTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const futureTs = todayTs + 60 * 86400000;
+
+  const [cl, tk, te, st, pa, sg, ap] = await Promise.all([
     sb.from('clients').select('*').eq('is_active',true).order('display_order'),
     sb.from('tasks').select('*').eq('is_active',true).order('sort_order'),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
     sb.from('scheduled_tasks').select('*').order('created_at',{ascending:false}),
-    sb.from('monthly_payments').select('*').eq('month',new Date().getMonth()+1).eq('year',new Date().getFullYear()).eq('is_paid',false),
+    sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
     sb.from('settings').select('*').eq('id',1).single(),
+    sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'),
   ]);
   T.clients = cl.data||[];
   if (sg.data) T.settings = { ...T.settings, ...sg.data };
@@ -1329,6 +1335,7 @@ async function loadHomeData() {
   T.tasks = tk.data||[];
   T.todayEntries = te.data||[];
   T.scheduledTasks = st.data||[];
+  T.appointments = ap.data||[];
 
   // Build payment alerts from unpaid payments
   const today = new Date(); today.setHours(0,0,0,0);
@@ -3612,7 +3619,7 @@ async function cfgToggleFav(id, isFav) {
 }
 
 async function cfgDeleteTask(id, name) {
-  showConfirmModal(`Remover a tarefa "${name}"?`, async () => {
+  openConfirmModal(`Remover a tarefa "${name}"?`, 'Esta tarefa será removida permanentemente.', async () => {
     await sb.from('tasks').delete().eq('id', id);
     cfgRenderTasks();
     renderTaskTree();
