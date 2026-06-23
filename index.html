@@ -512,9 +512,85 @@
       </div>
     </div>
 
-    <!-- ── RESULTADO (placeholder) ── -->
+    <!-- ── RESULTADO ── -->
     <div class="page" id="page-resultado">
-      <div class="page-placeholder"><div class="icon">📊</div><h2>Resultado</h2><p>KPIs, donuts SVG e calendário meta — em breve.</p></div>
+      <div style="max-width:1100px;margin:0 auto;">
+
+        <!-- Seletor de modo + nav mês -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:10px 16px;background:rgba(255,255,255,.88);border:var(--border);border-radius:14px;box-shadow:var(--shadow);flex-wrap:wrap;">
+          <div style="display:flex;background:rgba(46,27,78,.07);border-radius:10px;padding:3px;gap:2px;">
+            <button id="res-tab-hoje" onclick="resSetView('hoje')" style="padding:5px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:var(--coral);color:white;transition:all .15s;">Hoje</button>
+            <button id="res-tab-mes" onclick="resSetView('mes')" style="padding:5px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--text-dim);transition:all .15s;">Mês</button>
+          </div>
+          <div id="res-nav-mes" style="display:none;align-items:center;gap:8px;">
+            <button onclick="resNavMes(-1)" style="width:28px;height:28px;border-radius:8px;border:var(--border);background:rgba(255,255,255,.88);cursor:pointer;font-size:14px;display:grid;place-items:center;color:var(--deep);">‹</button>
+            <span id="res-month-label" style="font-size:15px;font-weight:800;color:var(--deep);min-width:100px;text-align:center;"></span>
+            <button onclick="resNavMes(1)" style="width:28px;height:28px;border-radius:8px;border:var(--border);background:rgba(255,255,255,.88);cursor:pointer;font-size:14px;display:grid;place-items:center;color:var(--deep);">›</button>
+          </div>
+          <button onclick="resGoToday()" style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:none;background:rgba(196,114,90,.15);color:var(--coral);cursor:pointer;font-family:inherit;">Hoje</button>
+          <button onclick="initResultado()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1.5px solid var(--purple);background:rgba(92,61,130,.1);color:var(--purple);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">↻ Atualizar</button>
+        </div>
+
+        <!-- VIEW: HOJE -->
+        <div id="res-view-hoje">
+          <!-- KPIs -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;" id="res-kpis-hoje"></div>
+          <!-- Gráficos -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <!-- Donut por cliente -->
+            <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">Horas por cliente — hoje</div>
+              <div style="display:flex;gap:20px;align-items:flex-start;">
+                <div id="res-donut-hoje" style="flex-shrink:0;"></div>
+                <div id="res-legend-hoje" style="flex:1;min-width:0;"></div>
+              </div>
+            </div>
+            <!-- Log do dia -->
+            <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">Registros do dia</div>
+              <div id="res-log-hoje"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: MÊS -->
+        <div id="res-view-mes" style="display:none;">
+          <!-- Alertas custo > contrato -->
+          <div id="res-custo-alerts" style="display:none;background:rgba(232,62,120,.07);border:1.5px solid rgba(232,62,120,.25);border-radius:14px;padding:14px 18px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#E83E78;margin-bottom:10px;">⚠ Custo alocado acima do contrato</div>
+            <div id="res-custo-alerts-list" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+          </div>
+          <!-- Label mês -->
+          <div id="res-mes-label-header" style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;"></div>
+          <!-- KPIs mês -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;" id="res-kpis-mes"></div>
+          <!-- Três cards -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+            <!-- Por cliente -->
+            <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Tempo por cliente</div>
+              <div id="res-donut-clientes" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
+              <div id="res-legend-clientes"></div>
+            </div>
+            <!-- Calendário meta -->
+            <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;">
+              <div id="res-cal-meta-title" style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;"></div>
+              <div id="res-cal-meta"></div>
+              <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);"><span style="width:8px;height:8px;border-radius:50%;background:#2E1B4E;display:inline-block;"></span>Meta atingida</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);"><span style="width:8px;height:8px;border-radius:50%;background:var(--coral);display:inline-block;"></span>Abaixo da meta</span>
+              </div>
+            </div>
+            <!-- Por tarefa -->
+            <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">Tempo por tipo de tarefa</div>
+              <div id="res-donut-tarefas" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
+              <div id="res-legend-tarefas"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- ── CALENDÁRIO ── -->
@@ -1084,6 +1160,7 @@ function navigateTo(page) {
   const tab = document.querySelector(`[data-page="${page}"]`);
   if (tab) tab.classList.add('active');
   // Init pages on first visit
+  if (page === 'resultado'  && appUser) initResultado();
   if (page === 'clientes'   && appUser) initClientes();
   if (page === 'financeiro' && appUser) initFinanceiro();
   if (page === 'config'     && appUser) initConfig();
@@ -3130,6 +3207,269 @@ async function confirmAction() {
 
 // ════════════════════════════════════════════════════════════════
 // CONFIG PAGE
+// ════════════════════════════════════════════════════════════════
+// RESULTADO
+// ════════════════════════════════════════════════════════════════
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const RES_PALETTE = ['#C4725A','#4A2976','#2FB989','#3B82F6','#E07A3A','#C4487A','#BFA8D9','#5C3D82','#1D9E75','#BA7517'];
+let resViewMode = 'hoje';
+let resMonth = new Date().getMonth() + 1;
+let resYear = new Date().getFullYear();
+
+async function initResultado() {
+  resSetView(resViewMode);
+}
+
+function resGoToday() {
+  resMonth = new Date().getMonth() + 1;
+  resYear = new Date().getFullYear();
+  resSetView('hoje');
+}
+
+function resNavMes(dir) {
+  resMonth += dir;
+  if (resMonth < 1) { resMonth = 12; resYear--; }
+  if (resMonth > 12) { resMonth = 1; resYear++; }
+  document.getElementById('res-month-label').textContent = MONTHS_PT[resMonth-1] + '/' + resYear;
+  resRenderMes();
+}
+
+function resSetView(mode) {
+  resViewMode = mode;
+  const tabs = ['hoje','mes'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('res-tab-' + t);
+    if (btn) { btn.style.background = t === mode ? 'var(--coral)' : 'transparent'; btn.style.color = t === mode ? 'white' : 'var(--text-dim)'; }
+  });
+  document.getElementById('res-view-hoje').style.display = mode === 'hoje' ? '' : 'none';
+  document.getElementById('res-view-mes').style.display = mode === 'mes' ? '' : 'none';
+  document.getElementById('res-nav-mes').style.display = mode === 'mes' ? 'flex' : 'none';
+  document.getElementById('res-month-label').textContent = MONTHS_PT[resMonth-1] + '/' + resYear;
+  if (mode === 'hoje') resRenderHoje();
+  else resRenderMes();
+}
+
+function resFmin(m) { const h = Math.floor(m/60), min = m%60; return h > 0 ? `${h}h ${min}m` : `${min}m`; }
+
+function resDonutSVG(slices, size, label) {
+  const total = slices.reduce((s,x) => s + x.value, 0);
+  const r = size * 0.4, circ = 2 * Math.PI * r;
+  if (total === 0) return `<svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(46,27,78,.08)" stroke-width="${size*0.12}"/></svg>`;
+  let offset = 0;
+  const arcs = slices.map(s => {
+    const dash = (s.value/total)*circ, gap = circ - dash;
+    const arc = { dash, gap, offset, color: s.color };
+    offset += dash; return arc;
+  });
+  const lblEl = label ? `<text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="middle" style="font-size:${size*0.11}px;font-weight:800;fill:var(--deep);font-family:Inter,sans-serif;">${label}</text>` : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(46,27,78,.06)" stroke-width="${size*0.12}"/>
+    ${arcs.map(a => `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${a.color}" stroke-width="${size*0.12}" stroke-linecap="butt" stroke-dasharray="${a.dash} ${a.gap}" stroke-dashoffset="${-a.offset}"/>`).join('')}
+    <g style="transform:rotate(90deg);transform-origin:${size/2}px ${size/2}px">${lblEl}</g>
+  </svg>`;
+}
+
+function resLegend(slices, totalMins) {
+  if (!slices.length) return '<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:12px 0;">Nenhum registro.</div>';
+  return slices.slice(0,8).map((x,i) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${x.color};flex-shrink:0;"></div>
+      <span style="font-size:11px;color:var(--deep);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.label}</span>
+      <span style="font-size:11px;font-weight:700;color:var(--text-dim);">${resFmin(x.value)}</span>
+      <span style="font-size:10px;color:var(--coral);font-weight:600;">${totalMins > 0 ? Math.round((x.value/totalMins)*100) : 0}%</span>
+    </div>`).join('');
+}
+
+function resMetaCalendar(year, month, goalMins, entriesByDay) {
+  const DOW = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
+  const firstDay = new Date(year, month-1, 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  let startDow = firstDay.getDay(); startDow = startDow === 0 ? 6 : startDow - 1;
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const mins = entriesByDay[key] ?? 0;
+    cells.push({ day: d, mins, pct: goalMins > 0 ? Math.min(mins/goalMins,1) : 0 });
+  }
+  const today = new Date();
+  const todayDay = (today.getFullYear()===year && today.getMonth()+1===month) ? today.getDate() : -1;
+  const cs = 36, r = 15, circ = 2*Math.PI*r;
+  const headers = DOW.map(d => `<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:4px 0;">${d}</div>`).join('');
+  const dayCells = cells.map((c,i) => {
+    if (!c) return '<div></div>';
+    const isToday = c.day === todayDay;
+    const metaOk = c.mins >= goalMins && goalMins > 0;
+    const dash = c.pct * circ;
+    const ringColor = metaOk ? '#2E1B4E' : 'var(--coral)';
+    const textColor = isToday ? 'var(--coral)' : metaOk ? '#1D9E75' : 'var(--deep)';
+    return `<div style="display:flex;align-items:center;justify-content:center;aspect-ratio:1;position:relative;">
+      <svg width="${cs}" height="${cs}" viewBox="0 0 ${cs} ${cs}" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">
+        <circle cx="${cs/2}" cy="${cs/2}" r="${r}" fill="none" stroke="rgba(46,27,78,.07)" stroke-width="2.5"/>
+        ${c.mins > 0 ? `<circle cx="${cs/2}" cy="${cs/2}" r="${r}" fill="none" stroke="${ringColor}" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${dash} ${circ-dash}"/>` : ''}
+      </svg>
+      <span style="font-size:11px;font-weight:${isToday?800:500};position:relative;z-index:1;color:${textColor};">${c.day}</span>
+    </div>`;
+  }).join('');
+  return `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;">${headers}</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${dayCells}</div>`;
+}
+
+async function resRenderHoje() {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const endOfDay = startOfDay + 86400000;
+
+  const { data: entries } = await sb.from('time_entries')
+    .select('*, clients(name)')
+    .gte('start_time', startOfDay)
+    .lt('start_time', endOfDay)
+    .order('start_time', { ascending: false });
+
+  const validEntries = (entries||[]).filter(e => e.duration_minutes != null && e.duration_minutes > 0);
+  const totalMins = validEntries.reduce((s,e) => s + e.duration_minutes, 0);
+  const totalH = Math.floor(totalMins/60), totalM = totalMins%60;
+
+  // Settings para meta
+  const { data: settings } = await sb.from('settings').select('daily_goal_minutes').eq('id',1).single();
+  const goalMins = settings?.daily_goal_minutes ?? 480;
+  const goalPct = goalMins > 0 ? Math.min(Math.round((totalMins/goalMins)*100),100) : 0;
+
+  // Por cliente
+  const byClient = {};
+  for (const e of validEntries) {
+    const name = e.clients?.name ?? '—';
+    if (!byClient[name]) byClient[name] = { name, mins: 0 };
+    byClient[name].mins += e.duration_minutes;
+  }
+  const clientArr = Object.values(byClient).sort((a,b) => b.mins - a.mins);
+  const clientSlices = clientArr.map((x,i) => ({ label: x.name, value: x.mins, color: RES_PALETTE[i%RES_PALETTE.length] }));
+
+  // KPIs
+  document.getElementById('res-kpis-hoje').innerHTML = [
+    { label: 'Tempo trabalhado hoje', val: `${totalH}h ${totalM}m`, sub: `Meta: ${Math.floor(goalMins/60)}h · ${goalPct}% atingida` },
+    { label: 'Registros hoje', val: String(validEntries.length), sub: `${validEntries.length} sessões registradas` },
+    { label: 'Top cliente hoje', val: clientArr[0]?.name ?? '—', sub: clientArr[0] ? resFmin(clientArr[0].mins) : 'Nenhum registro' },
+  ].map(k => `<div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:20px;box-shadow:var(--shadow);padding:20px 22px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">${k.label}</div>
+    <div style="font-size:30px;font-weight:800;color:var(--deep);line-height:1;">${k.val}</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-top:6px;">${k.sub}</div>
+  </div>`).join('');
+
+  // Donut
+  document.getElementById('res-donut-hoje').innerHTML = resDonutSVG(clientSlices, 140, resFmin(totalMins));
+  document.getElementById('res-legend-hoje').innerHTML = clientArr.length
+    ? clientArr.slice(0,8).map((x,i) => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};flex-shrink:0;"></div>
+        <span style="font-size:12px;color:var(--deep);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.name}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text-dim);">${resFmin(x.mins)}</span>
+        <span style="font-size:11px;color:var(--coral);font-weight:600;">${totalMins>0?Math.round((x.mins/totalMins)*100):0}%</span>
+      </div>`).join('')
+    : '<div style="font-size:13px;color:var(--text-dim);opacity:.7;">Nenhum registro ainda hoje.</div>';
+
+  // Log
+  document.getElementById('res-log-hoje').innerHTML = validEntries.length === 0
+    ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
+    : `<div style="display:grid;grid-template-columns:10px 1fr auto 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
+        <div></div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Hora</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
+      </div>
+      ${validEntries.slice(0,10).map((e,i) => `
+      <div style="display:grid;grid-template-columns:10px 1fr auto 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
+        <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
+        <div>
+          <div style="font-weight:800;font-size:13px;color:var(--deep);">${e.clients?.name ?? '—'}</div>
+          <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${e.task_name}</div>
+        </div>
+        <div style="color:var(--text-dim);font-size:12px;">${new Date(e.start_time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(e.duration_minutes)}</div>
+      </div>`).join('')}`;
+}
+
+async function resRenderMes() {
+  const startTs = new Date(resYear, resMonth-1, 1).getTime();
+  const endTs = new Date(resYear, resMonth, 1).getTime();
+
+  document.getElementById('res-mes-label-header').textContent = `Produtividade do mês — ${MONTHS_PT[resMonth-1]}/${resYear}`;
+
+  const [entriesRes, settingsRes, clientsRes] = await Promise.all([
+    sb.from('time_entries').select('*, clients(name, contract_value)').gte('start_time', startTs).lt('start_time', endTs),
+    sb.from('settings').select('daily_goal_minutes').eq('id',1).single(),
+    sb.from('clients').select('id, name, contract_value').eq('is_internal', false),
+  ]);
+
+  const entries = (entriesRes.data||[]).filter(e => e.duration_minutes > 0);
+  const goalMins = settingsRes.data?.daily_goal_minutes ?? 480;
+  const totalMins = entries.reduce((s,e) => s + e.duration_minutes, 0);
+
+  const activeDaySet = new Set(entries.map(e => { const d = new Date(e.start_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }));
+  const activeDays = activeDaySet.size;
+
+  const taskCount = {}, taskMins = {};
+  for (const e of entries) {
+    taskCount[e.task_name] = (taskCount[e.task_name]??0) + 1;
+    if (!taskMins[e.task_name]) taskMins[e.task_name] = { total:0, count:0 };
+    taskMins[e.task_name].total += e.duration_minutes;
+    taskMins[e.task_name].count++;
+  }
+  const freqTask = Object.entries(taskCount).sort((a,b) => b[1]-a[1])[0];
+  const heavyTask = Object.entries(taskMins).map(([name,v]) => ({ name, avg: v.total/v.count })).sort((a,b) => b.avg-a.avg)[0];
+
+  // KPIs mês
+  document.getElementById('res-kpis-mes').innerHTML = [
+    { label: 'Total registrado', val: resFmin(totalMins), sub: `${activeDays} dias ativos` },
+    { label: 'Dias ativos', val: String(activeDays), sub: 'com registro no mês' },
+    { label: 'Tarefa frequente', val: freqTask?.[0] ?? '—', sub: freqTask ? `${freqTask[1]} sessões no mês` : '' },
+    { label: 'Tarefa mais pesada', val: heavyTask?.name ?? '—', sub: heavyTask ? `${Math.round(heavyTask.avg)}min/sessão em média` : '' },
+  ].map(k => `<div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:16px;padding:14px 16px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;">${k.label}</div>
+    <div style="font-size:18px;font-weight:700;color:var(--deep);">${k.val}</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-top:3px;">${k.sub}</div>
+  </div>`).join('');
+
+  // Por cliente
+  const byClient = {};
+  for (const e of entries) {
+    const name = e.clients?.name ?? '—';
+    byClient[name] = (byClient[name]??0) + e.duration_minutes;
+  }
+  const clientSlices = Object.entries(byClient).map(([label,value],i) => ({ label, value, color: RES_PALETTE[i%RES_PALETTE.length] })).sort((a,b) => b.value-a.value);
+  document.getElementById('res-donut-clientes').innerHTML = resDonutSVG(clientSlices, 120, resFmin(totalMins));
+  document.getElementById('res-legend-clientes').innerHTML = resLegend(clientSlices, totalMins);
+
+  // Calendário meta
+  const entriesByDay = {};
+  for (const e of entries) {
+    const d = new Date(e.start_time);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    entriesByDay[key] = (entriesByDay[key]??0) + e.duration_minutes;
+  }
+  document.getElementById('res-cal-meta-title').textContent = `Meta de foco — ${Math.floor(goalMins/60)}h/dia`;
+  document.getElementById('res-cal-meta').innerHTML = resMetaCalendar(resYear, resMonth, goalMins, entriesByDay);
+
+  // Por tarefa
+  const byTask = {};
+  for (const e of entries) byTask[e.task_name] = (byTask[e.task_name]??0) + e.duration_minutes;
+  const taskSlices = Object.entries(byTask).map(([label,value],i) => ({ label, value, color: RES_PALETTE[i%RES_PALETTE.length] })).sort((a,b) => b.value-a.value).slice(0,8);
+  document.getElementById('res-donut-tarefas').innerHTML = resDonutSVG(taskSlices, 120, resFmin(totalMins));
+  document.getElementById('res-legend-tarefas').innerHTML = resLegend(taskSlices, totalMins);
+
+  // Alertas custo > contrato (60 min = R$1 placeholder — só mostra se houver contrato definido)
+  const custoHora = 60; // minutos → R$ (estimativa: R$1/min para alertar)
+  const clientsData = clientsRes.data || [];
+  const byClientId = {};
+  for (const e of entries) { if (e.client_id) byClientId[e.client_id] = (byClientId[e.client_id]??0) + e.duration_minutes; }
+  const alerts = clientsData.filter(c => {
+    const mins = byClientId[c.id] ?? 0;
+    return c.contract_value > 0 && mins > 0;
+  }).map(c => ({ name: c.name, mins: byClientId[c.id]??0, contract: c.contract_value }))
+    .filter(c => false); // desativado por ora — sem custo/hora configurado
+  const alertBox = document.getElementById('res-custo-alerts');
+  alertBox.style.display = alerts.length ? '' : 'none';
+}
+
 // ════════════════════════════════════════════════════════════════
 const TASK_CATS = ['Atendimento','Gestão ELO','Gestão Cliente','Conteúdo','Design','Publicação','Análise','Interno'];
 
