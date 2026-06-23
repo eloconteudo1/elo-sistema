@@ -1000,6 +1000,11 @@
                 <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
                 <div id="cfg-revenue-lbl" style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600"></div>
               </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Valor hora trabalhada (R$)</label>
+                <input id="cfg-hourly-rate" type="number" min="0" step="5" placeholder="Ex: 150" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+                <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600">Usado para calcular o custo por tarefa no Resultado</div>
+              </div>
               <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
             </div>
           </div>
@@ -2979,14 +2984,19 @@ function finNavMes(dir) {
 }
 
 async function loadFinData() {
-  const [pm, ci, cl] = await Promise.all([
+  const [pm, ci, cl, sg] = await Promise.all([
     sb.from('monthly_payments').select('*').eq('month', FIN.month).eq('year', FIN.year).order('client_id'),
     sb.from('cost_items').select('*').eq('month', FIN.month).eq('year', FIN.year).order('id'),
     sb.from('clients').select('id,name,due_day,contract_value,payment_method,color').eq('is_active', true).eq('is_internal', false),
+    sb.from('settings').select('revenue_goal,hourly_rate,daily_goal_minutes').eq('id',1).single(),
   ]);
   FIN.payments = pm.data || [];
   FIN.costs    = ci.data || [];
   FIN.clients  = cl.data || [];
+  if (sg.data) {
+    T.settings.revenue_goal = sg.data.revenue_goal || 0;
+    T.settings.hourly_rate  = sg.data.hourly_rate  || 0;
+  }
 
   // Auto-gera entradas mensais para clientes que ainda não têm registro no mês
   // Usa upsert com ignoreDuplicates para evitar duplicação em chamadas repetidas
@@ -3784,13 +3794,14 @@ async function cfgLoadMetas() {
     document.getElementById('cfg-daily-goal').value = g;
     document.getElementById('cfg-daily-lbl').textContent = `${Math.floor(g/60)}h ${g%60}min por dia`;
     document.getElementById('cfg-alert-days').value = data.payment_alert_days || 3;
+    const rg = data.revenue_goal || 0;
+    document.getElementById('cfg-revenue-goal').value = rg || '';
+    if (rg) document.getElementById('cfg-revenue-lbl').textContent =
+      `Meta: ${rg.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0})} /mês`;
+    T.settings.revenue_goal = rg;
+    document.getElementById('cfg-hourly-rate').value = data.hourly_rate || '';
+    T.settings.hourly_rate = data.hourly_rate || 0;
   }
-  // revenue_goal fica em localStorage (não precisa de coluna no banco)
-  const rg = parseFloat(localStorage.getItem('elo_revenue_goal')||'0');
-  document.getElementById('cfg-revenue-goal').value = rg || '';
-  if (rg) document.getElementById('cfg-revenue-lbl').textContent =
-    `Meta: ${rg.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0})} /mês`;
-  T.settings.revenue_goal = rg;
 
   const inp = document.getElementById('cfg-daily-goal');
   if (inp) inp.oninput = () => {
@@ -3809,16 +3820,18 @@ async function cfgSaveMetas() {
   const daily = parseInt(document.getElementById('cfg-daily-goal').value)||480;
   const alertDays = parseInt(document.getElementById('cfg-alert-days').value)||3;
   const revenueGoal = parseFloat(document.getElementById('cfg-revenue-goal').value)||0;
+  const hourlyRate = parseFloat(document.getElementById('cfg-hourly-rate').value)||0;
   const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
-  const { error } = await sb.from('settings').upsert({ id:1, daily_goal_minutes:daily, payment_alert_days:alertDays }, { onConflict:'id' });
+  const { error } = await sb.from('settings').upsert({
+    id:1, daily_goal_minutes:daily, payment_alert_days:alertDays,
+    revenue_goal:revenueGoal, hourly_rate:hourlyRate,
+  }, { onConflict:'id' });
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
-  // Salva revenue_goal em localStorage
-  if (revenueGoal > 0) localStorage.setItem('elo_revenue_goal', String(revenueGoal));
-  else localStorage.removeItem('elo_revenue_goal');
   T.settings.daily_goal_minutes = daily;
   T.settings.revenue_goal = revenueGoal;
+  T.settings.hourly_rate = hourlyRate;
   showToast('Metas salvas ✓','ok');
 }
 
