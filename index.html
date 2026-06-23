@@ -970,13 +970,26 @@
         </div>
 
         <!-- ABA: TAREFAS -->
-        <div id="cfg-pane-tarefas" style="display:flex;flex-direction:column;gap:16px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span id="cfg-tasks-count" style="font-size:13px;color:var(--text-dim);font-weight:600">— tarefas cadastradas</span>
-            <button class="elo-btn-primary" onclick="cfgOpenTaskModal()">+ Nova Tarefa</button>
+        <div id="cfg-pane-tarefas" style="display:flex;flex-direction:column;gap:20px">
+          <!-- Categorias -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div style="font-weight:800;font-size:14px;color:var(--deep);">Categorias</div>
+              <button class="elo-btn-primary" style="padding:7px 14px;font-size:12px;" onclick="cfgOpenCatModal()">+ Nova Categoria</button>
+            </div>
+            <div id="cfg-cats-list" style="display:flex;flex-wrap:wrap;gap:8px;">
+              <div style="font-size:13px;color:var(--text-dim);">Carregando...</div>
+            </div>
           </div>
-          <div id="cfg-tasks-list" style="display:flex;flex-direction:column;gap:12px">
-            <div style="text-align:center;padding:32px;color:var(--text-dim)">Carregando...</div>
+          <!-- Tarefas -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <span id="cfg-tasks-count" style="font-size:13px;color:var(--text-dim);font-weight:600">— tarefas cadastradas</span>
+              <button class="elo-btn-primary" onclick="cfgOpenTaskModal()">+ Nova Tarefa</button>
+            </div>
+            <div id="cfg-tasks-list" style="display:flex;flex-direction:column;gap:12px">
+              <div style="text-align:center;padding:32px;color:var(--text-dim)">Carregando...</div>
+            </div>
           </div>
         </div>
 
@@ -1014,6 +1027,7 @@
                   <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600">Faturamento ideal</div>
                 </div>
               </div>
+              <button type="button" onclick="openHourlyCalc()" style="background:rgba(124,111,205,.1);color:var(--purple);border:none;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;align-self:flex-start;">🧮 Calcular automaticamente</button>
               <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
             </div>
           </div>
@@ -3558,21 +3572,32 @@ async function resRenderHoje() {
   }
   const logArr = Object.values(logMap).sort((a,b) => b.mins - a.mins);
 
+  const showCost = hourlyMin > 0 || hourlyOpt > 0;
+  const fmtBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+  const col = showCost ? '10px 1fr 55px 90px 90px' : '10px 1fr 55px';
   document.getElementById('res-log-hoje').innerHTML = logArr.length === 0
     ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
-    : `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
+    : `<div style="display:grid;grid-template-columns:${col};gap:10px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
         <div></div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
+        ${showCost ? `<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;text-align:right;">Mín/h</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#2FB989;text-align:right;">Ótimo/h</div>` : ''}
       </div>
-      ${logArr.slice(0,10).map((x,i) => `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
-        <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
-        <div>
-          <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
-          <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
-        </div>
-        <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
-      </div>`).join('')}`;
+      ${logArr.slice(0,10).map((x,i) => {
+        const cMin = hourlyMin > 0 ? fmtBRL((x.mins/60)*hourlyMin) : '—';
+        const cOpt = hourlyOpt > 0 ? fmtBRL((x.mins/60)*hourlyOpt) : '—';
+        return `<div style="display:grid;grid-template-columns:${col};gap:10px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
+          <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
+          <div>
+            <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
+            <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
+          </div>
+          <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
+          ${showCost ? `<div style="font-size:12px;font-weight:700;color:#E07A3A;text-align:right;">${cMin}</div>
+          <div style="font-size:12px;font-weight:700;color:#2FB989;text-align:right;">${cOpt}</div>` : ''}
+        </div>`;
+      }).join('')}`;
 }
 
 async function resRenderMes() {
@@ -3721,7 +3746,8 @@ async function resRenderMes() {
 }
 
 // ════════════════════════════════════════════════════════════════
-const TASK_CATS = ['Atendimento','Gestão ELO','Gestão Cliente','Conteúdo','Design','Publicação','Análise','Interno'];
+let TASK_CATS = ['Atendimento','Gestão ELO','Gestão Cliente','Conteúdo','Design','Publicação','Análise','Interno'];
+let _cfgCats = []; // categorias carregadas do banco
 
 function initConfig() {
   cfgShowTab('tarefas');
@@ -3740,10 +3766,83 @@ function cfgShowTab(tab) {
   if (tab === 'metas')   cfgLoadMetas();
 }
 
+async function cfgRenderCats() {
+  const el = document.getElementById('cfg-cats-list');
+  const { data } = await sb.from('categories').select('*').order('sort_order');
+  _cfgCats = data || [];
+  TASK_CATS = _cfgCats.map(c => c.name);
+  if (!_cfgCats.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text-dim);">Nenhuma categoria. Crie uma acima.</div>';
+    return;
+  }
+  el.innerHTML = _cfgCats.map(c => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(74,41,118,.07);border:var(--border);border-radius:20px;padding:5px 12px;">
+      <span style="font-size:12px;font-weight:700;color:var(--deep);">${c.name}</span>
+      <button onclick="cfgOpenCatModal(${c.id},'${c.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0 2px;" title="Editar">✏️</button>
+      <button onclick="cfgDeleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0 2px;" title="Excluir">🗑</button>
+    </div>`).join('');
+}
+
+function cfgOpenCatModal(id, name) {
+  const html = `<div class="modal-overlay" id="cfg-cat-modal" onclick="if(event.target===this)this.remove()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="width:360px">
+      <div class="modal-header">
+        <div class="modal-title">${id ? 'Editar Categoria' : 'Nova Categoria'}</div>
+        <button class="modal-close" onclick="document.getElementById('cfg-cat-modal').remove()">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Nome *</label>
+          <input id="ccm-name" class="elo-input" placeholder="Ex: Estratégia" value="${name||''}" autofocus>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
+          <button class="elo-btn-outline" onclick="document.getElementById('cfg-cat-modal').remove()">Cancelar</button>
+          <button class="elo-btn-primary" onclick="cfgSubmitCat(${id||0})">${id ? 'Salvar' : 'Criar'}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => document.getElementById('ccm-name')?.focus(), 50);
+}
+
+async function cfgSubmitCat(id) {
+  const name = document.getElementById('ccm-name').value.trim();
+  if (!name) { showToast('Nome é obrigatório','warn'); return; }
+  const btn = document.querySelector('#cfg-cat-modal .elo-btn-primary');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  let error;
+  if (id) {
+    ({ error } = await sb.from('categories').update({ name }).eq('id', id));
+    if (!error) await sb.from('tasks').update({ category: name }).eq('category',
+      _cfgCats.find(c => c.id === id)?.name || '');
+  } else {
+    const maxOrder = _cfgCats.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
+    ({ error } = await sb.from('categories').insert({ name, sort_order: maxOrder + 1 }));
+  }
+  if (error) { showToast('Erro: ' + error.message, 'err'); btn.disabled = false; btn.textContent = id ? 'Salvar' : 'Criar'; return; }
+  document.getElementById('cfg-cat-modal').remove();
+  await cfgRenderCats();
+  showToast(id ? 'Categoria atualizada ✓' : 'Categoria criada ✓', 'ok');
+}
+
+async function cfgDeleteCat(id, name) {
+  const count = T.tasks.filter(t => t.category === name).length;
+  const msg = count > 0
+    ? `A categoria "${name}" tem ${count} tarefa(s). Excluir irá remover a categoria, mas as tarefas serão mantidas sem categoria.`
+    : `Excluir a categoria "${name}"?`;
+  openConfirmModal('Excluir categoria?', msg, async () => {
+    await sb.from('categories').delete().eq('id', id);
+    await cfgRenderCats();
+    showToast('Categoria removida', 'ok');
+  });
+}
+
 async function cfgRenderTasks() {
   const el = document.getElementById('cfg-tasks-list');
   const countEl = document.getElementById('cfg-tasks-count');
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">Carregando...</div>';
+  await cfgRenderCats();
   const { data: tasks, error } = await sb.from('tasks').select('*').order('sort_order');
   if (error) { el.innerHTML = '<div style="color:red;padding:16px">Erro ao carregar tarefas</div>'; return; }
   T.tasks = tasks || [];
@@ -3795,6 +3894,8 @@ async function cfgDeleteTask(id, name) {
 
 function cfgOpenTaskModal(id) {
   const t = id ? T.tasks.find(x=>x.id===id) : null;
+  const cats = TASK_CATS.length ? TASK_CATS : ['Atendimento'];
+  const currentCat = t?.category || cats[0];
   const html = `<div class="modal-overlay" id="cfg-task-modal" onclick="if(event.target===this)this.remove()">
     <div class="modal-box" onclick="event.stopPropagation()" style="width:400px">
       <div class="modal-header">
@@ -3809,7 +3910,7 @@ function cfgOpenTaskModal(id) {
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categoria</label>
           <select id="ctm-cat" class="elo-select" style="width:100%">
-            ${TASK_CATS.map(c=>`<option value="${c}"${(t?.category||'Atendimento')===c?' selected':''}>${c}</option>`).join('')}
+            ${cats.map(c=>`<option value="${c}"${currentCat===c?' selected':''}>${c}</option>`).join('')}
           </select>
         </div>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim)">
