@@ -248,6 +248,17 @@
     .modal-tab { padding:10px 18px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; }
     .modal-tab.active { color:var(--purple); font-weight:800; border-bottom-color:var(--purple); }
 
+    /* ── Config tabs ── */
+    .cfg-tab { padding:8px 20px; border-radius:10px; background:transparent; border:none; color:rgba(46,27,78,.55); font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .cfg-tab:hover { color:var(--deep); background:rgba(46,27,78,.06); }
+    .cfg-tab.active { color:var(--deep); background:white; font-weight:800; box-shadow:0 2px 10px rgba(46,27,78,.10); }
+
+    /* ── Config task rows ── */
+    .cfg-task-row { background:white; border:var(--border); border-radius:14px; padding:14px 18px; display:flex; align-items:center; gap:12px; transition:box-shadow .15s; }
+    .cfg-task-row:hover { box-shadow:var(--shadow-sm); }
+    .cfg-task-cat-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .cfg-task-cat-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px; background:rgba(74,41,118,.08); color:var(--purple); letter-spacing:.5px; white-space:nowrap; }
+
     /* ── Responsive ── */
     @media (max-width:1100px) { #home-grid { grid-template-columns:260px 1fr 300px; } }
     @media (max-width:900px) { #home-grid { grid-template-columns:1fr; } #page-container { padding:16px 12px; } }
@@ -647,9 +658,108 @@
       </div>
     </div>
 
-    <!-- ── CONFIG (placeholder) ── -->
-    <div class="page" id="page-config">
-      <div class="page-placeholder"><div class="icon">⚙️</div><h2>Config.</h2><p>Tarefas, metas, sobre — em breve.</p></div>
+    <!-- ── CONFIG ── -->
+    <div class="page page-narrow" id="page-config">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px;">Sistema ELO</div>
+          <h1 style="font-size:22px;font-weight:800;color:var(--deep);margin:0;">Configurações</h1>
+        </div>
+      </div>
+
+      <!-- Config tabs -->
+      <div style="display:flex;gap:2px;background:rgba(255,255,255,.7);border:var(--border);border-radius:14px;padding:4px;width:fit-content;margin-bottom:24px;">
+        <button class="cfg-tab active" id="cfgtab-tarefas" onclick="switchCfgTab('tarefas')">Tarefas</button>
+        <button class="cfg-tab" id="cfgtab-meta" onclick="switchCfgTab('meta')">Meta Diária</button>
+        <button class="cfg-tab" id="cfgtab-perfil" onclick="switchCfgTab('perfil')">Perfil & Sobre</button>
+      </div>
+
+      <!-- Tarefas -->
+      <div id="cfg-page-tarefas">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <p style="font-size:13px;color:var(--text-dim);margin:0;">Gerencie os tipos de tarefa disponíveis no timer.</p>
+          <button onclick="openCfgTaskModal(null)" style="background:var(--coral);border:none;border-radius:10px;color:white;font-family:inherit;font-size:13px;font-weight:800;padding:9px 20px;cursor:pointer;">+ Nova Tarefa</button>
+        </div>
+        <div id="cfg-tasks-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- Meta Diária -->
+      <div id="cfg-page-meta" style="display:none;">
+        <div style="max-width:480px;">
+          <div style="background:white;border:var(--border);border-radius:var(--radius);padding:28px 32px;box-shadow:var(--shadow-sm);">
+            <h3 style="font-size:15px;font-weight:800;color:var(--deep);margin:0 0 6px;">Meta de horas diárias</h3>
+            <p style="font-size:13px;color:var(--text-dim);margin:0 0 20px;">Define o objetivo de horas trabalhadas por dia, exibido no timer e nos KPIs.</p>
+            <div style="margin-bottom:20px;">
+              <label class="field-label">Horas por dia</label>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+                <input class="field-input" id="cfg-goal-hours" type="number" min="1" max="16" step="0.5" style="width:100px;" />
+                <span style="font-size:13px;color:var(--text-dim);font-weight:600;">horas</span>
+              </div>
+            </div>
+            <div style="background:var(--bg2);border-radius:12px;padding:12px 16px;margin-bottom:20px;">
+              <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Conversão</div>
+              <div id="cfg-goal-preview" style="font-size:14px;font-weight:700;color:var(--deep);"></div>
+            </div>
+            <button onclick="saveCfgMeta()" style="background:var(--coral);border:none;border-radius:10px;color:white;font-family:inherit;font-size:13px;font-weight:800;padding:10px 24px;cursor:pointer;">Salvar Meta</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Perfil & Sobre -->
+      <div id="cfg-page-perfil" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:860px;">
+          <!-- Perfil -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);padding:28px 32px;box-shadow:var(--shadow-sm);">
+            <h3 style="font-size:15px;font-weight:800;color:var(--deep);margin:0 0 20px;">Perfil</h3>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+              <div id="cfg-avatar-big" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--lavender),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;flex-shrink:0;"></div>
+              <div>
+                <div id="cfg-profile-name" style="font-size:16px;font-weight:800;color:var(--deep);"></div>
+                <div id="cfg-profile-email" style="font-size:12px;color:var(--text-dim);margin-top:2px;"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nome de exibição</label>
+              <input class="field-input" id="cfg-name-input" placeholder="Seu nome" />
+            </div>
+            <button onclick="saveCfgPerfil()" style="background:var(--coral);border:none;border-radius:10px;color:white;font-family:inherit;font-size:13px;font-weight:800;padding:10px 20px;cursor:pointer;margin-top:8px;">Salvar</button>
+          </div>
+
+          <!-- Sobre -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);padding:28px 32px;box-shadow:var(--shadow-sm);">
+            <h3 style="font-size:15px;font-weight:800;color:var(--deep);margin:0 0 20px;">Sobre o Sistema</h3>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:24px;font-weight:900;color:var(--deep);letter-spacing:-.5px;">ELO</div>
+                <div style="font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Sistema de Gestão</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:var(--border);">
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                  <span style="color:var(--text-dim);font-weight:600;">Versão</span>
+                  <span style="font-weight:700;color:var(--deep);">3.0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                  <span style="color:var(--text-dim);font-weight:600;">Atualizado</span>
+                  <span style="font-weight:700;color:var(--deep);">Jun/2026</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                  <span style="color:var(--text-dim);font-weight:600;">Empresa</span>
+                  <span style="font-weight:700;color:var(--deep);">ELO Comunicação</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                  <span style="color:var(--text-dim);font-weight:600;">Local</span>
+                  <span style="font-weight:700;color:var(--deep);">Umuarama-PR</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                  <span style="color:var(--text-dim);font-weight:600;">Backend</span>
+                  <span style="font-weight:700;color:var(--deep);">Supabase</span>
+                </div>
+              </div>
+              <button onclick="handleLogout()" style="margin-top:8px;width:100%;padding:10px 0;border-radius:10px;border:1.5px solid rgba(220,38,38,.3);background:transparent;color:#DC2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">Sair da conta</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -749,6 +859,7 @@ function navigateTo(page) {
   // Init pages on first visit
   if (page === 'clientes'   && appUser) initClientes();
   if (page === 'financeiro' && appUser) initFinanceiro();
+  if (page === 'config'     && appUser) initConfig();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -869,6 +980,8 @@ setInterval(refreshTodayPill, 30000);
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
 async function initHome() {
+  const savedGoal = localStorage.getItem('elo_daily_goal_minutes');
+  if (savedGoal) T.settings.daily_goal_minutes = parseInt(savedGoal);
   await loadHomeData();
   renderClientList();
   renderTaskTree();
@@ -2302,6 +2415,241 @@ async function finDeleteCost(id, desc) {
     renderFinanceiro();
     showToast('Removido','warn');
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════
+const CFG = { tasks: [], currentTab: 'tarefas' };
+
+async function initConfig() {
+  loadCfgGoalInput();
+  loadCfgPerfil();
+  await loadCfgTasks();
+  renderCfgTasks();
+}
+
+function switchCfgTab(tab) {
+  CFG.currentTab = tab;
+  document.querySelectorAll('.cfg-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('cfgtab-'+tab)?.classList.add('active');
+  ['tarefas','meta','perfil'].forEach(t => {
+    document.getElementById('cfg-page-'+t).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'meta') loadCfgGoalInput();
+  if (tab === 'perfil') loadCfgPerfil();
+}
+
+// ── Tarefas ────────────────────────────────────────────────────
+async function loadCfgTasks() {
+  const { data } = await sb.from('tasks').select('*').order('sort_order').order('name');
+  CFG.tasks = data || [];
+}
+
+function renderCfgTasks() {
+  const container = document.getElementById('cfg-tasks-list');
+  if (CFG.tasks.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);">Nenhuma tarefa cadastrada.</div>`;
+    return;
+  }
+
+  const grouped = {};
+  for (const t of CFG.tasks) {
+    if (!grouped[t.category]) grouped[t.category] = [];
+    grouped[t.category].push(t);
+  }
+
+  let html = '';
+  for (const cat of CAT_ORDER) {
+    const list = grouped[cat] || [];
+    const cfg = CAT_CONFIG[cat] || { color:'#888', icon:'📌' };
+    html += `<div style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${cfg.color};flex-shrink:0;"></div>
+        <span style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);">${cat}</span>
+        <span style="font-size:11px;color:var(--text-dim);">(${list.length})</span>
+      </div>
+      ${list.map((t, i) => `
+        <div class="cfg-task-row" style="opacity:${t.is_active ? 1 : .45};">
+          <div style="font-size:16px;">${cfg.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">Ordem: ${t.sort_order ?? i+1}</div>
+          </div>
+          <span class="cfg-task-cat-badge">${cat}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="cfgToggleTask(${t.id},${!t.is_active})"
+              style="padding:5px 12px;border-radius:8px;border:1px solid ${t.is_active ? 'rgba(196,114,90,.3)' : 'rgba(47,185,137,.3)'};background:transparent;color:${t.is_active ? 'var(--coral)' : '#2FB989'};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+              ${t.is_active ? 'Desativar' : 'Ativar'}
+            </button>
+            <button onclick="openCfgTaskModal(${t.id})" style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(46,24,71,.06);cursor:pointer;font-size:12px;" title="Editar">✏️</button>
+            <button onclick="cfgDeleteTask(${t.id},'${t.name.replace(/'/g,"\\'")}') " style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(46,24,71,.06);cursor:pointer;font-size:13px;color:var(--text-dim);" title="Excluir">×</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  // Categorias não listadas no CAT_ORDER
+  for (const cat of Object.keys(grouped)) {
+    if (!CAT_ORDER.includes(cat)) {
+      const list = grouped[cat];
+      html += `<div style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#888;flex-shrink:0;"></div>
+          <span style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);">${cat}</span>
+        </div>
+        ${list.map(t => `
+          <div class="cfg-task-row">
+            <div style="flex:1;font-size:14px;font-weight:700;color:var(--deep);">${t.name}</div>
+            <button onclick="cfgDeleteTask(${t.id},'${t.name.replace(/'/g,"\\'")}') " style="width:28px;height:28px;border-radius:8px;border:none;background:rgba(46,24,71,.06);cursor:pointer;font-size:13px;color:var(--text-dim);">×</button>
+          </div>
+        `).join('')}
+      </div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+async function cfgToggleTask(id, newActive) {
+  const { error } = await sb.from('tasks').update({ is_active: newActive }).eq('id', id);
+  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  CFG.tasks = CFG.tasks.map(t => t.id === id ? {...t, is_active: newActive} : t);
+  T.tasks = T.tasks.map(t => t.id === id ? {...t, is_active: newActive} : t);
+  renderCfgTasks();
+  renderTaskTree();
+  showToast(newActive ? 'Tarefa ativada' : 'Tarefa desativada', newActive ? 'ok' : 'warn');
+}
+
+async function cfgDeleteTask(id, name) {
+  openConfirmModal(`Excluir "${name}"?`, 'Esta tarefa será removida permanentemente do sistema.', async () => {
+    const { error } = await sb.from('tasks').delete().eq('id', id);
+    if (error) { showToast('Erro: '+error.message,'err'); return; }
+    CFG.tasks = CFG.tasks.filter(t => t.id !== id);
+    T.tasks = T.tasks.filter(t => t.id !== id);
+    renderCfgTasks();
+    renderTaskTree();
+    showToast('Tarefa excluída','warn');
+  });
+}
+
+function openCfgTaskModal(id) {
+  const task = id ? CFG.tasks.find(t => t.id === id) : null;
+  const isEdit = !!task;
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">${isEdit ? 'Editar Tarefa' : 'Nova Tarefa'}</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Nome da tarefa *</label>
+        <input class="field-input" id="ctf-name" placeholder="Ex: Stories, Feed, Reunião..." value="${task?.name||''}" autofocus />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Categoria *</label>
+        <select class="field-input" id="ctf-cat" style="cursor:pointer;">
+          ${CAT_ORDER.map(c => `<option value="${c}"${(task?.category||'CONTEÚDO')===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Ordem de exibição</label>
+        <input class="field-input" id="ctf-order" type="number" min="0" placeholder="Ex: 10" value="${task?.sort_order??''}" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" id="ctf-save-btn" onclick="saveCfgTask(${id||'null'})">${isEdit ? 'Salvar' : 'Criar'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function saveCfgTask(id) {
+  const name = document.getElementById('ctf-name').value.trim();
+  const category = document.getElementById('ctf-cat').value;
+  const sort_order = parseInt(document.getElementById('ctf-order').value||'99') || 99;
+  if (!name) { showToast('Informe o nome da tarefa','warn'); return; }
+  const btn = document.getElementById('ctf-save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  if (id) {
+    const { data, error } = await sb.from('tasks').update({ name, category, sort_order }).eq('id', id).select().single();
+    if (error) { showToast('Erro: '+error.message,'err'); btn.disabled=false; btn.textContent='Salvar'; return; }
+    CFG.tasks = CFG.tasks.map(t => t.id===id ? data : t);
+    T.tasks = T.tasks.map(t => t.id===id ? data : t);
+    showToast('Tarefa atualizada ✓','ok');
+  } else {
+    const { data, error } = await sb.from('tasks').insert({ name, category, sort_order, is_active: true }).select().single();
+    if (error) { showToast('Erro: '+error.message,'err'); btn.disabled=false; btn.textContent='Criar'; return; }
+    CFG.tasks.push(data);
+    T.tasks.push(data);
+    showToast('Tarefa criada ✓','ok');
+  }
+  closeModal();
+  renderCfgTasks();
+  renderTaskTree();
+}
+
+// ── Meta diária ────────────────────────────────────────────────
+function loadCfgGoalInput() {
+  const saved = localStorage.getItem('elo_daily_goal_minutes');
+  const mins = saved ? parseInt(saved) : T.settings.daily_goal_minutes;
+  const hoursVal = (mins / 60).toFixed(1).replace('.0','');
+  const el = document.getElementById('cfg-goal-hours');
+  if (el) {
+    el.value = hoursVal;
+    el.oninput = updateCfgGoalPreview;
+    updateCfgGoalPreview();
+  }
+}
+
+function updateCfgGoalPreview() {
+  const hours = parseFloat(document.getElementById('cfg-goal-hours')?.value || '8');
+  const mins = Math.round(hours * 60);
+  const h = Math.floor(mins/60), m = mins%60;
+  const el = document.getElementById('cfg-goal-preview');
+  if (el) el.textContent = `${h}h ${m > 0 ? m+'min' : ''} = ${mins} minutos por dia`;
+}
+
+function saveCfgMeta() {
+  const hours = parseFloat(document.getElementById('cfg-goal-hours')?.value || '8');
+  if (isNaN(hours) || hours < 0.5 || hours > 16) { showToast('Informe um valor entre 0,5 e 16 horas','warn'); return; }
+  const mins = Math.round(hours * 60);
+  localStorage.setItem('elo_daily_goal_minutes', String(mins));
+  T.settings.daily_goal_minutes = mins;
+  showToast('Meta salva ✓','ok');
+}
+
+// ── Perfil ─────────────────────────────────────────────────────
+function loadCfgPerfil() {
+  if (!authUser) return;
+  const email = authUser.email || '';
+  const initial = email.charAt(0).toUpperCase();
+  const name = appUser?.name || email.split('@')[0] || 'Usuário';
+
+  const avEl = document.getElementById('cfg-avatar-big');
+  const nameEl = document.getElementById('cfg-profile-name');
+  const emailEl = document.getElementById('cfg-profile-email');
+  const nameInput = document.getElementById('cfg-name-input');
+
+  if (avEl) avEl.textContent = initial;
+  if (nameEl) nameEl.textContent = name;
+  if (emailEl) emailEl.textContent = email;
+  if (nameInput) nameInput.value = name;
+}
+
+async function saveCfgPerfil() {
+  const name = document.getElementById('cfg-name-input')?.value.trim();
+  if (!name) { showToast('Informe o nome','warn'); return; }
+  if (!appUser) return;
+  const { data, error } = await sb.from('users').update({ name }).eq('id', appUser.id).select().single();
+  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  appUser = data;
+  document.getElementById('cfg-profile-name').textContent = name;
+  showToast('Perfil salvo ✓','ok');
 }
 
 // ════════════════════════════════════════════════════════════════
