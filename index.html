@@ -3421,24 +3421,31 @@ async function resRenderHoje() {
       </div>`).join('')
     : '<div style="font-size:13px;color:var(--text-dim);opacity:.7;">Nenhum registro ainda hoje.</div>';
 
-  // Log
-  document.getElementById('res-log-hoje').innerHTML = validEntries.length === 0
+  // Log — agrupa por cliente + tarefa
+  const logMap = {};
+  for (const e of validEntries) {
+    const key = `${e.clients?.name ?? '—'}||${e.task_name ?? '—'}`;
+    if (!logMap[key]) logMap[key] = { clientName: e.clients?.name ?? '—', taskName: e.task_name ?? '—', mins: 0, firstTime: e.start_time };
+    else if (e.start_time < logMap[key].firstTime) logMap[key].firstTime = e.start_time;
+    logMap[key].mins += e.duration_minutes;
+  }
+  const logArr = Object.values(logMap).sort((a,b) => b.mins - a.mins);
+
+  document.getElementById('res-log-hoje').innerHTML = logArr.length === 0
     ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
-    : `<div style="display:grid;grid-template-columns:10px 1fr auto 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
+    : `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
         <div></div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Hora</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
       </div>
-      ${validEntries.slice(0,10).map((e,i) => `
-      <div style="display:grid;grid-template-columns:10px 1fr auto 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
+      ${logArr.slice(0,10).map((x,i) => `
+      <div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
         <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
         <div>
-          <div style="font-weight:800;font-size:13px;color:var(--deep);">${e.clients?.name ?? '—'}</div>
-          <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${e.task_name}</div>
+          <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
+          <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
         </div>
-        <div style="color:var(--text-dim);font-size:12px;">${new Date(e.start_time).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
-        <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(e.duration_minutes)}</div>
+        <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
       </div>`).join('')}`;
 }
 
