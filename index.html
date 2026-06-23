@@ -1044,35 +1044,35 @@
           </div>
 
           <!-- Coluna direita: resultados calculados -->
-          <div style="width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;position:sticky;top:80px">
-            <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Resultado</div>
+          <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;position:sticky;top:80px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">Resultado</div>
 
             <!-- Para cobrir despesas -->
-            <div style="background:#FFF5EF;border:1.5px solid rgba(224,122,58,.25);border-radius:16px;padding:18px 20px;">
-              <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;margin-bottom:10px">🟠 Para cobrir despesas</div>
-              <div style="margin-bottom:8px">
-                <div style="font-size:10px;color:rgba(224,122,58,.7);font-weight:600;margin-bottom:2px">Faturar por mês</div>
-                <div id="cfg-fat-min-result" style="font-size:22px;font-weight:900;color:#E07A3A;">—</div>
+            <div style="background:white;border:var(--border);border-radius:14px;padding:16px 18px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(74,41,118,.07);">Para cobrir contas</div>
+              <div style="margin-bottom:10px">
+                <div style="font-size:10px;color:var(--text-dim);font-weight:600;margin-bottom:3px">Faturar por mês</div>
+                <div id="cfg-fat-min-result" style="font-size:18px;font-weight:800;color:var(--deep);">—</div>
               </div>
-              <div style="border-top:1px solid rgba(224,122,58,.15);padding-top:8px;">
-                <div style="font-size:10px;color:rgba(224,122,58,.7);font-weight:600;margin-bottom:2px">Valor da hora</div>
-                <div id="cfg-hora-min-result" style="font-size:22px;font-weight:900;color:#E07A3A;">—</div>
+              <div style="background:rgba(224,122,58,.08);border-radius:8px;padding:8px 10px;">
+                <div style="font-size:10px;color:#B85E1A;font-weight:600;margin-bottom:2px">Valor da hora</div>
+                <div id="cfg-hora-min-result" style="font-size:20px;font-weight:900;color:#B85E1A;">—</div>
               </div>
-              <div id="cfg-hora-min-formula" style="font-size:10px;color:rgba(224,122,58,.55);margin-top:8px;line-height:1.5;"></div>
+              <div id="cfg-hora-min-formula" style="font-size:10px;color:var(--text-dim);margin-top:8px;line-height:1.6;opacity:.8;"></div>
             </div>
 
             <!-- Para lucrar -->
-            <div style="background:#EFF9F5;border:1.5px solid rgba(47,185,137,.25);border-radius:16px;padding:18px 20px;">
-              <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:10px">🟢 Para começar a lucrar</div>
-              <div style="margin-bottom:8px">
-                <div style="font-size:10px;color:rgba(47,185,137,.7);font-weight:600;margin-bottom:2px">Faturar por mês</div>
-                <div id="cfg-fat-opt-result" style="font-size:22px;font-weight:900;color:#2FB989;">—</div>
+            <div style="background:white;border:var(--border);border-radius:14px;padding:16px 18px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(74,41,118,.07);">Para lucrar</div>
+              <div style="margin-bottom:10px">
+                <div style="font-size:10px;color:var(--text-dim);font-weight:600;margin-bottom:3px">Faturar por mês</div>
+                <div id="cfg-fat-opt-result" style="font-size:18px;font-weight:800;color:var(--deep);">—</div>
               </div>
-              <div style="border-top:1px solid rgba(47,185,137,.15);padding-top:8px;">
-                <div style="font-size:10px;color:rgba(47,185,137,.7);font-weight:600;margin-bottom:2px">Valor da hora</div>
-                <div id="cfg-hora-opt-result" style="font-size:22px;font-weight:900;color:#2FB989;">—</div>
+              <div style="background:rgba(47,185,137,.08);border-radius:8px;padding:8px 10px;">
+                <div style="font-size:10px;color:#1A7A55;font-weight:600;margin-bottom:2px">Valor da hora</div>
+                <div id="cfg-hora-opt-result" style="font-size:20px;font-weight:900;color:#1A7A55;">—</div>
               </div>
-              <div id="cfg-hora-opt-formula" style="font-size:10px;color:rgba(47,185,137,.55);margin-top:8px;line-height:1.5;"></div>
+              <div id="cfg-hora-opt-formula" style="font-size:10px;color:var(--text-dim);margin-top:8px;line-height:1.6;opacity:.8;"></div>
             </div>
 
             <div id="cfg-hora-calculada" style="display:none"></div>
@@ -2819,7 +2819,7 @@ function openCalModal(day) {
   // Populate client select
   const sel = document.getElementById('cme-client');
   sel.innerHTML = '<option value="">— selecione —</option>' +
-    (C.clients||[]).filter(c=>c.is_active).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    (T.clients||[]).filter(c=>c.is_active && !c.is_internal).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
 
   setCalModalTab('compromisso');
   const modal = document.getElementById('cal-modal');
