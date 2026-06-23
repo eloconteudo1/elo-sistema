@@ -243,10 +243,54 @@
     /* Section label */
     .cl-sec-label { font-size:11px; font-weight:800; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; padding:4px 0 8px; }
 
+    /* ── Calendário ── */
+    .cal-grid { display:grid; grid-template-columns:1fr 300px; gap:20px; }
+    .cal-box { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+    .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid #f0f0f0; }
+    .cal-weekday { padding:14px 0; text-align:center; font-size:11px; font-weight:700; color:#999; letter-spacing:1px; }
+    .cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
+    .cal-cell { min-height:110px; padding:8px 6px 6px; border-right:1px solid #f5f5f5; border-bottom:1px solid #f5f5f5; cursor:pointer; background:#fff; transition:background .15s; position:relative; box-sizing:border-box; }
+    .cal-cell:nth-child(7n) { border-right:none; }
+    .cal-cell.empty { cursor:default; }
+    .cal-cell.today { background:rgba(224,122,95,.05); }
+    .cal-cell.selected { background:rgba(124,111,205,.08); }
+    .cal-cell-num { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500; color:#333; }
+    .cal-cell.today .cal-cell-num { background:var(--coral); color:#fff; font-weight:700; }
+    .cal-cell.selected .cal-cell-num { color:var(--purple); font-weight:700; }
+    .cal-add-btn { width:20px; height:20px; border-radius:50%; border:none; background:rgba(196,114,90,.18); color:var(--coral); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; font-weight:700; opacity:0.7; transition:opacity .15s; line-height:1; }
+    .cal-add-btn:hover { opacity:1; }
+    .cal-cell.selected .cal-add-btn { background:var(--purple); color:#fff; }
+    .cal-event-chip { font-size:10px; padding:2px 5px; border-radius:4px; margin-bottom:2px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* Sidebar */
+    .cal-sidebar { display:flex; flex-direction:column; gap:16px; }
+    .cal-panel { background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); padding:20px; }
+    /* Alertas */
+    .cal-alert-card { background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+    .cal-alert-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .cal-toggle { width:44px; height:24px; border-radius:12px; border:none; cursor:pointer; padding:0; position:relative; flex-shrink:0; transition:background .2s; }
+    .cal-toggle-knob { width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:3px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+
     /* ── Modal tabs (underline style) ── */
     .modal-tabs { display:flex; border-bottom:2px solid rgba(74,41,118,.10); margin-bottom:20px; gap:0; }
     .modal-tab { padding:10px 18px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; }
     .modal-tab.active { color:var(--purple); font-weight:800; border-bottom-color:var(--purple); }
+
+    /* ── Subtabs ── */
+    .elo-subtabs { display:flex; gap:4px; border-bottom:1px solid rgba(74,41,118,.10); padding-bottom:0; margin-bottom:4px; }
+    .elo-subtab { padding:8px 20px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; border-radius:0; }
+    .elo-subtab:hover { color:var(--purple); }
+    .elo-subtab.active { color:var(--purple); font-weight:800; border-bottom-color:var(--purple); }
+
+    /* ── Buttons ── */
+    .elo-btn-primary { display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border:none; border-radius:12px; background:linear-gradient(135deg,var(--coral),var(--coral-light)); color:white; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:opacity .15s; }
+    .elo-btn-primary:hover { opacity:.88; }
+    .elo-btn-primary:disabled { opacity:.55; cursor:not-allowed; }
+    .elo-btn-outline { display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border:1.5px solid rgba(74,41,118,.25); border-radius:12px; background:white; color:var(--purple); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+    .elo-btn-outline:hover { border-color:var(--purple); background:rgba(74,41,118,.04); }
+
+    /* ── Config task row ── */
+    .cfg-task-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:white; border:var(--border); border-radius:12px; box-shadow:var(--shadow-sm); }
+    .cfg-task-row:hover { box-shadow:0 4px 20px rgba(46,24,71,.12); }
 
     /* ── Responsive ── */
     @media (max-width:1100px) { #home-grid { grid-template-columns:260px 1fr 300px; } }
@@ -473,9 +517,182 @@
       <div class="page-placeholder"><div class="icon">📊</div><h2>Resultado</h2><p>KPIs, donuts SVG e calendário meta — em breve.</p></div>
     </div>
 
-    <!-- ── CALENDÁRIO (placeholder) ── -->
-    <div class="page" id="page-calendario">
-      <div class="page-placeholder"><div class="icon">📅</div><h2>Calendário</h2><p>Grade mensal + alertas — em breve.</p></div>
+    <!-- ── CALENDÁRIO ── -->
+    <div class="page page-narrow" id="page-calendario">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:20px;font-weight:900;color:var(--deep);margin:0 0 2px;">Calendário</h2>
+          <p style="font-size:12px;color:var(--text-dim);font-weight:600;margin:0;">Clique em um dia para ver eventos ou no + para cadastrar</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <!-- Tab switcher -->
+          <div style="display:flex;background:rgba(46,27,78,.06);border-radius:10px;padding:3px;gap:2px;">
+            <button id="cal-tab-calendario" onclick="setCalTab('calendario')"
+              style="padding:6px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:#fff;color:var(--deep);box-shadow:0 1px 4px rgba(0,0,0,.08);transition:all .15s;">📅 Calendário</button>
+            <button id="cal-tab-alertas" onclick="setCalTab('alertas')"
+              style="padding:6px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--text-dim);transition:all .15s;">🔔 Alertas</button>
+          </div>
+          <!-- Nav (shown only in calendar tab) -->
+          <div id="cal-nav" style="display:flex;align-items:center;gap:8px;">
+            <button onclick="calPrevMonth()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:16px;">‹</button>
+            <span id="cal-month-label" style="font-weight:700;font-size:15px;color:var(--deep);min-width:160px;text-align:center;"></span>
+            <button onclick="calNextMonth()" style="background:none;border:1px solid #ddd;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:16px;">›</button>
+            <button onclick="calGoToday()" style="background:var(--coral);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700;">Hoje</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar view -->
+      <div id="cal-view-calendario">
+        <div class="cal-grid">
+          <div class="cal-box">
+            <div class="cal-weekdays">
+              <div class="cal-weekday">Dom</div><div class="cal-weekday">Seg</div><div class="cal-weekday">Ter</div>
+              <div class="cal-weekday">Qua</div><div class="cal-weekday">Qui</div><div class="cal-weekday">Sex</div><div class="cal-weekday">Sáb</div>
+            </div>
+            <div class="cal-days" id="cal-days-grid"></div>
+          </div>
+          <div class="cal-sidebar" id="cal-sidebar"></div>
+        </div>
+      </div>
+
+      <!-- Alertas view -->
+      <div id="cal-view-alertas" style="display:none;max-width:800px;margin:0 auto;">
+        <button id="cal-notif-btn" onclick="calEnableNotif()"
+          style="width:100%;padding:14px 0;border-radius:12px;border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;margin-bottom:24px;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;">
+          🔔 Clique aqui para ativar som e notificações
+        </button>
+
+        <!-- Configurações de alertas -->
+        <div style="background:#f9f8fc;border-radius:16px;padding:20px 22px;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Notificações e Alertas</div>
+          <p style="font-size:12px;color:#aaa;margin:0 0 18px;">Configure quais alertas quer receber e em quais horários.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="cal-alert-settings"></div>
+          <button onclick="calSaveSettings()" style="margin-top:16px;padding:10px 24px;border-radius:10px;border:none;background:var(--coral);color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Salvar configurações</button>
+        </div>
+
+        <!-- Alarmes pessoais -->
+        <div style="background:#f9f8fc;border-radius:16px;padding:20px 22px;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Alarmes Pessoais</div>
+          <p style="font-size:12px;color:#aaa;margin:0 0 18px;">Lembretes de bem-estar — independentes do trabalho.</p>
+          <div id="cal-reminders-list"></div>
+          <button onclick="openReminderModal(null)" style="margin-top:10px;padding:10px 22px;border-radius:10px;border:1.5px solid var(--purple);background:transparent;color:var(--purple);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">+ Novo alarme</button>
+        </div>
+      </div>
+
+      <!-- Modal evento -->
+      <div id="cal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:28px 32px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.2);" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <h2 style="font-size:17px;font-weight:800;color:var(--deep);margin:0;">Novo evento</h2>
+            <button onclick="closeCalModal()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#aaa;line-height:1;">×</button>
+          </div>
+          <!-- Modal tabs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:22px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(46,27,78,.12);">
+            <button id="cmt-compromisso" onclick="setCalModalTab('compromisso')"
+              style="padding:10px 0;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;background:var(--purple);color:#fff;transition:all .15s;">Compromisso</button>
+            <button id="cmt-tarefa" onclick="setCalModalTab('tarefa')"
+              style="padding:10px 0;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;background:#fff;color:var(--text-dim);transition:all .15s;">Tarefa</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label class="elo-modal-label">Título *</label>
+              <input id="cme-title" class="elo-input" placeholder="Ex: Reunião, Entregar relatório..." />
+            </div>
+            <div>
+              <label class="elo-modal-label">Cliente</label>
+              <select id="cme-client" class="elo-select" style="width:100%;"></select>
+            </div>
+            <div>
+              <label class="elo-modal-label">Data</label>
+              <input id="cme-date" class="elo-input" placeholder="DD/MM/AAAA" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label class="elo-modal-label">Horário</label>
+                <input id="cme-time" type="time" class="elo-input" />
+              </div>
+              <div>
+                <label class="elo-modal-label">Alertar antes</label>
+                <select id="cme-alert" class="elo-select" style="width:100%;">
+                  <option value="">Sem alerta</option>
+                  <option value="10">10 minutos antes</option>
+                  <option value="30">30 minutos antes</option>
+                  <option value="60">1 hora antes</option>
+                  <option value="1440">1 dia antes</option>
+                </select>
+              </div>
+            </div>
+            <div id="cme-priority-row">
+              <label class="elo-modal-label">Prioridade</label>
+              <select id="cme-priority" class="elo-select" style="width:100%;">
+                <option value="alta">🔴 Alta</option>
+                <option value="media" selected>🟡 Média</option>
+                <option value="baixa">🟢 Baixa</option>
+              </select>
+            </div>
+            <div>
+              <label class="elo-modal-label">Descrição (opcional)</label>
+              <textarea id="cme-desc" class="elo-input" style="min-height:56px;resize:vertical;" placeholder="Detalhes..."></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end;">
+            <button onclick="closeCalModal()" class="elo-btn-outline">Cancelar</button>
+            <button onclick="saveCalEvent()" id="cal-save-btn" style="padding:10px 24px;border-radius:10px;border:none;background:var(--coral);color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal lembrete -->
+      <div id="rem-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:28px 32px;width:440px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.2);" onclick="event.stopPropagation()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <h2 id="rem-modal-title" style="font-size:16px;font-weight:800;color:var(--deep);margin:0;">Novo Alarme Pessoal</h2>
+            <button onclick="closeReminderModal()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#aaa;">×</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label class="elo-modal-label">Título *</label>
+              <input id="rem-title" class="elo-input" placeholder="Ex: Beber água, Levantar e alongar..." />
+            </div>
+            <div>
+              <label class="elo-modal-label">Tipo de Recorrência</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <button id="rem-type-interval" onclick="setRemType('interval')"
+                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:none;background:var(--purple);color:#fff;font-family:inherit;font-size:12px;">A cada X minutos</button>
+                <button id="rem-type-daily" onclick="setRemType('daily')"
+                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);font-family:inherit;font-size:12px;">Todo dia (horário fixo)</button>
+              </div>
+            </div>
+            <div id="rem-interval-row">
+              <label class="elo-modal-label">Intervalo</label>
+              <select id="rem-interval" class="elo-select" style="width:100%;">
+                <option value="15">A cada 15 minutos</option>
+                <option value="20">A cada 20 minutos</option>
+                <option value="30" selected>A cada 30 minutos</option>
+                <option value="45">A cada 45 minutos</option>
+                <option value="60">A cada 1 hora</option>
+                <option value="90">A cada 1h30</option>
+                <option value="120">A cada 2 horas</option>
+                <option value="180">A cada 3 horas</option>
+              </select>
+            </div>
+            <div id="rem-daily-row" style="display:none;">
+              <label class="elo-modal-label">Horário diário</label>
+              <input id="rem-daily-time" type="time" class="elo-input" value="08:00" />
+            </div>
+            <div>
+              <label class="elo-modal-label">Observação (opcional)</label>
+              <textarea id="rem-desc" class="elo-input" style="min-height:56px;resize:vertical;" placeholder="Detalhes..."></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end;">
+            <button onclick="closeReminderModal()" class="elo-btn-outline">Cancelar</button>
+            <button onclick="saveReminder()" style="padding:10px 24px;border-radius:10px;border:none;background:var(--coral);color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Salvar</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ── CLIENTES ── -->
@@ -647,9 +864,129 @@
       </div>
     </div>
 
-    <!-- ── CONFIG (placeholder) ── -->
-    <div class="page" id="page-config">
-      <div class="page-placeholder"><div class="icon">⚙️</div><h2>Config.</h2><p>Tarefas, metas, sobre — em breve.</p></div>
+    <!-- ── CONFIG ── -->
+    <div class="page page-narrow" id="page-config">
+      <div style="display:flex;flex-direction:column;gap:20px;padding-bottom:48px">
+
+        <!-- Header -->
+        <div>
+          <h2 style="font-size:20px;font-weight:900;color:var(--deep);margin-bottom:2px">Configurações</h2>
+          <p style="font-size:12px;color:var(--text-dim);font-weight:600">Tarefas, metas e preferências do sistema</p>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="elo-subtabs" id="cfg-tabs">
+          <button class="elo-subtab active" onclick="cfgShowTab('tarefas')">Tarefas</button>
+          <button class="elo-subtab" onclick="cfgShowTab('metas')">Metas</button>
+          <button class="elo-subtab" onclick="cfgShowTab('sobre')">Sobre</button>
+        </div>
+
+        <!-- ABA: TAREFAS -->
+        <div id="cfg-pane-tarefas" style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span id="cfg-tasks-count" style="font-size:13px;color:var(--text-dim);font-weight:600">— tarefas cadastradas</span>
+            <button class="elo-btn-primary" onclick="cfgOpenTaskModal()">+ Nova Tarefa</button>
+          </div>
+          <div id="cfg-tasks-list" style="display:flex;flex-direction:column;gap:12px">
+            <div style="text-align:center;padding:32px;color:var(--text-dim)">Carregando...</div>
+          </div>
+        </div>
+
+        <!-- ABA: METAS -->
+        <div id="cfg-pane-metas" style="display:none">
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px;max-width:480px">
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">Metas de produtividade</div>
+            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.6;margin-bottom:20px">
+              Defina quantos minutos trabalhar por dia. O sistema usa isso para calcular o progresso no timer.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Meta diária (minutos)</label>
+                <input id="cfg-daily-goal" type="number" min="60" max="720" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+                <div id="cfg-daily-lbl" style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600"></div>
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Dias de alerta de vencimento</label>
+                <input id="cfg-alert-days" type="number" min="1" max="10" value="3" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+              </div>
+              <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABA: SOBRE + IMPORTAR -->
+        <div id="cfg-pane-sobre" style="display:none;flex-direction:column;gap:16px;max-width:560px">
+
+          <!-- Info -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+              <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
+              <div>
+                <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600">Versão 3.0 · ELO Comunicação</div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:var(--text);line-height:1.7">
+              <p>Sistema de gestão desenvolvido para a <strong>ELO Comunicação</strong>, agência de marketing médico.</p>
+              <ul style="padding-left:20px;margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                <li><strong>Timer</strong> — Registro de horas por cliente e tarefa</li>
+                <li><strong>Clientes</strong> — Gestão de contratos e pagamentos</li>
+                <li><strong>Financeiro</strong> — Receitas, custos e resultado</li>
+                <li><strong>Resultado</strong> — Rentabilidade real por cliente</li>
+                <li><strong>Config</strong> — Tarefas e metas de produtividade</li>
+              </ul>
+              <p style="margin-top:12px;font-size:12px;color:var(--text-dim)">Umuarama, Paraná · Brasil</p>
+            </div>
+          </div>
+
+          <!-- Importar Clientes -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">📥 Importar Clientes</div>
+            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">
+              Arquivo CSV com colunas:<br>
+              <code style="font-size:11px;background:rgba(74,41,118,.07);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px">nome, especialidade, plano, valor, vencimento, forma_pagamento, telefone, posts_mes, observacoes</code>
+            </div>
+            <input type="file" id="imp-cli-file" accept=".csv" style="display:none" onchange="cfgPreviewClientes(this)">
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-cli-file').click()">📂 Escolher arquivo CSV</button>
+            <div id="imp-cli-preview" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
+              <div id="imp-cli-info" style="font-size:12px;font-weight:700;color:var(--purple)"></div>
+              <div id="imp-cli-rows" style="max-height:160px;overflow-y:auto;border:var(--border);border-radius:10px;font-size:11px;font-family:monospace"></div>
+              <div style="display:flex;gap:8px">
+                <button class="elo-btn-outline" onclick="cfgCancelClientes()" style="flex:1;justify-content:center">Cancelar</button>
+                <button class="elo-btn-primary" id="imp-cli-btn" onclick="cfgImportClientes()" style="flex:2;justify-content:center">✅ Importar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Importar Pagamentos -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">💰 Importar Pagamentos Mensais</div>
+            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">
+              Arquivo CSV com colunas:<br>
+              <code style="font-size:11px;background:rgba(74,41,118,.07);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px">cliente, valor, mes, ano, pago (sim/nao)</code>
+            </div>
+            <input type="file" id="imp-pay-file" accept=".csv" style="display:none" onchange="cfgPreviewPagamentos(this)">
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-pay-file').click()">📂 Escolher arquivo CSV</button>
+            <div id="imp-pay-preview" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
+              <div id="imp-pay-info" style="font-size:12px;font-weight:700;color:var(--purple)"></div>
+              <div id="imp-pay-rows" style="max-height:160px;overflow-y:auto;border:var(--border);border-radius:10px;font-size:11px;font-family:monospace"></div>
+              <div style="display:flex;gap:8px">
+                <button class="elo-btn-outline" onclick="cfgCancelPagamentos()" style="flex:1;justify-content:center">Cancelar</button>
+                <button class="elo-btn-primary" id="imp-pay-btn" onclick="cfgImportPagamentos()" style="flex:2;justify-content:center">✅ Importar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exportar backup -->
+          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">💾 Exportar Dados</div>
+            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">Baixe um backup completo dos seus dados em JSON.</div>
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="cfgExportBackup()">⬇️ Baixar backup JSON</button>
+          </div>
+
+        </div><!-- /cfg-pane-sobre -->
+
+      </div>
     </div>
 
   </main>
@@ -749,6 +1086,7 @@ function navigateTo(page) {
   // Init pages on first visit
   if (page === 'clientes'   && appUser) initClientes();
   if (page === 'financeiro' && appUser) initFinanceiro();
+  if (page === 'config'     && appUser) initConfig();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1972,6 +2310,464 @@ async function saveClient(id) {
 // FINANCEIRO
 // ════════════════════════════════════════════════════════════════
 const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+// ─────────────────────────────────────────────────────────────────
+// CALENDÁRIO
+// ─────────────────────────────────────────────────────────────────
+const MONTHS_CAL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const PRIORITY_COLOR = { alta:'#e07a5f', media:'#7c6fcd', baixa:'#4caf8a' };
+
+const CAL = {
+  tab: 'calendario',
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  selectedDay: null,
+  appointments: [],
+  scheduledTasks: [],
+  reminders: [],
+  modalTab: 'compromisso',
+  editingRemId: null,
+  remType: 'interval',
+  settings: { pauseMinutes:30, lunchTime:'12:00', endTime:'18:00', dailyGoalHours:8 },
+};
+
+async function initCalendario() {
+  await loadCalData();
+  renderCalPage();
+}
+
+async function loadCalData() {
+  const now = new Date(CAL.year, CAL.month, 1);
+  const monthStart = new Date(CAL.year, CAL.month, 1).getTime();
+  const monthEnd = new Date(CAL.year, CAL.month+1, 0, 23, 59, 59, 999).getTime();
+
+  const [apptRes, taskRes, remRes] = await Promise.all([
+    sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'),
+    sb.from('scheduled_tasks').select('*').order('created_at', {ascending:false}),
+    sb.from('reminders').select('*').order('id'),
+  ]);
+  CAL.appointments = apptRes.data || [];
+  CAL.scheduledTasks = taskRes.data || [];
+  CAL.reminders = remRes.data || [];
+}
+
+function setCalTab(tab) {
+  CAL.tab = tab;
+  const isCal = tab === 'calendario';
+  document.getElementById('cal-view-calendario').style.display = isCal ? '' : 'none';
+  document.getElementById('cal-view-alertas').style.display = isCal ? 'none' : '';
+  document.getElementById('cal-nav').style.display = isCal ? '' : 'none';
+
+  const btnCal = document.getElementById('cal-tab-calendario');
+  const btnAl = document.getElementById('cal-tab-alertas');
+  btnCal.style.background = isCal ? '#fff' : 'transparent';
+  btnCal.style.color = isCal ? 'var(--deep)' : 'var(--text-dim)';
+  btnCal.style.boxShadow = isCal ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
+  btnAl.style.background = !isCal ? '#fff' : 'transparent';
+  btnAl.style.color = !isCal ? 'var(--deep)' : 'var(--text-dim)';
+  btnAl.style.boxShadow = !isCal ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
+
+  if (!isCal) renderCalAlerts();
+}
+
+function renderCalPage() {
+  document.getElementById('cal-month-label').textContent = `${MONTHS_CAL[CAL.month]} ${CAL.year}`;
+  renderCalGrid();
+  renderCalSidebar();
+}
+
+function getEventsByDay() {
+  const map = {};
+  for (const appt of CAL.appointments) {
+    const d = new Date(Number(appt.scheduled_at));
+    if (d.getMonth() === CAL.month && d.getFullYear() === CAL.year) {
+      const day = d.getDate();
+      if (!map[day]) map[day] = [];
+      map[day].push({ type:'appointment', title:appt.title, time:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), isDone:appt.is_done });
+    }
+  }
+  for (const task of CAL.scheduledTasks) {
+    if (!task.scheduled_date) continue;
+    const parts = task.scheduled_date.split('/');
+    if (parts.length !== 3) continue;
+    const [dd, mm, yyyy] = parts.map(Number);
+    if (mm-1 === CAL.month && yyyy === CAL.year) {
+      if (!map[dd]) map[dd] = [];
+      map[dd].push({ type:'task', title:task.title, time:task.scheduled_time||null, priority:task.priority||'media', isDone:task.is_done });
+    }
+  }
+  return map;
+}
+
+function renderCalGrid() {
+  const now = new Date();
+  const todayDay = now.getDate();
+  const isCurrentMonth = now.getMonth() === CAL.month && now.getFullYear() === CAL.year;
+  const firstDay = new Date(CAL.year, CAL.month, 1).getDay();
+  const daysInMonth = new Date(CAL.year, CAL.month+1, 0).getDate();
+  const eventsByDay = getEventsByDay();
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  let html = '';
+  cells.forEach((day, idx) => {
+    if (!day) { html += `<div class="cal-cell empty"></div>`; return; }
+    const events = eventsByDay[day] || [];
+    const isToday = isCurrentMonth && day === todayDay;
+    const isSel = day === CAL.selectedDay;
+    let cls = 'cal-cell';
+    if (isToday) cls += ' today';
+    if (isSel) cls += ' selected';
+
+    let chips = events.slice(0, 3).map(ev => {
+      const bg = ev.type === 'appointment'
+        ? 'rgba(124,111,205,.15)' : `${PRIORITY_COLOR[ev.priority||'media']}22`;
+      const col = ev.type === 'appointment'
+        ? 'var(--purple)' : PRIORITY_COLOR[ev.priority||'media'];
+      const dec = ev.isDone ? 'line-through' : 'none';
+      const op = ev.isDone ? '0.5' : '1';
+      const t = ev.time ? `${ev.time} ` : '';
+      return `<div class="cal-event-chip" style="background:${bg};color:${col};text-decoration:${dec};opacity:${op};">${t}${ev.title}</div>`;
+    }).join('');
+    if (events.length > 3) chips += `<div style="font-size:10px;color:#999;padding-left:5px;">+${events.length-3} mais</div>`;
+
+    html += `<div class="${cls}" onclick="calSelectDay(${day})">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="cal-cell-num">${day}</div>
+        <button class="cal-add-btn" onclick="event.stopPropagation();openCalModal(${day})">+</button>
+      </div>
+      ${chips}
+    </div>`;
+  });
+  document.getElementById('cal-days-grid').innerHTML = html;
+}
+
+function calSelectDay(day) {
+  CAL.selectedDay = CAL.selectedDay === day ? null : day;
+  renderCalGrid();
+  renderCalSidebar();
+}
+
+function renderCalSidebar() {
+  const sidebar = document.getElementById('cal-sidebar');
+  const now = new Date();
+  const apptCount = CAL.appointments.length;
+  const taskCount = CAL.scheduledTasks.filter(t => {
+    if (!t.scheduled_date) return false;
+    const p = t.scheduled_date.split('/');
+    return p.length === 3 && Number(p[1])-1 === CAL.month && Number(p[2]) === CAL.year;
+  }).length;
+
+  let panelHtml = '';
+  if (CAL.selectedDay) {
+    const eventsByDay = getEventsByDay();
+    const events = eventsByDay[CAL.selectedDay] || [];
+    let evHtml = '';
+    if (events.length === 0) {
+      evHtml = `<div style="text-align:center;padding:20px 0;">
+        <p style="font-size:13px;color:#aaa;margin:0 0 12px;">Nenhum evento neste dia</p>
+        <button onclick="openCalModal(${CAL.selectedDay})" style="padding:8px 18px;border-radius:10px;border:1.5px dashed rgba(196,114,90,.4);background:rgba(196,114,90,.05);color:var(--coral);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">+ Adicionar evento</button>
+      </div>`;
+    } else {
+      evHtml = `<div style="display:flex;flex-direction:column;gap:10px;">` +
+        events.map(ev => {
+          const col = ev.type === 'appointment' ? 'var(--purple)' : PRIORITY_COLOR[ev.priority||'media'];
+          const bg = ev.type === 'appointment' ? 'rgba(124,111,205,.08)' : `${PRIORITY_COLOR[ev.priority||'media']}11`;
+          const lbl = ev.type === 'appointment' ? 'COMPROMISSO' : `TAREFA · ${(ev.priority||'media').toUpperCase()}`;
+          const done = ev.isDone ? '<span style="margin-left:6px;color:#4caf8a;">✓ CONCLUÍDO</span>' : '';
+          const dec = ev.isDone ? 'line-through' : 'none';
+          const op = ev.isDone ? '0.5' : '1';
+          const timeHtml = ev.time ? `<div style="font-size:11px;color:#888;margin-top:2px;">🕐 ${ev.time}</div>` : '';
+          return `<div style="padding:10px 14px;border-radius:10px;background:${bg};border-left:3px solid ${col};opacity:${op};">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${col};margin-bottom:2px;">${lbl}${done}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${ev.title}</div>
+            ${timeHtml}
+          </div>`;
+        }).join('') + `</div>`;
+    }
+    panelHtml = `<div class="cal-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="font-size:15px;font-weight:700;color:var(--deep);margin:0;">${CAL.selectedDay} de ${MONTHS_CAL[CAL.month]}</h3>
+        <button onclick="openCalModal(${CAL.selectedDay})" style="padding:5px 12px;border-radius:8px;border:none;background:var(--coral);color:#fff;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">+ Evento</button>
+      </div>
+      ${evHtml}
+    </div>`;
+  } else {
+    panelHtml = `<div class="cal-panel">
+      <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0 0 12px;">Legenda</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${[['rgba(124,111,205,.3)','Compromisso'],[`${PRIORITY_COLOR.alta}44`,'Tarefa — Alta'],[`${PRIORITY_COLOR.media}44`,'Tarefa — Média'],[`${PRIORITY_COLOR.baixa}44`,'Tarefa — Baixa']].map(([c,l])=>`
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <div style="width:12px;height:12px;border-radius:3px;background:${c};flex-shrink:0;"></div>
+            <span style="color:#555;">${l}</span>
+          </div>`).join('')}
+      </div>
+      <p style="font-size:12px;color:#bbb;margin-top:14px;">Clique em um dia ou no <strong>+</strong> para adicionar</p>
+    </div>`;
+  }
+
+  sidebar.innerHTML = panelHtml + `
+    <div class="cal-panel">
+      <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0 0 12px;letter-spacing:.5px;text-transform:uppercase;">Resumo do Mês</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="text-align:center;padding:12px 0;background:rgba(124,111,205,.06);border-radius:10px;">
+          <div style="font-size:24px;font-weight:700;color:var(--purple);">${apptCount}</div>
+          <div style="font-size:11px;color:#888;">Compromissos</div>
+        </div>
+        <div style="text-align:center;padding:12px 0;background:rgba(224,122,95,.06);border-radius:10px;">
+          <div style="font-size:24px;font-weight:700;color:var(--coral);">${taskCount}</div>
+          <div style="font-size:11px;color:#888;">Tarefas</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function calPrevMonth() {
+  if (CAL.month === 0) { CAL.month = 11; CAL.year--; }
+  else CAL.month--;
+  CAL.selectedDay = null;
+  loadCalData().then(() => renderCalPage());
+}
+function calNextMonth() {
+  if (CAL.month === 11) { CAL.month = 0; CAL.year++; }
+  else CAL.month++;
+  CAL.selectedDay = null;
+  loadCalData().then(() => renderCalPage());
+}
+function calGoToday() {
+  const now = new Date();
+  CAL.month = now.getMonth();
+  CAL.year = now.getFullYear();
+  CAL.selectedDay = now.getDate();
+  loadCalData().then(() => renderCalPage());
+}
+
+// ── Modal de evento ──────────────────────────────────
+function openCalModal(day) {
+  const dd = String(day).padStart(2,'0');
+  const mm = String(CAL.month+1).padStart(2,'0');
+  document.getElementById('cme-date').value = `${dd}/${mm}/${CAL.year}`;
+  document.getElementById('cme-title').value = '';
+  document.getElementById('cme-time').value = '';
+  document.getElementById('cme-alert').value = '';
+  document.getElementById('cme-desc').value = '';
+  document.getElementById('cme-priority').value = 'media';
+
+  // Populate client select
+  const sel = document.getElementById('cme-client');
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    (C.clients||[]).filter(c=>c.is_active).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+
+  setCalModalTab('compromisso');
+  const modal = document.getElementById('cal-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('cme-title').focus(), 50);
+}
+function closeCalModal() {
+  document.getElementById('cal-modal').style.display = 'none';
+}
+
+function setCalModalTab(tab) {
+  CAL.modalTab = tab;
+  const isCom = tab === 'compromisso';
+  document.getElementById('cmt-compromisso').style.background = isCom ? 'var(--purple)' : '#fff';
+  document.getElementById('cmt-compromisso').style.color = isCom ? '#fff' : 'var(--text-dim)';
+  document.getElementById('cmt-tarefa').style.background = !isCom ? 'var(--purple)' : '#fff';
+  document.getElementById('cmt-tarefa').style.color = !isCom ? '#fff' : 'var(--text-dim)';
+  document.getElementById('cme-priority-row').style.display = isCom ? 'none' : '';
+}
+
+async function saveCalEvent() {
+  const title = document.getElementById('cme-title').value.trim();
+  if (!title) { showToast('Informe o título','err'); return; }
+  const date = document.getElementById('cme-date').value;
+  const time = document.getElementById('cme-time').value;
+  const alertMin = document.getElementById('cme-alert').value;
+  const desc = document.getElementById('cme-desc').value.trim();
+  const clientId = document.getElementById('cme-client').value;
+  const btn = document.getElementById('cal-save-btn');
+  btn.textContent = 'Salvando...'; btn.disabled = true;
+
+  if (CAL.modalTab === 'compromisso') {
+    const parts = date.split('/');
+    if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)','err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+    const [dd, mm, yyyy] = parts.map(Number);
+    const [hh, min] = time ? time.split(':').map(Number) : [0,0];
+    const scheduled_at = new Date(yyyy, mm-1, dd, hh||0, min||0).getTime();
+    const { data, error } = await sb.from('appointments').insert({
+      title, description: desc||null, scheduled_at,
+      alert_minutes_before: alertMin ? Number(alertMin) : null,
+      client_id: clientId ? Number(clientId) : null,
+      is_done: false,
+    }).select().single();
+    if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+    CAL.appointments.push(data);
+  } else {
+    const priority = document.getElementById('cme-priority').value;
+    const { data, error } = await sb.from('scheduled_tasks').insert({
+      title, description: desc||null,
+      scheduled_date: date||null, scheduled_time: time||null,
+      priority, client_id: clientId ? Number(clientId) : null,
+      alert_minutes_before: alertMin ? Number(alertMin) : null,
+      is_done: false,
+    }).select().single();
+    if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+    CAL.scheduledTasks.push(data);
+  }
+  closeCalModal();
+  btn.textContent='Salvar'; btn.disabled=false;
+  showToast(CAL.modalTab === 'compromisso' ? 'Compromisso criado!':'Tarefa criada!','ok');
+  renderCalGrid();
+  renderCalSidebar();
+}
+
+// ── Alertas ──────────────────────────────────────────
+function calEnableNotif() {
+  if (!('Notification' in window)) { showToast('Seu navegador não suporta notificações.','err'); return; }
+  Notification.requestPermission().then(p => {
+    const btn = document.getElementById('cal-notif-btn');
+    if (p === 'granted') {
+      btn.style.background = 'rgba(76,175,138,.15)'; btn.style.color = '#4caf8a';
+      btn.textContent = '✅ Notificações ativadas';
+      showToast('Notificações ativadas!','ok');
+    } else {
+      showToast('Permissão negada. Verifique as configurações do navegador.','err');
+    }
+  });
+}
+
+function renderCalAlerts() {
+  const settHtml = [
+    { icon:'⏰', bg:'rgba(255,165,0,.12)', title:'Pausa longa', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Após</span><input type="number" id="cal-pause-min" value="${CAL.settings.pauseMinutes}" min="15" max="480" style="width:70px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /><span style="font-size:12px;color:#888;">minutos</span></div>` },
+    { icon:'🍽️', bg:'rgba(255,193,7,.12)', title:'Hora do almoço', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Horário:</span><input type="time" id="cal-lunch-time" value="${CAL.settings.lunchTime}" style="width:100px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /></div>` },
+    { icon:'🌙', bg:'rgba(124,111,205,.12)', title:'Encerrar expediente', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Horário:</span><input type="time" id="cal-end-time" value="${CAL.settings.endTime}" style="width:100px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /></div>` },
+    { icon:'📊', bg:'rgba(76,175,138,.12)', title:'Meta diária', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Meta:</span><input type="number" id="cal-goal-hours" value="${CAL.settings.dailyGoalHours}" min="1" max="16" style="width:60px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /><span style="font-size:12px;color:#888;">horas/dia</span></div>` },
+    { icon:'🔴', bg:'rgba(224,122,95,.12)', title:'Tarefas atrasadas', content:`<div style="font-size:12px;color:#888;margin-top:4px;">Alerta quando próximas tarefas passam do horário</div>` },
+    { icon:'💬', bg:'rgba(37,211,102,.12)', title:'Checar WhatsApp', content:`<div style="font-size:12px;color:#888;margin-top:4px;">Configure via Alarmes Pessoais abaixo</div>` },
+  ].map(s => `<div class="cal-alert-card">
+    <div class="cal-alert-icon" style="background:${s.bg};">${s.icon}</div>
+    <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:var(--deep);">${s.title}</div>${s.content}</div>
+  </div>`).join('');
+  document.getElementById('cal-alert-settings').innerHTML = settHtml;
+
+  const remHtml = CAL.reminders.length === 0
+    ? `<div style="text-align:center;padding:24px 0;color:#bbb;font-size:13px;">Nenhum alarme pessoal. Crie o primeiro abaixo.</div>`
+    : CAL.reminders.map(rem => {
+      const emojis = {'água':'💧','levantar':'🧘','alongar':'🧘','postura':'🪑','coma':'🍎','lanche':'🍎','whatsapp':'💬'};
+      const emoji = Object.entries(emojis).find(([k])=>rem.title.toLowerCase().includes(k))?.[1] || '🔔';
+      const detail = rem.type === 'interval' ? `A cada ${rem.interval_minutes} min` : `Todo dia às ${rem.daily_time}`;
+      const op = rem.is_active ? '1' : '0.55';
+      const toggleBg = rem.is_active ? 'var(--coral)' : 'rgba(0,0,0,.15)';
+      const knobLeft = rem.is_active ? '23px' : '3px';
+      return `<div class="cal-alert-card" style="opacity:${op};">
+        <div style="font-size:20px;">${emoji}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;color:var(--deep);">${rem.title}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${detail}</div>
+        </div>
+        <button onclick="toggleReminder(${rem.id},${!rem.is_active})" class="cal-toggle" style="background:${toggleBg};">
+          <div class="cal-toggle-knob" style="left:${knobLeft};"></div>
+        </button>
+        <button onclick="openReminderModal(${rem.id})" style="background:none;border:none;cursor:pointer;font-size:15px;color:#bbb;padding:0 4px;">✏️</button>
+        <button onclick="deleteReminder(${rem.id})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--coral);padding:0 4px;">🗑️</button>
+      </div>`;
+    }).join('');
+  document.getElementById('cal-reminders-list').innerHTML = remHtml;
+}
+
+function calSaveSettings() {
+  CAL.settings.pauseMinutes = Number(document.getElementById('cal-pause-min')?.value || 30);
+  CAL.settings.lunchTime = document.getElementById('cal-lunch-time')?.value || '12:00';
+  CAL.settings.endTime = document.getElementById('cal-end-time')?.value || '18:00';
+  CAL.settings.dailyGoalHours = Number(document.getElementById('cal-goal-hours')?.value || 8);
+  localStorage.setItem('elo_cal_settings', JSON.stringify(CAL.settings));
+  showToast('Configurações salvas!','ok');
+}
+
+// ── Reminder Modal ────────────────────────────────────
+function setRemType(type) {
+  CAL.remType = type;
+  document.getElementById('rem-interval-row').style.display = type === 'interval' ? '' : 'none';
+  document.getElementById('rem-daily-row').style.display = type === 'daily' ? '' : 'none';
+  const btnI = document.getElementById('rem-type-interval');
+  const btnD = document.getElementById('rem-type-daily');
+  btnI.style.background = type === 'interval' ? 'var(--purple)' : 'transparent';
+  btnI.style.color = type === 'interval' ? '#fff' : 'var(--text-dim)';
+  btnI.style.border = type === 'interval' ? 'none' : '1.5px solid rgba(46,27,78,.15)';
+  btnD.style.background = type === 'daily' ? 'var(--purple)' : 'transparent';
+  btnD.style.color = type === 'daily' ? '#fff' : 'var(--text-dim)';
+  btnD.style.border = type === 'daily' ? 'none' : '1.5px solid rgba(46,27,78,.15)';
+}
+
+function openReminderModal(id) {
+  CAL.editingRemId = id;
+  const rem = id ? CAL.reminders.find(r=>r.id===id) : null;
+  document.getElementById('rem-modal-title').textContent = rem ? 'Editar Alarme' : 'Novo Alarme Pessoal';
+  document.getElementById('rem-title').value = rem?.title || '';
+  document.getElementById('rem-desc').value = rem?.description || '';
+  document.getElementById('rem-interval').value = rem?.interval_minutes || 30;
+  document.getElementById('rem-daily-time').value = rem?.daily_time || '08:00';
+  setRemType(rem?.type || 'interval');
+  document.getElementById('rem-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('rem-title').focus(),50);
+}
+function closeReminderModal() {
+  document.getElementById('rem-modal').style.display = 'none';
+  CAL.editingRemId = null;
+}
+
+async function saveReminder() {
+  const title = document.getElementById('rem-title').value.trim();
+  if (!title) { showToast('Preencha o título','err'); return; }
+  const type = CAL.remType;
+  const interval_minutes = type === 'interval' ? Number(document.getElementById('rem-interval').value) : null;
+  const daily_time = type === 'daily' ? document.getElementById('rem-daily-time').value : null;
+  const description = document.getElementById('rem-desc').value.trim() || null;
+
+  if (CAL.editingRemId) {
+    const { error } = await sb.from('reminders').update({ title, description, type, interval_minutes, daily_time }).eq('id', CAL.editingRemId);
+    if (error) { showToast('Erro: '+error.message,'err'); return; }
+    CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,title,description,type,interval_minutes,daily_time} : r);
+    showToast('Alarme atualizado!','ok');
+  } else {
+    const { data, error } = await sb.from('reminders').insert({ title, description, type, interval_minutes, daily_time, is_active:true }).select().single();
+    if (error) { showToast('Erro: '+error.message,'err'); return; }
+    CAL.reminders.push(data);
+    showToast('Alarme criado!','ok');
+  }
+  closeReminderModal();
+  renderCalAlerts();
+}
+
+async function toggleReminder(id, isActive) {
+  const { error } = await sb.from('reminders').update({ is_active:isActive }).eq('id', id);
+  if (error) { showToast('Erro','err'); return; }
+  CAL.reminders = CAL.reminders.map(r => r.id===id ? {...r,is_active:isActive} : r);
+  renderCalAlerts();
+}
+
+async function deleteReminder(id) {
+  openConfirmModal('Excluir alarme?', 'Essa ação não pode ser desfeita.', async () => {
+    const { error } = await sb.from('reminders').delete().eq('id', id);
+    if (error) { showToast('Erro','err'); return; }
+    CAL.reminders = CAL.reminders.filter(r=>r.id!==id);
+    showToast('Alarme excluído','ok');
+    renderCalAlerts();
+  });
+}
+
+// Load saved settings
+(function loadCalSettings() {
+  try {
+    const saved = localStorage.getItem('elo_cal_settings');
+    if (saved) CAL.settings = { ...CAL.settings, ...JSON.parse(saved) };
+  } catch(e) {}
+})();
+
+// ─────────────────────────────────────────────────────────────────
+// FINANCEIRO
+// ─────────────────────────────────────────────────────────────────
 const FIN = { payments:[], costs:[], clients:[], month: new Date().getMonth()+1, year: new Date().getFullYear(), chart: null };
 
 function fBRL(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
@@ -2330,6 +3126,285 @@ function openConfirmModal(title, msg, onConfirm) {
 async function confirmAction() {
   closeModal();
   if (window._confirmFn) { await window._confirmFn(); window._confirmFn=null; }
+}
+
+// ════════════════════════════════════════════════════════════════
+// CONFIG PAGE
+// ════════════════════════════════════════════════════════════════
+const TASK_CATS = ['Atendimento','Gestão ELO','Gestão Cliente','Conteúdo','Design','Publicação','Análise','Interno'];
+
+function initConfig() {
+  cfgShowTab('tarefas');
+  cfgRenderTasks();
+  cfgLoadMetas();
+}
+
+function cfgShowTab(tab) {
+  ['tarefas','metas','sobre'].forEach(t => {
+    const pane = document.getElementById('cfg-pane-'+t);
+    const btn = document.querySelector(`#cfg-tabs button[onclick*="${t}"]`);
+    if (pane) pane.style.display = t === tab ? (t === 'sobre' ? 'flex' : 'flex') : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+  if (tab === 'tarefas') cfgRenderTasks();
+  if (tab === 'metas')   cfgLoadMetas();
+}
+
+async function cfgRenderTasks() {
+  const el = document.getElementById('cfg-tasks-list');
+  const countEl = document.getElementById('cfg-tasks-count');
+  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">Carregando...</div>';
+  const { data: tasks, error } = await sb.from('tasks').select('*').order('sort_order');
+  if (error) { el.innerHTML = '<div style="color:red;padding:16px">Erro ao carregar tarefas</div>'; return; }
+  T.tasks = tasks || [];
+  countEl.textContent = `${T.tasks.length} tarefa${T.tasks.length!==1?'s':''} cadastrada${T.tasks.length!==1?'s':''}`;
+  if (!T.tasks.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim)"><div style="font-size:36px;margin-bottom:8px">📋</div><div style="font-weight:700">Nenhuma tarefa cadastrada</div><div style="font-size:12px;margin-top:4px">Crie tarefas para usar no timer</div></div>`;
+    return;
+  }
+  const favs = T.tasks.filter(t=>t.is_favorite);
+  const bycat = {};
+  T.tasks.filter(t=>!t.is_favorite).forEach(t=>{
+    if (!bycat[t.category]) bycat[t.category]=[];
+    bycat[t.category].push(t);
+  });
+  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+  if (favs.length) {
+    html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">⭐ Favoritas</div><div style="display:flex;flex-direction:column;gap:6px">${favs.map(cfgTaskRowHTML).join('')}</div></div>`;
+  }
+  for (const [cat, list] of Object.entries(bycat)) {
+    html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">${cat}</div><div style="display:flex;flex-direction:column;gap:6px">${list.map(cfgTaskRowHTML).join('')}</div></div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function cfgTaskRowHTML(t) {
+  return `<div class="cfg-task-row">
+    <button onclick="cfgToggleFav(${t.id},${!t.is_favorite})" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;color:${t.is_favorite?'var(--coral)':'var(--text-dim)'};flex-shrink:0" title="${t.is_favorite?'Remover favorito':'Adicionar favorito'}">${t.is_favorite?'⭐':'☆'}</button>
+    <div style="flex:1;font-weight:700;font-size:13px;color:var(--deep)">${t.name}</div>
+    <span style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,41,118,.08);color:var(--purple)">${t.category}</span>
+    <button onclick="cfgOpenTaskModal(${t.id})" style="padding:4px 8px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:8px" title="Editar">✏️</button>
+    <button onclick="cfgDeleteTask(${t.id},'${t.name.replace(/'/g,"\\'")}')" style="padding:4px 8px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:8px" title="Remover">🗑</button>
+  </div>`;
+}
+
+async function cfgToggleFav(id, isFav) {
+  await sb.from('tasks').update({ is_favorite: isFav }).eq('id', id);
+  cfgRenderTasks();
+}
+
+async function cfgDeleteTask(id, name) {
+  showConfirmModal(`Remover a tarefa "${name}"?`, async () => {
+    await sb.from('tasks').delete().eq('id', id);
+    cfgRenderTasks();
+    renderTaskTree();
+    showToast('Tarefa removida');
+  });
+}
+
+function cfgOpenTaskModal(id) {
+  const t = id ? T.tasks.find(x=>x.id===id) : null;
+  const html = `<div class="modal-overlay" id="cfg-task-modal" onclick="if(event.target===this)this.remove()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="width:400px">
+      <div class="modal-header">
+        <div class="modal-title">${t?'Editar Tarefa':'Nova Tarefa'}</div>
+        <button class="modal-close" onclick="document.getElementById('cfg-task-modal').remove()">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Nome da tarefa *</label>
+          <input id="ctm-name" class="fin-input" placeholder="Ex: Criação de carrossel" value="${t?.name||''}" autofocus>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categoria</label>
+          <select id="ctm-cat" class="fin-select" style="width:100%">
+            ${TASK_CATS.map(c=>`<option value="${c}"${(t?.category||'Atendimento')===c?' selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim)">
+          <input type="checkbox" id="ctm-fav" ${t?.is_favorite?'checked':''} style="width:16px;height:16px;accent-color:var(--coral)">
+          ⭐ Marcar como favorita (aparece em destaque no timer)
+        </label>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+          <button class="elo-btn-outline" onclick="document.getElementById('cfg-task-modal').remove()">Cancelar</button>
+          <button class="elo-btn-primary" onclick="cfgSubmitTask(${t?.id||0})">${t?'Salvar':'Criar'}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(()=>document.getElementById('ctm-name')?.focus(), 50);
+}
+
+async function cfgSubmitTask(id) {
+  const name = document.getElementById('ctm-name').value.trim();
+  if (!name) { showToast('Nome é obrigatório','warn'); return; }
+  const obj = {
+    name,
+    category: document.getElementById('ctm-cat').value,
+    is_favorite: document.getElementById('ctm-fav').checked,
+    is_active: true,
+  };
+  const btn = document.querySelector('#cfg-task-modal .elo-btn-primary');
+  btn.disabled=true; btn.textContent='Salvando...';
+  let error;
+  if (id) {
+    ({ error } = await sb.from('tasks').update(obj).eq('id', id));
+  } else {
+    const maxOrder = T.tasks.reduce((m,t)=>Math.max(m,t.sort_order||0),0);
+    ({ error } = await sb.from('tasks').insert({...obj, sort_order: maxOrder+1}));
+  }
+  if (error) { showToast('Erro: '+error.message,'err'); btn.disabled=false; btn.textContent=id?'Salvar':'Criar'; return; }
+  document.getElementById('cfg-task-modal').remove();
+  cfgRenderTasks();
+  renderTaskTree();
+  showToast(id?'Tarefa atualizada ✓':'Tarefa criada ✓','ok');
+}
+
+async function cfgLoadMetas() {
+  const { data } = await sb.from('settings').select('*').eq('id',1).single();
+  if (data) {
+    const g = data.daily_goal_minutes || 480;
+    document.getElementById('cfg-daily-goal').value = g;
+    document.getElementById('cfg-daily-lbl').textContent = `${Math.floor(g/60)}h ${g%60}min por dia`;
+    document.getElementById('cfg-alert-days').value = data.payment_alert_days || 3;
+  }
+  const inp = document.getElementById('cfg-daily-goal');
+  if (inp) inp.oninput = () => {
+    const v = parseInt(inp.value)||0;
+    document.getElementById('cfg-daily-lbl').textContent = `${Math.floor(v/60)}h ${v%60}min por dia`;
+  };
+}
+
+async function cfgSaveMetas() {
+  const daily = parseInt(document.getElementById('cfg-daily-goal').value)||480;
+  const alertDays = parseInt(document.getElementById('cfg-alert-days').value)||3;
+  const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
+  btn.disabled=true; btn.textContent='Salvando...';
+  const { error } = await sb.from('settings').upsert({ id:1, daily_goal_minutes:daily, payment_alert_days:alertDays }, { onConflict:'id' });
+  btn.disabled=false; btn.textContent='Salvar metas';
+  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  T.settings.daily_goal_minutes = daily;
+  showToast('Metas salvas ✓','ok');
+}
+
+// ── Importação CSV ──────────────────────────────────────────────
+let _impCliRows = [], _impPayRows = [];
+
+function _parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(/[,;]/).map(h=>h.trim().replace(/^"|"$/g,'').toLowerCase());
+  return lines.slice(1).filter(l=>l.trim()).map(line => {
+    const vals = line.match(/(".*?"|[^,;\n]+)/g)||[];
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h]=(vals[i]||'').trim().replace(/^"|"$/g,''); });
+    return obj;
+  });
+}
+
+function cfgPreviewClientes(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _impCliRows = _parseCSV(e.target.result);
+    const pre = document.getElementById('imp-cli-preview');
+    pre.style.display = 'flex';
+    document.getElementById('imp-cli-info').textContent = `${_impCliRows.length} cliente(s) encontrado(s)`;
+    document.getElementById('imp-cli-rows').innerHTML = _impCliRows.slice(0,8).map(r=>
+      `<div style="padding:6px 10px;border-bottom:1px solid rgba(0,0,0,.06)">${r.nome||r.name||'?'} · ${r.especialidade||''} · R$ ${r.valor||0}</div>`
+    ).join('') + (_impCliRows.length>8?`<div style="padding:6px 10px;color:var(--text-dim)">... e mais ${_impCliRows.length-8}</div>`:'');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+function cfgCancelClientes() { _impCliRows=[]; document.getElementById('imp-cli-preview').style.display='none'; document.getElementById('imp-cli-file').value=''; }
+async function cfgImportClientes() {
+  const btn = document.getElementById('imp-cli-btn');
+  btn.disabled=true; btn.textContent='Importando...';
+  let ok=0, err=0;
+  for (const r of _impCliRows) {
+    const obj = {
+      name: r.nome||r.name||'', specialty: r.especialidade||r.specialty||null,
+      plan: r.plano||r.plan||null,
+      contract_value: parseFloat((r.valor||r.contract_value||'0').replace(',','.'))||0,
+      due_day: parseInt(r.vencimento||r.due_day)||null,
+      payment_method: r.forma_pagamento||r.payment_method||null,
+      phone: r.telefone||r.phone||null,
+      posts_per_month: parseInt(r.posts_mes||r.posts_per_month)||null,
+      notes: r.observacoes||r.notes||null,
+      is_internal: ['sim','1','true'].includes((r.interno||r.is_internal||'').toLowerCase()),
+      is_active: true, display_order: 0,
+    };
+    if (!obj.name) { err++; continue; }
+    const { error } = await sb.from('clients').insert(obj);
+    error ? err++ : ok++;
+  }
+  cfgCancelClientes();
+  btn.disabled=false; btn.textContent='✅ Importar';
+  showToast(`Importados: ${ok} cliente(s)${err?` · ${err} erro(s)`:''}`, err?'warn':'ok');
+}
+
+function cfgPreviewPagamentos(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _impPayRows = _parseCSV(e.target.result);
+    const pre = document.getElementById('imp-pay-preview');
+    pre.style.display = 'flex';
+    document.getElementById('imp-pay-info').textContent = `${_impPayRows.length} lançamento(s) encontrado(s)`;
+    document.getElementById('imp-pay-rows').innerHTML = _impPayRows.slice(0,8).map(r=>
+      `<div style="padding:6px 10px;border-bottom:1px solid rgba(0,0,0,.06)">${r.cliente||r.client||'?'} · R$ ${r.valor||r.value||0} · ${r.mes||'?'}/${r.ano||'?'}</div>`
+    ).join('') + (_impPayRows.length>8?`<div style="padding:6px 10px;color:var(--text-dim)">... e mais ${_impPayRows.length-8}</div>`:'');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+function cfgCancelPagamentos() { _impPayRows=[]; document.getElementById('imp-pay-preview').style.display='none'; document.getElementById('imp-pay-file').value=''; }
+async function cfgImportPagamentos() {
+  const btn = document.getElementById('imp-pay-btn');
+  btn.disabled=true; btn.textContent='Importando...';
+  const { data: clients } = await sb.from('clients').select('id,name');
+  let ok=0, err=0;
+  for (const r of _impPayRows) {
+    const clientName = r.cliente||r.client||'';
+    const found = (clients||[]).find(c=>c.name.toLowerCase()===clientName.toLowerCase());
+    const obj = {
+      client_id: found?.id||0, client_name: clientName,
+      amount: parseFloat((r.valor||r.value||'0').replace(',','.'))||0,
+      month: parseInt(r.mes||r.month)||new Date().getMonth()+1,
+      year: parseInt(r.ano||r.year)||new Date().getFullYear(),
+      is_paid: ['sim','1','true','pago'].includes((r.pago||r.paid||'').toLowerCase()),
+      paid_at: null,
+    };
+    const { error } = await sb.from('monthly_payments').insert(obj);
+    error ? err++ : ok++;
+  }
+  cfgCancelPagamentos();
+  btn.disabled=false; btn.textContent='✅ Importar';
+  showToast(`Importados: ${ok} pagamento(s)${err?` · ${err} erro(s)`:''}`, err?'warn':'ok');
+}
+
+async function cfgExportBackup() {
+  try {
+    const [cl, tk, te, pay, costs] = await Promise.all([
+      sb.from('clients').select('*'),
+      sb.from('tasks').select('*'),
+      sb.from('time_entries').select('*').order('start_time',{ascending:false}).limit(5000),
+      sb.from('monthly_payments').select('*'),
+      sb.from('cost_items').select('*'),
+    ]);
+    const data = {
+      exported_at: new Date().toISOString(), version: '3.0',
+      clients: cl.data||[], tasks: tk.data||[],
+      time_entries: te.data||[], monthly_payments: pay.data||[], cost_items: costs.data||[],
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`elo-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Backup exportado ✓','ok');
+  } catch(e) { showToast('Erro ao exportar: '+e.message,'err'); }
 }
 </script>
 </body>
