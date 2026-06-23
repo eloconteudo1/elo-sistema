@@ -3716,11 +3716,11 @@ function cfgOpenTaskModal(id) {
       <div style="display:flex;flex-direction:column;gap:14px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Nome da tarefa *</label>
-          <input id="ctm-name" class="fin-input" placeholder="Ex: Criação de carrossel" value="${t?.name||''}" autofocus>
+          <input id="ctm-name" class="elo-input" placeholder="Ex: Criação de carrossel" value="${t?.name||''}" autofocus>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categoria</label>
-          <select id="ctm-cat" class="fin-select" style="width:100%">
+          <select id="ctm-cat" class="elo-select" style="width:100%">
             ${TASK_CATS.map(c=>`<option value="${c}"${(t?.category||'Atendimento')===c?' selected':''}>${c}</option>`).join('')}
           </select>
         </div>
