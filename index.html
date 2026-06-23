@@ -270,6 +270,16 @@
     .cal-toggle { width:44px; height:24px; border-radius:12px; border:none; cursor:pointer; padding:0; position:relative; flex-shrink:0; transition:background .2s; }
     .cal-toggle-knob { width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:3px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
 
+    /* ── Shared form inputs ── */
+    .elo-input, .elo-select {
+      width:100%; padding:9px 13px; border-radius:8px; border:1.5px solid rgba(46,27,78,.15);
+      font-size:13px; font-family:inherit; color:var(--deep); background:#fff; outline:none;
+      box-sizing:border-box; transition:border-color .15s;
+    }
+    .elo-input:focus, .elo-select:focus { border-color:rgba(196,114,90,.5); }
+    .elo-select { cursor:pointer; }
+    .elo-modal-label { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; display:block; }
+
     /* ── Modal tabs (underline style) ── */
     .modal-tabs { display:flex; border-bottom:2px solid rgba(74,41,118,.10); margin-bottom:20px; gap:0; }
     .modal-tab { padding:10px 18px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; }
@@ -1167,6 +1177,7 @@ function navigateTo(page) {
   // Init pages on first visit
   if (page === 'resultado'  && appUser) initResultado();
   if (page === 'clientes'   && appUser) initClientes();
+  if (page === 'calendario' && appUser) initCalendario();
   if (page === 'financeiro' && appUser) initFinanceiro();
   if (page === 'config'     && appUser) initConfig();
 }
@@ -1178,6 +1189,11 @@ function toggleAvatarMenu() { document.getElementById('avatar-menu').classList.t
 document.addEventListener('click', e => {
   if (!document.getElementById('topbar-avatar').contains(e.target))
     document.getElementById('avatar-menu').classList.remove('open');
+  // Close calendar modals when clicking backdrop
+  const calModal = document.getElementById('cal-modal');
+  if (calModal && calModal.style.display === 'flex' && e.target === calModal) closeCalModal();
+  const remModal = document.getElementById('rem-modal');
+  if (remModal && remModal.style.display === 'flex' && e.target === remModal) closeReminderModal();
 });
 
 // ════════════════════════════════════════════════════════════════
