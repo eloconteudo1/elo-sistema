@@ -220,15 +220,26 @@
     .cl-filter-btn:last-child  { border-radius:0 12px 12px 0; }
 
     /* ── Client card ── */
-    .cl-card { background:rgba(255,255,255,.92); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; position:relative; transition:box-shadow .2s; }
-    .cl-card:hover { box-shadow:0 24px 56px rgba(46,24,71,.14); }
-    .cl-card-actions { position:absolute; top:14px; right:14px; display:flex; gap:6px; }
-    .cl-card-icon-btn { width:28px; height:28px; border-radius:8px; border:none; background:rgba(46,24,71,.06); cursor:pointer; display:grid; place-items:center; font-size:13px; transition:background .15s; }
-    .cl-card-icon-btn:hover { background:rgba(46,24,71,.12); }
-    .cl-plan-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800; margin-top:8px; }
-    .cl-pay-btn { width:100%; margin-top:14px; padding:8px; border-radius:10px; border:1.5px solid rgba(196,114,90,.4); background:transparent; color:var(--coral); font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; transition:all .18s; }
+    .cl-card { background:rgba(255,255,255,.95); border:var(--border); border-radius:16px; box-shadow:var(--shadow-sm); padding:16px 16px 12px; position:relative; transition:box-shadow .2s; }
+    .cl-card:hover { box-shadow:0 20px 48px rgba(46,24,71,.13); }
+    .cl-card-actions { position:absolute; top:12px; right:12px; display:flex; gap:4px; }
+    .cl-card-icon-btn { width:26px; height:26px; border-radius:7px; border:none; background:rgba(46,24,71,.06); cursor:pointer; display:grid; place-items:center; font-size:12px; transition:background .15s; }
+    .cl-card-icon-btn:hover { background:rgba(46,24,71,.14); }
+    .cl-card-name { font-size:15px; font-weight:800; color:var(--deep); padding-right:60px; line-height:1.2; }
+    .cl-card-spec { font-size:12px; color:var(--text-dim); margin-top:2px; }
+    .cl-card-pills { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+    .cl-pill { display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:700; white-space:nowrap; }
+    .cl-pill-neutral { background:rgba(46,27,78,.07); color:var(--text-dim); }
+    .cl-pill-warn { background:rgba(224,122,58,.15); color:#854F0B; }
+    .cl-pill-vencido { background:rgba(163,45,45,.12); color:#A32D2D; }
+    .cl-pill-interno { background:rgba(59,130,246,.10); color:#1D4ED8; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
+    .cl-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+    .cl-card-value { font-size:20px; font-weight:900; color:var(--deep); }
+    .cl-pay-btn { padding:6px 14px; border-radius:20px; border:1.5px solid rgba(196,114,90,.4); background:transparent; color:var(--coral); font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; transition:all .18s; white-space:nowrap; }
     .cl-pay-btn:hover { background:var(--coral); color:white; border-color:var(--coral); }
-    .cl-paid-badge { width:100%; margin-top:14px; padding:8px; border-radius:10px; background:rgba(47,185,137,.12); color:#15803D; font-family:inherit; font-size:12px; font-weight:800; text-align:center; border:1px solid rgba(47,185,137,.25); }
+    .cl-paid-badge { padding:6px 14px; border-radius:20px; background:rgba(47,185,137,.12); color:#15803D; font-size:11px; font-weight:800; border:1px solid rgba(47,185,137,.3); white-space:nowrap; }
+    .cl-details-btn { font-size:11px; color:var(--text-dim); background:none; border:none; cursor:pointer; font-family:inherit; font-weight:600; padding:4px 0 0; transition:color .15s; display:block; width:100%; }
+    .cl-details-btn:hover { color:var(--purple); }
 
     /* ── Modal tabs (underline style) ── */
     .modal-tabs { display:flex; border-bottom:2px solid rgba(74,41,118,.10); margin-bottom:20px; gap:0; }
@@ -1526,8 +1537,8 @@ function setClientFilter(f) {
 function filterClients(q) { C.search = q.toLowerCase(); renderClientGrid(); }
 
 function getFilteredClients() {
-  let list = [...C.clients];
-  if (C.filter === 'ativos')   list = list.filter(c => c.is_active && !c.is_internal);
+  let list = C.clients.filter(c => c.is_active);
+  if (C.filter === 'ativos')   list = list.filter(c => !c.is_internal);
   if (C.filter === 'internos') list = list.filter(c => c.is_internal);
   if (C.search) list = list.filter(c =>
     c.name.toLowerCase().includes(C.search) ||
@@ -1543,52 +1554,74 @@ function getClientPayment(clientId) {
 
 function renderClientGrid() {
   const list = getFilteredClients();
-  const active = C.clients.filter(c => c.is_active && !c.is_internal);
-  const paid = C.payments.filter(p => p.is_paid).length;
+  const externos = list.filter(c => !c.is_internal);
+  const internos = list.filter(c => c.is_internal);
+  const totalMes = externos.reduce((s,c) => s + Number(c.contract_value||0), 0);
+  const totalFmt = totalMes.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   document.getElementById('cl-subtitle').textContent =
-    `${C.clients.length} clientes · ${paid} pagos este mês`;
+    `${externos.length} clientes · ${totalFmt} /mês`;
 
-  if (list.length === 0) {
-    document.getElementById('cl-grid').innerHTML =
-      `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado.</div>`;
-    return;
-  }
+  const today = new Date();
+  const todayDay = today.getDate();
 
-  document.getElementById('cl-grid').innerHTML = list.map((c, i) => {
+  function mkCard(c, i) {
     const color = c.color || CLIENT_COLORS[i % CLIENT_COLORS.length];
     const pay = getClientPayment(c.id);
     const isPaid = pay?.is_paid;
     const value = Number(c.contract_value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const isVencido = !isPaid && c.due_day && c.due_day < todayDay;
+    const isUrgente = !isPaid && c.due_day && c.due_day >= todayDay && c.due_day <= todayDay + 2;
+    const borderColor = isVencido ? '#A32D2D' : isUrgente ? '#E07A3A' : color;
+    const duePillClass = isVencido ? 'cl-pill cl-pill-vencido' : isUrgente ? 'cl-pill cl-pill-warn' : 'cl-pill cl-pill-neutral';
 
     let payBtn = '';
     if (!c.is_internal) {
       if (isPaid) {
-        payBtn = `<div class="cl-paid-badge">✓ PAGO</div>`;
+        payBtn = `<span class="cl-paid-badge">✓ Pago</span>`;
       } else if (pay) {
         payBtn = `<button class="cl-pay-btn" onclick="markPaid(${c.id},${pay.id})">Marcar pago</button>`;
       } else {
         payBtn = `<button class="cl-pay-btn" onclick="createAndMarkPaid(${c.id})">Marcar pago</button>`;
       }
+    } else {
+      payBtn = `<span class="cl-pill cl-pill-interno">Interno ELO</span>`;
     }
 
-    return `<div class="cl-card" style="border-left:4px solid ${color};">
+    return `<div class="cl-card" style="border-left:4px solid ${borderColor};">
       <div class="cl-card-actions">
         <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})" title="Editar">✏️</button>
         <button class="cl-card-icon-btn" onclick="deleteClient(${c.id},'${c.name.replace(/'/g,"\\'")}')" title="Excluir">🗑</button>
       </div>
-      <div style="font-size:16px;font-weight:800;color:var(--deep);padding-right:56px;line-height:1.2;">${c.name}</div>
-      ${c.specialty ? `<div style="font-size:12px;color:var(--text-dim);margin-top:3px;">${c.specialty}</div>` : ''}
-      ${c.plan ? `<div class="cl-plan-pill" style="background:${color}18;color:${color};">${c.plan}</div>` : ''}
-      <div style="margin-top:12px;">
-        <div style="font-size:20px;font-weight:900;color:var(--deep);">${value}</div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
-          ${c.due_day ? `Venc. Dia ${c.due_day}` : 'Sem vencimento'}
-          ${c.payment_method ? ` · ${c.payment_method}` : ''}
-        </div>
+      <div class="cl-card-name">${c.name}</div>
+      ${c.specialty ? `<div class="cl-card-spec">${c.specialty}</div>` : ''}
+      <div class="cl-card-pills">
+        ${c.plan ? `<span class="cl-pill" style="background:${color}18;color:${color};">${c.plan}</span>` : ''}
+        ${c.payment_method ? `<span class="cl-pill cl-pill-neutral">${c.payment_method}</span>` : ''}
+        ${c.due_day ? `<span class="${duePillClass}">Dia ${c.due_day}</span>` : ''}
       </div>
-      ${c.is_internal ? `<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.10);padding:5px 10px;border-radius:8px;display:inline-block;">Interno ELO</div>` : payBtn}
+      <div class="cl-card-footer">
+        <div class="cl-card-value">${value}</div>
+        ${payBtn}
+      </div>
+      <div style="text-align:center;margin-top:6px;">
+        <button class="cl-details-btn" onclick="openClientModal(${c.id})">▼ Ver detalhes</button>
+      </div>
     </div>`;
-  }).join('');
+  }
+
+  const grid = document.getElementById('cl-grid');
+  if (list.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado.</div>`;
+    return;
+  }
+
+  const sectionLabel = (label, count) =>
+    `<div style="grid-column:1/-1;font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding:8px 0 4px;">${label} (${count})</div>`;
+
+  let html = '';
+  if (externos.length) html += sectionLabel('Clientes', externos.length) + externos.map(mkCard).join('');
+  if (internos.length && C.filter !== 'ativos') html += sectionLabel('Interno ELO', internos.length) + internos.map(mkCard).join('');
+  grid.innerHTML = html;
 }
 
 async function markPaid(clientId, payId) {
