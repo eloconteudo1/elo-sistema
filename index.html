@@ -574,6 +574,8 @@
           <div id="res-mes-label-header" style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;"></div>
           <!-- KPIs mês -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;" id="res-kpis-mes"></div>
+          <!-- Valor real da hora -->
+          <div id="res-hora-real" style="display:none;margin-bottom:18px;"></div>
           <!-- Três cards -->
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
             <!-- Por cliente -->
@@ -1000,10 +1002,17 @@
                 <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
                 <div id="cfg-revenue-lbl" style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600"></div>
               </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Valor hora trabalhada (R$)</label>
-                <input id="cfg-hourly-rate" type="number" min="0" step="5" placeholder="Ex: 150" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
-                <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600">Usado para calcular o custo por tarefa no Resultado</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Hora mínima (R$)</label>
+                  <input id="cfg-hourly-min" type="number" min="0" step="5" placeholder="Ex: 80" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600">Cobre despesas</div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Hora ótima (R$)</label>
+                  <input id="cfg-hourly-opt" type="number" min="0" step="5" placeholder="Ex: 150" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+                  <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600">Faturamento ideal</div>
+                </div>
               </div>
               <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
             </div>
@@ -3501,9 +3510,10 @@ async function resRenderHoje() {
   const totalH = Math.floor(totalMins/60), totalM = totalMins%60;
 
   // Settings para meta e custo/hora
-  const { data: settings } = await sb.from('settings').select('daily_goal_minutes,hourly_rate').eq('id',1).single();
+  const { data: settings } = await sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single();
   const goalMins = settings?.daily_goal_minutes ?? 480;
-  const hourlyRate = settings?.hourly_rate ?? 0;
+  const hourlyMin = settings?.hourly_rate_min ?? 0;
+  const hourlyOpt = settings?.hourly_rate_optimal ?? 0;
   const goalPct = goalMins > 0 ? Math.min(Math.round((totalMins/goalMins)*100),100) : 0;
 
   // Por cliente
@@ -3548,29 +3558,21 @@ async function resRenderHoje() {
   }
   const logArr = Object.values(logMap).sort((a,b) => b.mins - a.mins);
 
-  const showCost = hourlyRate > 0;
-  const colTemplate = showCost ? '10px 1fr 60px 80px' : '10px 1fr 60px';
   document.getElementById('res-log-hoje').innerHTML = logArr.length === 0
     ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
-    : `<div style="display:grid;grid-template-columns:${colTemplate};gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
+    : `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
         <div></div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
-        ${showCost ? `<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Custo</div>` : ''}
       </div>
-      ${logArr.slice(0,10).map((x,i) => {
-        const custo = showCost ? (x.mins / 60) * hourlyRate : 0;
-        const custoFmt = custo > 0 ? custo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
-        return `<div style="display:grid;grid-template-columns:${colTemplate};gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
+      ${logArr.slice(0,10).map((x,i) => `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
         <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
         <div>
           <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
           <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
         </div>
         <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
-        ${showCost ? `<div style="font-size:12px;font-weight:700;color:var(--text-dim);text-align:right;">${custoFmt}</div>` : ''}
-      </div>`;
-      }).join('')}`;
+      </div>`).join('')}`;
 }
 
 async function resRenderMes() {
@@ -3579,15 +3581,20 @@ async function resRenderMes() {
 
   document.getElementById('res-mes-label-header').textContent = `Produtividade do mês — ${MONTHS_PT[resMonth-1]}/${resYear}`;
 
-  const [entriesRes, settingsRes, clientsRes] = await Promise.all([
+  const [entriesRes, settingsRes, clientsRes, paymentsRes] = await Promise.all([
     sb.from('time_entries').select('*, clients(name, contract_value)').gte('start_time', startTs).lt('start_time', endTs),
-    sb.from('settings').select('daily_goal_minutes').eq('id',1).single(),
+    sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single(),
     sb.from('clients').select('id, name, contract_value').eq('is_internal', false),
+    sb.from('monthly_payments').select('amount,is_paid').eq('month', resMonth).eq('year', resYear),
   ]);
 
   const entries = (entriesRes.data||[]).filter(e => e.duration_minutes > 0);
   const goalMins = settingsRes.data?.daily_goal_minutes ?? 480;
+  const hourlyMin = settingsRes.data?.hourly_rate_min ?? 0;
+  const hourlyOpt = settingsRes.data?.hourly_rate_optimal ?? 0;
   const totalMins = entries.reduce((s,e) => s + e.duration_minutes, 0);
+  const receitaRecebida = (paymentsRes.data||[]).filter(p => p.is_paid).reduce((s,p) => s + Number(p.amount||0), 0);
+  const receitaPrevista = (paymentsRes.data||[]).reduce((s,p) => s + Number(p.amount||0), 0);
 
   const activeDaySet = new Set(entries.map(e => { const d = new Date(e.start_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }));
   const activeDays = activeDaySet.size;
@@ -3613,6 +3620,64 @@ async function resRenderMes() {
     <div style="font-size:18px;font-weight:700;color:var(--deep);">${k.val}</div>
     <div style="font-size:10px;color:var(--text-dim);margin-top:3px;">${k.sub}</div>
   </div>`).join('');
+
+  // ── Valor real da hora ──────────────────────────────
+  const horaRealBox = document.getElementById('res-hora-real');
+  const totalHoras = totalMins / 60;
+  if (totalHoras > 0 && (hourlyMin > 0 || hourlyOpt > 0)) {
+    const horaRecebida = receitaRecebida > 0 ? receitaRecebida / totalHoras : 0;
+    const horaPrevista = receitaPrevista > 0 ? receitaPrevista / totalHoras : 0;
+    const fBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+
+    let status, statusColor, statusBg, statusMsg;
+    if (horaRecebida >= hourlyOpt && hourlyOpt > 0) {
+      status='ÓTIMO'; statusColor='#2FB989'; statusBg='rgba(47,185,137,.12)';
+      statusMsg = `Faturamento ideal atingido — você está acima da hora ótima (${fBRL(hourlyOpt)})`;
+    } else if (horaRecebida >= hourlyMin && hourlyMin > 0) {
+      status='COBRINDO'; statusColor='#E07A3A'; statusBg='rgba(224,122,58,.12)';
+      statusMsg = `Cobrindo despesas, mas abaixo da hora ótima (${fBRL(hourlyOpt)})`;
+    } else if (horaRecebida > 0) {
+      status='PREJUÍZO'; statusColor='#E83E78'; statusBg='rgba(232,62,120,.12)';
+      statusMsg = `Abaixo da hora mínima (${fBRL(hourlyMin)}) — você não está cobrindo despesas`;
+    } else {
+      status='AGUARDANDO'; statusColor='var(--text-dim)'; statusBg='var(--bg2)';
+      statusMsg = `Nenhum pagamento recebido ainda neste mês`;
+    }
+
+    horaRealBox.style.display = '';
+    horaRealBox.innerHTML = `
+      <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);">Valor real da sua hora — ${MONTHS_PT[resMonth-1]}/${resYear}</div>
+          <div style="background:${statusBg};color:${statusColor};font-size:10px;font-weight:800;letter-spacing:1px;padding:4px 10px;border-radius:20px;">${status}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Recebido</div>
+            <div style="font-size:22px;font-weight:800;color:${statusColor};">${fBRL(horaRecebida)}<span style="font-size:11px;color:var(--text-dim);font-weight:600;"> /h</span></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${fBRL(receitaRecebida)} ÷ ${totalHoras.toFixed(1)}h</div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Previsto</div>
+            <div style="font-size:22px;font-weight:800;color:var(--deep);">${fBRL(horaPrevista)}<span style="font-size:11px;color:var(--text-dim);font-weight:600;"> /h</span></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${fBRL(receitaPrevista)} ÷ ${totalHoras.toFixed(1)}h</div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;margin-bottom:4px;">Mínimo</div>
+            <div style="font-size:22px;font-weight:800;color:#E07A3A;">${hourlyMin>0?fBRL(hourlyMin):'—'}<span style="font-size:11px;color:var(--text-dim);font-weight:600;"> /h</span></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Cobre despesas</div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:4px;">Ótimo</div>
+            <div style="font-size:22px;font-weight:800;color:#2FB989;">${hourlyOpt>0?fBRL(hourlyOpt):'—'}<span style="font-size:11px;color:var(--text-dim);font-weight:600;"> /h</span></div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Faturamento ideal</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:14px;padding-top:14px;border-top:1px solid rgba(74,41,118,.08);font-weight:600;">${statusMsg}</div>
+      </div>`;
+  } else {
+    horaRealBox.style.display = 'none';
+  }
 
   // Por cliente
   const byClient = {};
@@ -3799,8 +3864,10 @@ async function cfgLoadMetas() {
     if (rg) document.getElementById('cfg-revenue-lbl').textContent =
       `Meta: ${rg.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0})} /mês`;
     T.settings.revenue_goal = rg;
-    document.getElementById('cfg-hourly-rate').value = data.hourly_rate || '';
-    T.settings.hourly_rate = data.hourly_rate || 0;
+    document.getElementById('cfg-hourly-min').value = data.hourly_rate_min || '';
+    document.getElementById('cfg-hourly-opt').value = data.hourly_rate_optimal || '';
+    T.settings.hourly_rate_min = data.hourly_rate_min || 0;
+    T.settings.hourly_rate_optimal = data.hourly_rate_optimal || 0;
   }
 
   const inp = document.getElementById('cfg-daily-goal');
@@ -3820,19 +3887,22 @@ async function cfgSaveMetas() {
   const daily = parseInt(document.getElementById('cfg-daily-goal').value)||480;
   const alertDays = parseInt(document.getElementById('cfg-alert-days').value)||3;
   const revenueGoal = parseFloat(document.getElementById('cfg-revenue-goal').value)||0;
-  const hourlyRate = parseFloat(document.getElementById('cfg-hourly-rate').value)||0;
+  const hourlyMin = parseFloat(document.getElementById('cfg-hourly-min').value)||0;
+  const hourlyOpt = parseFloat(document.getElementById('cfg-hourly-opt').value)||0;
   const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
   const { error } = await sb.from('settings').upsert({
     id:1, daily_goal_minutes:daily, payment_alert_days:alertDays,
-    revenue_goal:revenueGoal, hourly_rate:hourlyRate,
+    revenue_goal:revenueGoal,
+    hourly_rate_min:hourlyMin, hourly_rate_optimal:hourlyOpt,
     user_id: appUser?.id,
   }, { onConflict:'id' });
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
   T.settings.daily_goal_minutes = daily;
   T.settings.revenue_goal = revenueGoal;
-  T.settings.hourly_rate = hourlyRate;
+  T.settings.hourly_rate_min = hourlyMin;
+  T.settings.hourly_rate_optimal = hourlyOpt;
   showToast('Metas salvas ✓','ok');
 }
 
