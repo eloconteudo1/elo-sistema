@@ -1777,29 +1777,61 @@ function renderRightSidebar() {
 }
 
 function renderScheduledTasks() {
-  const pending = T.scheduledTasks.filter(t=>!t.is_done);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayTs = today.getTime();
+
+  // Merge scheduled_tasks (pending) + upcoming appointments
+  const pendingTasks = T.scheduledTasks.filter(t => !t.is_done).map(t => ({
+    _type: 'task',
+    id: t.id,
+    title: t.title,
+    priority: t.priority || 'media',
+    client_id: t.client_id,
+    date_str: t.scheduled_date || null,
+    time_str: t.scheduled_time || null,
+    sort_ts: t.scheduled_date ? (() => { const [dd,mm,yyyy]=t.scheduled_date.split('/').map(Number); return new Date(yyyy,mm-1,dd).getTime(); })() : Infinity,
+  }));
+
+  const upcomingAppts = (T.appointments||[]).filter(a => !a.is_done && a.scheduled_at >= todayTs).map(a => {
+    const d = new Date(a.scheduled_at);
+    return {
+      _type: 'appt',
+      id: a.id,
+      title: a.title,
+      priority: 'media',
+      client_id: a.client_id,
+      date_str: `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`,
+      time_str: d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      sort_ts: a.scheduled_at,
+    };
+  });
+
+  const all = [...pendingTasks, ...upcomingAppts].sort((a,b) => a.sort_ts - b.sort_ts);
   const done = T.scheduledTasks.filter(t=>t.is_done);
   const list = document.getElementById('sched-tasks-list');
   const doneEl = document.getElementById('sched-done-count');
 
-  if (pending.length===0) {
-    list.innerHTML = `<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma tarefa cadastrada.</div>`;
+  if (all.length===0) {
+    list.innerHTML = `<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma tarefa ou compromisso.</div>`;
     doneEl.style.display='none';
     return;
   }
 
   const priorityColors = { alta:'#e07a5f', media:'#7c6fcd', baixa:'#4caf8a' };
-  list.innerHTML = pending.slice(0,5).map(t => {
+  list.innerHTML = all.slice(0,6).map(t => {
     const pc = priorityColors[t.priority]||priorityColors.media;
     const clientName = T.clients.find(c=>c.id===t.client_id)?.name||'';
+    const icon = t._type === 'appt' ? '📅' : '📋';
+    const onComplete = t._type === 'task' ? `completeTask(${t.id})` : `completeAppt(${t.id})`;
+    const onDelete  = t._type === 'task' ? `deleteTask(${t.id})` : `deleteAppt(${t.id})`;
     return `<div class="sched-task">
-      <button class="priority-circle" style="border-color:${pc};" onclick="completeTask(${t.id})" title="Marcar como feita"></button>
+      <button class="priority-circle" style="border-color:${pc};" onclick="${onComplete}" title="Marcar como feito"></button>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title}</div>
-        ${t.scheduled_date?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px;">📅 ${t.scheduled_date}${t.scheduled_time?` às ${t.scheduled_time}`:''}</div>`:''}
+        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${icon} ${t.title}</div>
+        ${t.date_str?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${t.date_str}${t.time_str?` às ${t.time_str}`:''}</div>`:''}
         ${clientName?`<div style="font-size:11px;color:var(--text-dim);">${clientName}</div>`:''}
       </div>
-      <button class="del-btn" onclick="deleteTask(${t.id})">×</button>
+      <button class="del-btn" onclick="${onDelete}">×</button>
     </div>`;
   }).join('');
 
@@ -1881,6 +1913,24 @@ async function deleteTask(id) {
     T.scheduledTasks = T.scheduledTasks.filter(t=>t.id!==id);
     renderRightSidebar();
     showToast('Tarefa excluída','ok');
+  });
+}
+
+async function completeAppt(id) {
+  const { error } = await sb.from('appointments').update({ is_done:true }).eq('id',id);
+  if (error) { showToast('Erro','err'); return; }
+  T.appointments = T.appointments.map(a=>a.id===id?{...a,is_done:true}:a);
+  renderRightSidebar();
+  showToast('Compromisso concluído ✓','ok');
+}
+
+async function deleteAppt(id) {
+  openConfirmModal('Excluir compromisso?', 'Este compromisso será removido permanentemente.', async () => {
+    const { error } = await sb.from('appointments').delete().eq('id',id);
+    if (error) { showToast('Erro ao excluir','err'); return; }
+    T.appointments = T.appointments.filter(a=>a.id!==id);
+    renderRightSidebar();
+    showToast('Compromisso excluído','ok');
   });
 }
 
@@ -2435,6 +2485,7 @@ const CAL = {
   modalTab: 'compromisso',
   editingRemId: null,
   remType: 'interval',
+  hoursByDay: {},
   settings: { pauseMinutes:30, lunchTime:'12:00', endTime:'18:00', dailyGoalHours:8 },
 };
 
@@ -2448,14 +2499,24 @@ async function loadCalData() {
   const monthStart = new Date(CAL.year, CAL.month, 1).getTime();
   const monthEnd = new Date(CAL.year, CAL.month+1, 0, 23, 59, 59, 999).getTime();
 
-  const [apptRes, taskRes, remRes] = await Promise.all([
+  const [apptRes, taskRes, remRes, teRes] = await Promise.all([
     sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'),
     sb.from('scheduled_tasks').select('*').order('created_at', {ascending:false}),
     sb.from('reminders').select('*').order('id'),
+    sb.from('time_entries').select('start_time,duration_minutes').gte('start_time', monthStart).lte('start_time', monthEnd),
   ]);
   CAL.appointments = apptRes.data || [];
   CAL.scheduledTasks = taskRes.data || [];
   CAL.reminders = remRes.data || [];
+
+  // Horas trabalhadas por dia
+  CAL.hoursByDay = {};
+  for (const e of (teRes.data || [])) {
+    if (!e.duration_minutes) continue;
+    const d = new Date(e.start_time);
+    const day = d.getDate();
+    CAL.hoursByDay[day] = (CAL.hoursByDay[day] || 0) + e.duration_minutes;
+  }
 }
 
 function setCalTab(tab) {
@@ -2528,7 +2589,7 @@ function renderCalGrid() {
     if (isToday) cls += ' today';
     if (isSel) cls += ' selected';
 
-    let chips = events.slice(0, 3).map(ev => {
+    let chips = events.slice(0, 2).map(ev => {
       const bg = ev.type === 'appointment'
         ? 'rgba(124,111,205,.15)' : `${PRIORITY_COLOR[ev.priority||'media']}22`;
       const col = ev.type === 'appointment'
@@ -2538,14 +2599,20 @@ function renderCalGrid() {
       const t = ev.time ? `${ev.time} ` : '';
       return `<div class="cal-event-chip" style="background:${bg};color:${col};text-decoration:${dec};opacity:${op};">${t}${ev.title}</div>`;
     }).join('');
-    if (events.length > 3) chips += `<div style="font-size:10px;color:#999;padding-left:5px;">+${events.length-3} mais</div>`;
+    if (events.length > 2) chips += `<div style="font-size:10px;color:#999;padding-left:5px;">+${events.length-2} mais</div>`;
+
+    // Horas trabalhadas no dia
+    const dayMins = CAL.hoursByDay?.[day] || 0;
+    const hoursChip = dayMins > 0
+      ? `<div style="font-size:9px;font-weight:700;color:#1D9E75;background:rgba(29,158,117,.1);padding:1px 5px;border-radius:4px;margin-top:2px;">⏱ ${Math.floor(dayMins/60)}h${dayMins%60>0?String(dayMins%60).padStart(2,'0')+'m':''}</div>`
+      : '';
 
     html += `<div class="${cls}" onclick="calSelectDay(${day})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div class="cal-cell-num">${day}</div>
         <button class="cal-add-btn" onclick="event.stopPropagation();openCalModal(${day})">+</button>
       </div>
-      ${chips}
+      ${chips}${hoursChip}
     </div>`;
   });
   document.getElementById('cal-days-grid').innerHTML = html;
@@ -3407,9 +3474,10 @@ async function resRenderHoje() {
   const totalMins = validEntries.reduce((s,e) => s + e.duration_minutes, 0);
   const totalH = Math.floor(totalMins/60), totalM = totalMins%60;
 
-  // Settings para meta
-  const { data: settings } = await sb.from('settings').select('daily_goal_minutes').eq('id',1).single();
+  // Settings para meta e custo/hora
+  const { data: settings } = await sb.from('settings').select('daily_goal_minutes,hourly_rate').eq('id',1).single();
   const goalMins = settings?.daily_goal_minutes ?? 480;
+  const hourlyRate = settings?.hourly_rate ?? 0;
   const goalPct = goalMins > 0 ? Math.min(Math.round((totalMins/goalMins)*100),100) : 0;
 
   // Por cliente
@@ -3454,22 +3522,29 @@ async function resRenderHoje() {
   }
   const logArr = Object.values(logMap).sort((a,b) => b.mins - a.mins);
 
+  const showCost = hourlyRate > 0;
+  const colTemplate = showCost ? '10px 1fr 60px 80px' : '10px 1fr 60px';
   document.getElementById('res-log-hoje').innerHTML = logArr.length === 0
     ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
-    : `<div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
+    : `<div style="display:grid;grid-template-columns:${colTemplate};gap:12px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
         <div></div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
+        ${showCost ? `<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Custo</div>` : ''}
       </div>
-      ${logArr.slice(0,10).map((x,i) => `
-      <div style="display:grid;grid-template-columns:10px 1fr 60px;gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
+      ${logArr.slice(0,10).map((x,i) => {
+        const custo = showCost ? (x.mins / 60) * hourlyRate : 0;
+        const custoFmt = custo > 0 ? custo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
+        return `<div style="display:grid;grid-template-columns:${colTemplate};gap:12px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
         <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
         <div>
           <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
           <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
         </div>
         <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
-      </div>`).join('')}`;
+        ${showCost ? `<div style="font-size:12px;font-weight:700;color:var(--text-dim);text-align:right;">${custoFmt}</div>` : ''}
+      </div>`;
+      }).join('')}`;
 }
 
 async function resRenderMes() {
