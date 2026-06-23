@@ -2976,16 +2976,19 @@ async function loadFinData() {
   FIN.clients  = cl.data || [];
 
   // Auto-gera entradas mensais para clientes que ainda não têm registro no mês
+  // Usa upsert com ignoreDuplicates para evitar duplicação em chamadas repetidas
   const existingClientIds = new Set(FIN.payments.filter(p => !p.is_manual).map(p => p.client_id));
-  const missing = FIN.clients.filter(c => !existingClientIds.has(c.id) && c.contract_value > 0);
+  const missing = FIN.clients.filter(c => !existingClientIds.has(c.id) && Number(c.contract_value) > 0);
   if (missing.length > 0) {
     const toInsert = missing.map(c => ({
       client_id: c.id, month: FIN.month, year: FIN.year,
       amount: c.contract_value, is_paid: false, is_manual: false,
       due_day: c.due_day, payment_method: c.payment_method,
     }));
-    const { data: inserted } = await sb.from('monthly_payments').insert(toInsert).select();
-    if (inserted) FIN.payments = [...FIN.payments, ...inserted];
+    const { data: inserted } = await sb.from('monthly_payments')
+      .upsert(toInsert, { onConflict: 'client_id,month,year', ignoreDuplicates: true })
+      .select();
+    if (inserted && inserted.length > 0) FIN.payments = [...FIN.payments, ...inserted];
   }
   // Ordenar por due_day
   FIN.payments.sort((a,b) => {
