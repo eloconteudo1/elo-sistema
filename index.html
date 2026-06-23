@@ -994,61 +994,86 @@
         </div>
 
         <!-- ABA: METAS -->
-        <div id="cfg-pane-metas" style="display:none;flex-direction:column;gap:16px;max-width:520px">
+        <div id="cfg-pane-metas" style="display:none;flex-direction:row;gap:20px;align-items:flex-start">
 
-          <!-- Meta de trabalho -->
-          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
-            <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:16px">Meta de trabalho</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Horas por dia</label>
-                <input id="cfg-daily-hours" type="number" min="1" max="16" step="0.5" placeholder="Ex: 8" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+          <!-- Coluna esquerda: inputs -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+
+            <!-- Meta de trabalho -->
+            <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+              <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:16px">Meta de trabalho</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Horas por dia</label>
+                  <input id="cfg-daily-hours" type="number" min="1" max="16" step="0.5" placeholder="Ex: 8" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Dias úteis/mês</label>
+                  <input id="cfg-dias-uteis" type="number" min="1" max="31" placeholder="Ex: 20" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Alerta vencimento</label>
+                  <input id="cfg-alert-days" type="number" min="1" max="10" placeholder="Ex: 3" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+                </div>
               </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Dias úteis/mês</label>
-                <input id="cfg-dias-uteis" type="number" min="1" max="31" placeholder="Ex: 20" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
-              </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Alerta vencimento</label>
-                <input id="cfg-alert-days" type="number" min="1" max="10" placeholder="Ex: 3" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+              <div id="cfg-horas-mes-lbl" style="font-size:12px;color:var(--text-dim);margin-top:8px;font-weight:600"></div>
+            </div>
+
+            <!-- Metas financeiras -->
+            <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
+              <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:4px">Metas financeiras</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Preencha os dois valores abaixo — sua hora é calculada automaticamente.</div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="background:#FFF5EF;border:1.5px solid rgba(224,122,58,.2);border-radius:12px;padding:16px;">
+                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;margin-bottom:6px">🟠 Para cobrir despesas (R$/mês)</label>
+                  <input id="cfg-despesas" type="number" min="0" step="100" placeholder="Ex: 8000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(224,122,58,.3);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
+                  <div style="font-size:11px;color:#E07A3A;margin-top:6px;opacity:.8;">Tudo que precisa pagar: aluguel + internet + software + contador + seu pró-labore mínimo</div>
+                </div>
+                <div style="background:#EFF9F5;border:1.5px solid rgba(47,185,137,.2);border-radius:12px;padding:16px;">
+                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:6px">🟢 Para começar a lucrar (R$/mês)</label>
+                  <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(47,185,137,.3);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
+                  <div style="font-size:11px;color:#2FB989;margin-top:6px;opacity:.8;">Despesas + salário desejado + reserva de emergência + margem de lucro</div>
+                </div>
               </div>
             </div>
-            <div id="cfg-horas-mes-lbl" style="font-size:12px;color:var(--text-dim);margin-top:8px;font-weight:600"></div>
+
+            <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
           </div>
 
-          <!-- Metas financeiras -->
-          <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
-            <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:16px">Metas financeiras</div>
-            <div style="display:flex;flex-direction:column;gap:14px">
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Despesas mensais (R$) <span style="font-weight:400;text-transform:none;letter-spacing:0">— aluguel, internet, software, contador…</span></label>
-                <input id="cfg-despesas" type="number" min="0" step="100" placeholder="Ex: 4000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+          <!-- Coluna direita: resultados calculados -->
+          <div style="width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;position:sticky;top:80px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Resultado</div>
+
+            <!-- Para cobrir despesas -->
+            <div style="background:#FFF5EF;border:1.5px solid rgba(224,122,58,.25);border-radius:16px;padding:18px 20px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;margin-bottom:10px">🟠 Para cobrir despesas</div>
+              <div style="margin-bottom:8px">
+                <div style="font-size:10px;color:rgba(224,122,58,.7);font-weight:600;margin-bottom:2px">Faturar por mês</div>
+                <div id="cfg-fat-min-result" style="font-size:22px;font-weight:900;color:#E07A3A;">—</div>
               </div>
-              <div>
-                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Meta de receita mensal (R$) <span style="font-weight:400;text-transform:none;letter-spacing:0">— quanto quer faturar</span></label>
-                <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box">
+              <div style="border-top:1px solid rgba(224,122,58,.15);padding-top:8px;">
+                <div style="font-size:10px;color:rgba(224,122,58,.7);font-weight:600;margin-bottom:2px">Valor da hora</div>
+                <div id="cfg-hora-min-result" style="font-size:22px;font-weight:900;color:#E07A3A;">—</div>
               </div>
+              <div id="cfg-hora-min-formula" style="font-size:10px;color:rgba(224,122,58,.55);margin-top:8px;line-height:1.5;"></div>
             </div>
-          </div>
 
-          <!-- Resultado calculado -->
-          <div id="cfg-hora-calculada" style="background:linear-gradient(135deg,var(--deep),var(--deep2));border-radius:var(--radius);padding:20px 24px;display:none">
-            <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:12px">Sua hora calculada</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div>
-                <div style="font-size:11px;color:#E07A3A;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Hora mínima</div>
-                <div id="cfg-hora-min-result" style="font-size:28px;font-weight:900;color:#E07A3A;"></div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Cobre suas despesas</div>
+            <!-- Para lucrar -->
+            <div style="background:#EFF9F5;border:1.5px solid rgba(47,185,137,.25);border-radius:16px;padding:18px 20px;">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:10px">🟢 Para começar a lucrar</div>
+              <div style="margin-bottom:8px">
+                <div style="font-size:10px;color:rgba(47,185,137,.7);font-weight:600;margin-bottom:2px">Faturar por mês</div>
+                <div id="cfg-fat-opt-result" style="font-size:22px;font-weight:900;color:#2FB989;">—</div>
               </div>
-              <div>
-                <div style="font-size:11px;color:#2FB989;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Hora ótima</div>
-                <div id="cfg-hora-opt-result" style="font-size:28px;font-weight:900;color:#2FB989;"></div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Atinge sua meta</div>
+              <div style="border-top:1px solid rgba(47,185,137,.15);padding-top:8px;">
+                <div style="font-size:10px;color:rgba(47,185,137,.7);font-weight:600;margin-bottom:2px">Valor da hora</div>
+                <div id="cfg-hora-opt-result" style="font-size:22px;font-weight:900;color:#2FB989;">—</div>
               </div>
+              <div id="cfg-hora-opt-formula" style="font-size:10px;color:rgba(47,185,137,.55);margin-top:8px;line-height:1.5;"></div>
             </div>
-          </div>
 
-          <button class="elo-btn-primary" onclick="cfgSaveMetas()" style="width:100%">Salvar metas</button>
+            <div id="cfg-hora-calculada" style="display:none"></div>
+          </div>
         </div>
 
         <!-- ABA: SOBRE + IMPORTAR -->
@@ -3979,25 +4004,32 @@ async function cfgSubmitTask(id) {
 function cfgRecalcHora() {
   const horas = parseFloat(document.getElementById('cfg-daily-hours')?.value) || 0;
   const dias = parseInt(document.getElementById('cfg-dias-uteis')?.value) || 0;
-  const despesas = parseFloat(document.getElementById('cfg-despesas')?.value) || 0;
-  const receita = parseFloat(document.getElementById('cfg-revenue-goal')?.value) || 0;
+  const fatMin = parseFloat(document.getElementById('cfg-despesas')?.value) || 0;
+  const fatOpt = parseFloat(document.getElementById('cfg-revenue-goal')?.value) || 0;
   const horasMes = horas * dias;
 
   const lbl = document.getElementById('cfg-horas-mes-lbl');
-  if (lbl) lbl.textContent = horasMes > 0 ? `Total: ${horasMes}h/mês` : '';
-
-  const box = document.getElementById('cfg-hora-calculada');
-  if (!box) return;
-  if (horasMes <= 0 || (despesas <= 0 && receita <= 0)) { box.style.display = 'none'; return; }
+  if (lbl) lbl.textContent = horasMes > 0 ? `${horas}h/dia × ${dias} dias = ${horasMes}h/mês` : '';
 
   const fBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
-  box.style.display = '';
-  const horaMin = despesas > 0 ? despesas / horasMes : 0;
-  const horaOpt = receita > 0 ? receita / horasMes : 0;
-  document.getElementById('cfg-hora-min-result').textContent = horaMin > 0 ? fBRL(horaMin)+'/h' : '—';
-  document.getElementById('cfg-hora-opt-result').textContent = horaOpt > 0 ? fBRL(horaOpt)+'/h' : '—';
 
-  // Salva nos inputs hidden para cfgSaveMetas usar
+  const horaMin = horasMes > 0 && fatMin > 0 ? fatMin / horasMes : 0;
+  const horaOpt = horasMes > 0 && fatOpt > 0 ? fatOpt / horasMes : 0;
+
+  const minEl = document.getElementById('cfg-fat-min-result');
+  const minHEl = document.getElementById('cfg-hora-min-result');
+  const minFEl = document.getElementById('cfg-hora-min-formula');
+  if (minEl) minEl.textContent = fatMin > 0 ? fBRL(fatMin)+'/mês' : '—';
+  if (minHEl) minHEl.textContent = horaMin > 0 ? fBRL(horaMin)+'/h' : '—';
+  if (minFEl) minFEl.textContent = horaMin > 0 ? `${fBRL(fatMin)} ÷ ${horasMes}h` : '';
+
+  const optEl = document.getElementById('cfg-fat-opt-result');
+  const optHEl = document.getElementById('cfg-hora-opt-result');
+  const optFEl = document.getElementById('cfg-hora-opt-formula');
+  if (optEl) optEl.textContent = fatOpt > 0 ? fBRL(fatOpt)+'/mês' : '—';
+  if (optHEl) optHEl.textContent = horaOpt > 0 ? fBRL(horaOpt)+'/h' : '—';
+  if (optFEl) optFEl.textContent = horaOpt > 0 ? `${fBRL(fatOpt)} ÷ ${horasMes}h` : '';
+
   T.settings.hourly_rate_min = horaMin;
   T.settings.hourly_rate_optimal = horaOpt;
 }
