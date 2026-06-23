@@ -1734,16 +1734,29 @@ function renderTodayActivities() {
     </div>`;
   }).join('');
 
-  // Recent (up to 7, click to repeat)
+  // Recent — agrupa por cliente+tarefa, soma minutos
   recentWrap.style.display='';
-  recentList.innerHTML = completed.slice(0,7).map(e => {
+  const grouped = [];
+  const groupMap = {};
+  for (const e of completed) {
+    const key = `${e.client_id}||${e.task_id||0}||${e.task_name||''}`;
+    if (groupMap[key] == null) {
+      groupMap[key] = grouped.length;
+      grouped.push({ ...e, duration_minutes: e.duration_minutes||0, _count: 1 });
+    } else {
+      grouped[groupMap[key]].duration_minutes += e.duration_minutes||0;
+      grouped[groupMap[key]]._count++;
+    }
+  }
+  recentList.innerHTML = grouped.slice(0,7).map(e => {
     const c = T.clients.find(cl=>cl.id===e.client_id);
+    const countBadge = e._count > 1 ? `<span style="font-size:10px;background:rgba(124,111,205,.15);color:var(--purple);padding:1px 6px;border-radius:8px;font-weight:700;">${e._count}x</span>` : '';
     return `<div class="recent-entry" onclick="repeatEntry(${e.client_id},${e.task_id||0},'${(e.task_name||'').replace(/'/g,"\\'")}')">
-      <span style="color:var(--purple);font-weight:700;min-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c?.name||'—'}</span>
-      <span style="flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.task_name}${e.notes?` · ${e.notes}`:''}</span>
-      <span style="font-size:12px;color:var(--green);font-weight:700;">${fMin(e.duration_minutes||0)}</span>
+      <span style="color:var(--purple);font-weight:700;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c?.name||'—'}</span>
+      <span style="flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.task_name||''}</span>
+      ${countBadge}
+      <span style="font-size:12px;color:var(--green);font-weight:700;">${fMin(e.duration_minutes)}</span>
       <button class="repeat-btn" onclick="event.stopPropagation();repeatEntry(${e.client_id},${e.task_id||0},'${(e.task_name||'').replace(/'/g,"\\'")}')">Repetir</button>
-      <button class="del-btn" onclick="event.stopPropagation();deleteEntry(${e.id})">×</button>
     </div>`;
   }).join('');
 }
