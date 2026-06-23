@@ -3826,6 +3826,7 @@ async function cfgSaveMetas() {
   const { error } = await sb.from('settings').upsert({
     id:1, daily_goal_minutes:daily, payment_alert_days:alertDays,
     revenue_goal:revenueGoal, hourly_rate:hourlyRate,
+    user_id: appUser?.id,
   }, { onConflict:'id' });
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
