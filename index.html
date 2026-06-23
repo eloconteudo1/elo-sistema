@@ -1022,18 +1022,21 @@
             <!-- Metas financeiras -->
             <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
               <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:4px">Metas financeiras</div>
-              <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Preencha os dois valores abaixo — sua hora é calculada automaticamente.</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">As despesas da empresa são buscadas automaticamente do Financeiro.</div>
               <div style="display:flex;flex-direction:column;gap:16px">
-                <div style="background:#FFF5EF;border:1.5px solid rgba(224,122,58,.2);border-radius:12px;padding:16px;">
-                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;margin-bottom:6px">🟠 Para cobrir despesas (R$/mês)</label>
-                  <input id="cfg-despesas" type="number" min="0" step="100" placeholder="Ex: 8000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(224,122,58,.3);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
-                  <div style="font-size:11px;color:#E07A3A;margin-top:6px;opacity:.8;">Tudo que precisa pagar: aluguel + internet + software + contador + seu pró-labore mínimo</div>
+                <div style="background:#F5F0FF;border:1.5px solid rgba(74,41,118,.15);border-radius:12px;padding:16px;">
+                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);margin-bottom:6px">Pró-labore (R$/mês)</label>
+                  <input id="cfg-pro-labore" type="number" min="0" step="100" placeholder="Ex: 6000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(74,41,118,.2);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
+                  <div style="font-size:11px;color:var(--purple);margin-top:6px;opacity:.7;">Seu salário mensal — usado inteiro para pagar suas contas pessoais</div>
                 </div>
                 <div style="background:#EFF9F5;border:1.5px solid rgba(47,185,137,.2);border-radius:12px;padding:16px;">
-                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:6px">🟢 Para começar a lucrar (R$/mês)</label>
-                  <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(47,185,137,.3);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
-                  <div style="font-size:11px;color:#2FB989;margin-top:6px;opacity:.8;">Despesas + salário desejado + reserva de emergência + margem de lucro</div>
+                  <label style="display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2FB989;margin-bottom:6px">Lucro desejado (R$/mês)</label>
+                  <input id="cfg-lucro" type="number" min="0" step="100" placeholder="Ex: 3000" oninput="cfgRecalcHora()" style="width:100%;padding:12px 16px;border:1.5px solid rgba(47,185,137,.3);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;background:white">
+                  <div style="font-size:11px;color:#2FB989;margin-top:6px;opacity:.8;">O que quer que sobre para a empresa após pagar tudo</div>
                 </div>
+                <!-- Campo oculto para revenue_goal (compatibilidade) -->
+                <input id="cfg-revenue-goal" type="hidden">
+                <input id="cfg-despesas" type="hidden">
               </div>
             </div>
 
@@ -4001,36 +4004,59 @@ async function cfgSubmitTask(id) {
   showToast(id?'Tarefa atualizada ✓':'Tarefa criada ✓','ok');
 }
 
-function cfgRecalcHora() {
+async function cfgRecalcHora() {
   const horas = parseFloat(document.getElementById('cfg-daily-hours')?.value) || 0;
   const dias = parseInt(document.getElementById('cfg-dias-uteis')?.value) || 0;
-  const fatMin = parseFloat(document.getElementById('cfg-despesas')?.value) || 0;
-  const fatOpt = parseFloat(document.getElementById('cfg-revenue-goal')?.value) || 0;
+  const proLabore = parseFloat(document.getElementById('cfg-pro-labore')?.value) || 0;
+  const lucro = parseFloat(document.getElementById('cfg-lucro')?.value) || 0;
   const horasMes = horas * dias;
 
   const lbl = document.getElementById('cfg-horas-mes-lbl');
   if (lbl) lbl.textContent = horasMes > 0 ? `${horas}h/dia × ${dias} dias = ${horasMes}h/mês` : '';
 
+  if (horasMes <= 0) return;
+
+  // Busca despesas do mês atual no Financeiro
+  const now = new Date();
+  const { data: costs } = await sb.from('cost_items')
+    .select('amount').eq('month', now.getMonth()+1).eq('year', now.getFullYear());
+  const despesasEmpresa = (costs||[]).reduce((s,c) => s + Number(c.amount||0), 0);
+
   const fBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
 
-  const horaMin = horasMes > 0 && fatMin > 0 ? fatMin / horasMes : 0;
-  const horaOpt = horasMes > 0 && fatOpt > 0 ? fatOpt / horasMes : 0;
+  // Para cobrir contas: despesas empresa + pró-labore
+  const fatMin = despesasEmpresa + proLabore;
+  const horaMin = fatMin > 0 ? fatMin / horasMes : 0;
 
-  const minEl = document.getElementById('cfg-fat-min-result');
+  // Para lucrar: fatMin + lucro desejado
+  const fatOpt = fatMin + lucro;
+  const horaOpt = fatOpt > 0 ? fatOpt / horasMes : 0;
+
+  // Atualiza campos ocultos de compatibilidade
+  const despEl = document.getElementById('cfg-despesas');
+  const revEl = document.getElementById('cfg-revenue-goal');
+  if (despEl) despEl.value = fatMin;
+  if (revEl) revEl.value = fatOpt;
+
+  // Card mínimo
+  const minEl  = document.getElementById('cfg-fat-min-result');
   const minHEl = document.getElementById('cfg-hora-min-result');
   const minFEl = document.getElementById('cfg-hora-min-formula');
-  if (minEl) minEl.textContent = fatMin > 0 ? fBRL(fatMin)+'/mês' : '—';
+  if (minEl)  minEl.textContent  = fBRL(fatMin)+'/mês';
   if (minHEl) minHEl.textContent = horaMin > 0 ? fBRL(horaMin)+'/h' : '—';
-  if (minFEl) minFEl.textContent = horaMin > 0 ? `${fBRL(fatMin)} ÷ ${horasMes}h` : '';
+  if (minFEl) minFEl.innerHTML   = despesasEmpresa > 0
+    ? `Despesas empresa ${fBRL(despesasEmpresa)}<br>+ Pró-labore ${fBRL(proLabore)}<br>÷ ${horasMes}h`
+    : `Pró-labore ${fBRL(proLabore)} ÷ ${horasMes}h`;
 
-  const optEl = document.getElementById('cfg-fat-opt-result');
+  // Card ótimo
+  const optEl  = document.getElementById('cfg-fat-opt-result');
   const optHEl = document.getElementById('cfg-hora-opt-result');
   const optFEl = document.getElementById('cfg-hora-opt-formula');
-  if (optEl) optEl.textContent = fatOpt > 0 ? fBRL(fatOpt)+'/mês' : '—';
+  if (optEl)  optEl.textContent  = fBRL(fatOpt)+'/mês';
   if (optHEl) optHEl.textContent = horaOpt > 0 ? fBRL(horaOpt)+'/h' : '—';
-  if (optFEl) optFEl.textContent = horaOpt > 0 ? `${fBRL(fatOpt)} ÷ ${horasMes}h` : '';
+  if (optFEl) optFEl.innerHTML   = `Mínimo ${fBRL(fatMin)}<br>+ Lucro ${fBRL(lucro)}<br>÷ ${horasMes}h`;
 
-  T.settings.hourly_rate_min = horaMin;
+  T.settings.hourly_rate_min     = horaMin;
   T.settings.hourly_rate_optimal = horaOpt;
 }
 
@@ -4038,44 +4064,45 @@ async function cfgLoadMetas() {
   const { data } = await sb.from('settings').select('*').eq('id',1).single();
   if (data) {
     const horasDia = data.daily_goal_minutes ? (data.daily_goal_minutes / 60) : 8;
-    const diasUteis = data.dias_uteis || 20;
     document.getElementById('cfg-daily-hours').value = horasDia;
-    document.getElementById('cfg-dias-uteis').value = diasUteis;
+    document.getElementById('cfg-dias-uteis').value = data.dias_uteis || 20;
     document.getElementById('cfg-alert-days').value = data.payment_alert_days || 3;
-    document.getElementById('cfg-despesas').value = data.despesas_mensais || '';
-    document.getElementById('cfg-revenue-goal').value = data.revenue_goal || '';
-    T.settings.revenue_goal = data.revenue_goal || 0;
-    T.settings.hourly_rate_min = data.hourly_rate_min || 0;
+    document.getElementById('cfg-pro-labore').value = data.pro_labore || '';
+    document.getElementById('cfg-lucro').value = data.lucro_desejado || '';
+    T.settings.revenue_goal        = data.revenue_goal || 0;
+    T.settings.hourly_rate_min     = data.hourly_rate_min || 0;
     T.settings.hourly_rate_optimal = data.hourly_rate_optimal || 0;
-    cfgRecalcHora();
+    await cfgRecalcHora();
   }
 }
 
 async function cfgSaveMetas() {
-  const horasDia = parseFloat(document.getElementById('cfg-daily-hours').value) || 8;
+  const horasDia  = parseFloat(document.getElementById('cfg-daily-hours').value) || 8;
   const diasUteis = parseInt(document.getElementById('cfg-dias-uteis').value) || 20;
-  const daily = Math.round(horasDia * 60);
   const alertDays = parseInt(document.getElementById('cfg-alert-days').value) || 3;
-  const despesas = parseFloat(document.getElementById('cfg-despesas').value) || 0;
-  const revenueGoal = parseFloat(document.getElementById('cfg-revenue-goal').value) || 0;
-  const horasMes = horasDia * diasUteis;
-  const hourlyMin = horasMes > 0 && despesas > 0 ? despesas / horasMes : T.settings.hourly_rate_min || 0;
-  const hourlyOpt = horasMes > 0 && revenueGoal > 0 ? revenueGoal / horasMes : T.settings.hourly_rate_optimal || 0;
+  const proLabore = parseFloat(document.getElementById('cfg-pro-labore').value) || 0;
+  const lucro     = parseFloat(document.getElementById('cfg-lucro').value) || 0;
+  const daily     = Math.round(horasDia * 60);
+  const hourlyMin = T.settings.hourly_rate_min || 0;
+  const hourlyOpt = T.settings.hourly_rate_optimal || 0;
+  const fatMin    = parseFloat(document.getElementById('cfg-despesas').value) || 0;
+  const fatOpt    = parseFloat(document.getElementById('cfg-revenue-goal').value) || 0;
 
   const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
   const { error } = await sb.from('settings').upsert({
     id:1, daily_goal_minutes:daily, payment_alert_days:alertDays,
-    revenue_goal:revenueGoal, despesas_mensais:despesas,
+    pro_labore:proLabore, lucro_desejado:lucro,
+    revenue_goal:fatOpt, despesas_mensais:fatMin,
     dias_uteis:diasUteis,
     hourly_rate_min:hourlyMin, hourly_rate_optimal:hourlyOpt,
     user_id: appUser?.id,
   }, { onConflict:'id' });
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
-  T.settings.daily_goal_minutes = daily;
-  T.settings.revenue_goal = revenueGoal;
-  T.settings.hourly_rate_min = hourlyMin;
+  T.settings.daily_goal_minutes  = daily;
+  T.settings.revenue_goal        = fatOpt;
+  T.settings.hourly_rate_min     = hourlyMin;
   T.settings.hourly_rate_optimal = hourlyOpt;
   showToast('Metas salvas ✓','ok');
 }
