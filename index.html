@@ -220,26 +220,28 @@
     .cl-filter-btn:last-child  { border-radius:0 12px 12px 0; }
 
     /* ── Client card ── */
-    .cl-card { background:rgba(255,255,255,.95); border:var(--border); border-radius:16px; box-shadow:var(--shadow-sm); padding:16px 16px 12px; position:relative; transition:box-shadow .2s; }
+    .cl-card { background:rgba(255,255,255,.95); border:var(--border); border-radius:16px; box-shadow:var(--shadow-sm); padding:18px 20px; position:relative; transition:box-shadow .2s; }
     .cl-card:hover { box-shadow:0 20px 48px rgba(46,24,71,.13); }
-    .cl-card-actions { position:absolute; top:12px; right:12px; display:flex; gap:4px; }
-    .cl-card-icon-btn { width:26px; height:26px; border-radius:7px; border:none; background:rgba(46,24,71,.06); cursor:pointer; display:grid; place-items:center; font-size:12px; transition:background .15s; }
+    .cl-card-actions { display:flex; gap:6px; }
+    .cl-card-icon-btn { width:28px; height:28px; border-radius:8px; border:none; background:rgba(46,24,71,.06); cursor:pointer; display:grid; place-items:center; font-size:12px; transition:background .15s; }
     .cl-card-icon-btn:hover { background:rgba(46,24,71,.14); }
-    .cl-card-name { font-size:15px; font-weight:800; color:var(--deep); padding-right:60px; line-height:1.2; }
-    .cl-card-spec { font-size:12px; color:var(--text-dim); margin-top:2px; }
-    .cl-card-pills { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
-    .cl-pill { display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:700; white-space:nowrap; }
-    .cl-pill-neutral { background:rgba(46,27,78,.07); color:var(--text-dim); }
-    .cl-pill-warn { background:rgba(224,122,58,.15); color:#854F0B; }
-    .cl-pill-vencido { background:rgba(163,45,45,.12); color:#A32D2D; }
-    .cl-pill-interno { background:rgba(59,130,246,.10); color:#1D4ED8; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; }
-    .cl-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-    .cl-card-value { font-size:20px; font-weight:900; color:var(--deep); }
-    .cl-pay-btn { padding:6px 14px; border-radius:20px; border:1.5px solid rgba(196,114,90,.4); background:transparent; color:var(--coral); font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; transition:all .18s; white-space:nowrap; }
-    .cl-pay-btn:hover { background:var(--coral); color:white; border-color:var(--coral); }
-    .cl-paid-badge { padding:6px 14px; border-radius:20px; background:rgba(47,185,137,.12); color:#15803D; font-size:11px; font-weight:800; border:1px solid rgba(47,185,137,.3); white-space:nowrap; }
-    .cl-details-btn { font-size:11px; color:var(--text-dim); background:none; border:none; cursor:pointer; font-family:inherit; font-weight:600; padding:4px 0 0; transition:color .15s; display:block; width:100%; }
-    .cl-details-btn:hover { color:var(--purple); }
+    /* Pills */
+    .elo-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; white-space:nowrap; }
+    .elo-pill-purple { background:rgba(74,41,118,.12); color:var(--purple); }
+    .elo-pill-gray   { background:rgba(46,27,78,.07); color:var(--text-dim); }
+    .elo-pill-red    { background:rgba(163,45,45,.12); color:#A32D2D; }
+    .elo-pill-orange { background:rgba(224,122,58,.15); color:#854F0B; }
+    /* Pay button */
+    .cl-pay-btn-inline { padding:6px 14px; border-radius:8px; border:none; font-family:inherit; font-size:11px; font-weight:800; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    /* Details toggle */
+    .cl-details-btn { margin-top:10px; width:100%; background:none; border:none; cursor:pointer; font-size:11px; color:var(--text-dim); font-weight:600; font-family:inherit; opacity:.6; text-align:center; padding:0; }
+    .cl-details-btn:hover { opacity:1; color:var(--purple); }
+    /* Expanded detail row */
+    .cl-detail-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .cl-detail-label { font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:2px; }
+    .cl-detail-val { font-size:13px; font-weight:600; color:var(--deep); }
+    /* Section label */
+    .cl-sec-label { font-size:11px; font-weight:800; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; padding:4px 0 8px; }
 
     /* ── Modal tabs (underline style) ── */
     .modal-tabs { display:flex; border-bottom:2px solid rgba(74,41,118,.10); margin-bottom:20px; gap:0; }
@@ -488,14 +490,17 @@
       </div>
 
       <!-- Filters + search -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-        <div style="display:flex;background:rgba(255,255,255,.88);border:var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);">
-          <button id="clf-todos"   class="cl-filter-btn active" onclick="setClientFilter('todos')">Todos</button>
-          <button id="clf-ativos"  class="cl-filter-btn"        onclick="setClientFilter('ativos')">Ativos</button>
-          <button id="clf-internos" class="cl-filter-btn"       onclick="setClientFilter('internos')">Internos</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;">
+        <div style="position:relative;flex:1;min-width:200px;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;">🔍</span>
+          <input id="cl-search" placeholder="Buscar cliente..." oninput="filterClients(this.value)"
+            style="width:100%;padding:10px 16px 10px 34px;border:var(--border);border-radius:12px;font-family:inherit;font-size:13px;background:rgba(255,255,255,.88);color:var(--text);outline:none;box-shadow:var(--shadow-sm);box-sizing:border-box;" />
         </div>
-        <input id="cl-search" placeholder="Buscar cliente…" oninput="filterClients(this.value)"
-          style="flex:1;min-width:200px;padding:10px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:13px;background:rgba(255,255,255,.88);color:var(--text);outline:none;box-shadow:var(--shadow-sm);" />
+        <div style="display:flex;background:rgba(255,255,255,.88);border:var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);">
+          <button id="clf-todos"    class="cl-filter-btn active" onclick="setClientFilter('todos')">Todos</button>
+          <button id="clf-ativos"   class="cl-filter-btn"        onclick="setClientFilter('ativos')">Clientes</button>
+          <button id="clf-internos" class="cl-filter-btn"        onclick="setClientFilter('internos')">Interno</button>
+        </div>
       </div>
 
       <!-- Grid -->
@@ -1552,76 +1557,146 @@ function getClientPayment(clientId) {
   return C.payments.find(p => p.client_id === clientId) || null;
 }
 
+let clExpandedCards = new Set();
+function toggleClientExpand(id) {
+  if (clExpandedCards.has(id)) clExpandedCards.delete(id);
+  else clExpandedCards.add(id);
+  renderClientGrid();
+}
+
 function renderClientGrid() {
   const list = getFilteredClients();
   const externos = list.filter(c => !c.is_internal);
   const internos = list.filter(c => c.is_internal);
   const totalMes = externos.reduce((s,c) => s + Number(c.contract_value||0), 0);
-  const totalFmt = totalMes.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const totalFmt = totalMes.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
   document.getElementById('cl-subtitle').textContent =
     `${externos.length} clientes · ${totalFmt} /mês`;
 
-  const today = new Date();
-  const todayDay = today.getDate();
+  const now = new Date();
+  const todayDay = now.getDate();
 
-  function mkCard(c, i) {
-    const color = c.color || CLIENT_COLORS[i % CLIENT_COLORS.length];
+  function mkExternalCard(c) {
     const pay = getClientPayment(c.id);
-    const isPaid = pay?.is_paid;
-    const value = Number(c.contract_value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-    const isVencido = !isPaid && c.due_day && c.due_day < todayDay;
-    const isUrgente = !isPaid && c.due_day && c.due_day >= todayDay && c.due_day <= todayDay + 2;
-    const borderColor = isVencido ? '#A32D2D' : isUrgente ? '#E07A3A' : color;
-    const duePillClass = isVencido ? 'cl-pill cl-pill-vencido' : isUrgente ? 'cl-pill cl-pill-warn' : 'cl-pill cl-pill-neutral';
+    const isPaid = pay?.is_paid ?? false;
+    const daysUntilDue = c.due_day ? (c.due_day - todayDay + 31) % 31 : null;
+    const isOverdue = !isPaid && daysUntilDue === 0 && c.due_day != null;
+    const isNearDue = !isPaid && daysUntilDue !== null && daysUntilDue <= 3 && daysUntilDue > 0;
+    const borderColor = isOverdue ? 'var(--coral)' : isNearDue ? 'var(--orange)' : 'var(--lavender)';
+    const duePillClass = isOverdue ? 'elo-pill elo-pill-red' : isNearDue ? 'elo-pill elo-pill-orange' : 'elo-pill elo-pill-gray';
+    const value = Number(c.contract_value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+    const isExpanded = clExpandedCards.has(c.id);
+    const safeName = c.name.replace(/'/g,"\\'");
 
-    let payBtn = '';
-    if (!c.is_internal) {
-      if (isPaid) {
-        payBtn = `<span class="cl-paid-badge">✓ Pago</span>`;
-      } else if (pay) {
-        payBtn = `<button class="cl-pay-btn" onclick="markPaid(${c.id},${pay.id})">Marcar pago</button>`;
-      } else {
-        payBtn = `<button class="cl-pay-btn" onclick="createAndMarkPaid(${c.id})">Marcar pago</button>`;
+    const payStyle = isPaid
+      ? 'padding:6px 14px;border-radius:8px;border:none;background:#D5F5E3;color:#0F6E56;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;'
+      : 'padding:6px 14px;border-radius:8px;border:none;background:rgba(0,0,0,.06);color:var(--text-dim);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;';
+    const payLabel = isPaid ? '✓ Pago' : 'Marcar pago';
+    const payAction = isPaid ? '' : pay ? `markPaid(${c.id},${pay.id})` : `createAndMarkPaid(${c.id})`;
+    const payClick = isPaid
+      ? `onclick="markUnpaid(${c.id},${pay?.id})"`
+      : `onclick="${payAction}"`;
+
+    let expandedHtml = '';
+    if (isExpanded) {
+      expandedHtml = `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(74,41,118,.08);display:flex;flex-direction:column;gap:8px;">`;
+      if (c.phone || c.whatsapp) {
+        expandedHtml += `<div class="cl-detail-row">`;
+        if (c.phone) expandedHtml += `<div><div class="cl-detail-label">Telefone</div><div class="cl-detail-val">${c.phone}</div></div>`;
+        if (c.whatsapp) expandedHtml += `<div><div class="cl-detail-label">WhatsApp</div><a href="https://wa.me/55${c.whatsapp.replace(/\D/g,'')}" target="_blank" style="font-size:13px;font-weight:600;color:var(--green);text-decoration:none;">${c.whatsapp} ↗</a></div>`;
+        expandedHtml += `</div>`;
       }
-    } else {
-      payBtn = `<span class="cl-pill cl-pill-interno">Interno ELO</span>`;
+      if (c.crm || c.rqe) {
+        expandedHtml += `<div class="cl-detail-row">`;
+        if (c.crm) expandedHtml += `<div><div class="cl-detail-label">CRM</div><div class="cl-detail-val">${c.crm}</div></div>`;
+        if (c.rqe) expandedHtml += `<div><div class="cl-detail-label">RQE</div><div class="cl-detail-val">${c.rqe}</div></div>`;
+        expandedHtml += `</div>`;
+      }
+      if (c.contract_start) expandedHtml += `<div><div class="cl-detail-label">Início do contrato</div><div class="cl-detail-val">${c.contract_start}</div></div>`;
+      if (c.instagram_login) expandedHtml += `<div><div class="cl-detail-label">Instagram</div><div class="cl-detail-val">${c.instagram_login}</div></div>`;
+      if (c.drive_link || c.photos_link) {
+        expandedHtml += `<div style="display:flex;gap:10px;flex-wrap:wrap;">`;
+        if (c.drive_link) expandedHtml += `<a href="${c.drive_link}" target="_blank" style="font-size:12px;font-weight:700;color:var(--purple);background:rgba(74,41,118,.08);padding:5px 12px;border-radius:10px;text-decoration:none;">📁 Drive</a>`;
+        if (c.photos_link) expandedHtml += `<a href="${c.photos_link}" target="_blank" style="font-size:12px;font-weight:700;color:var(--purple);background:rgba(74,41,118,.08);padding:5px 12px;border-radius:10px;text-decoration:none;">📷 Photos</a>`;
+        expandedHtml += `</div>`;
+      }
+      if (c.notes) expandedHtml += `<div><div class="cl-detail-label">Observações</div><div style="font-size:13px;color:var(--text-dim);line-height:1.5;">${c.notes}</div></div>`;
+      if (c.birthday) expandedHtml += `<div><div class="cl-detail-label">Aniversário</div><div class="cl-detail-val">🎂 ${c.birthday}</div></div>`;
+      expandedHtml += `</div>`;
     }
 
     return `<div class="cl-card" style="border-left:4px solid ${borderColor};">
-      <div class="cl-card-actions">
-        <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})" title="Editar">✏️</button>
-        <button class="cl-card-icon-btn" onclick="deleteClient(${c.id},'${c.name.replace(/'/g,"\\'")}')" title="Excluir">🗑</button>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+        <div style="flex:1;cursor:pointer;" onclick="toggleClientExpand(${c.id})">
+          <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:2px;">${c.name}</div>
+          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${c.specialty}</div>` : ''}
+        </div>
+        <div class="cl-card-actions">
+          <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})" title="Editar">✏️</button>
+          <button class="cl-card-icon-btn" onclick="deleteClient(${c.id},'${safeName}')" title="Excluir">🗑</button>
+        </div>
       </div>
-      <div class="cl-card-name">${c.name}</div>
-      ${c.specialty ? `<div class="cl-card-spec">${c.specialty}</div>` : ''}
-      <div class="cl-card-pills">
-        ${c.plan ? `<span class="cl-pill" style="background:${color}18;color:${color};">${c.plan}</span>` : ''}
-        ${c.payment_method ? `<span class="cl-pill cl-pill-neutral">${c.payment_method}</span>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        ${c.plan ? `<span class="elo-pill elo-pill-purple">${c.plan}</span>` : ''}
+        ${c.payment_method ? `<span class="elo-pill elo-pill-gray">${c.payment_method}</span>` : ''}
         ${c.due_day ? `<span class="${duePillClass}">Dia ${c.due_day}</span>` : ''}
       </div>
-      <div class="cl-card-footer">
-        <div class="cl-card-value">${value}</div>
-        ${payBtn}
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:18px;font-weight:900;color:var(--deep);">${value}</div>
+        <button style="${payStyle}" ${payClick}>${payLabel}</button>
       </div>
-      <div style="text-align:center;margin-top:6px;">
-        <button class="cl-details-btn" onclick="openClientModal(${c.id})">▼ Ver detalhes</button>
+      ${expandedHtml}
+      <button class="cl-details-btn" onclick="toggleClientExpand(${c.id})">
+        ${isExpanded ? '▲ Menos detalhes' : '▼ Ver detalhes'}
+      </button>
+    </div>`;
+  }
+
+  function mkInternalCard(c) {
+    const safeName = c.name.replace(/'/g,"\\'");
+    return `<div class="cl-card" style="padding:14px 16px;border-left:3px solid var(--purple);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:800;font-size:13px;color:var(--deep);">${c.name}</div>
+          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${c.specialty}</div>` : ''}
+        </div>
+        <div class="cl-card-actions">
+          <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})">✏️</button>
+          <button class="cl-card-icon-btn" onclick="deleteClient(${c.id},'${safeName}')">🗑</button>
+        </div>
       </div>
     </div>`;
   }
 
   const grid = document.getElementById('cl-grid');
   if (list.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado.</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 24px;color:var(--text-dim);">
+      <div style="font-size:32px;margin-bottom:12px;">👥</div>
+      <div style="font-weight:700;font-size:14px;">Nenhum cliente encontrado</div>
+      <div style="font-size:12px;margin-top:4px;">Tente ajustar os filtros ou adicione um novo cliente.</div>
+    </div>`;
     return;
   }
 
-  const sectionLabel = (label, count) =>
-    `<div style="grid-column:1/-1;font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding:8px 0 4px;">${label} (${count})</div>`;
-
   let html = '';
-  if (externos.length) html += sectionLabel('Clientes', externos.length) + externos.map(mkCard).join('');
-  if (internos.length && C.filter !== 'ativos') html += sectionLabel('Interno ELO', internos.length) + internos.map(mkCard).join('');
+  if (externos.length) {
+    if (C.filter === 'todos') html += `<div class="cl-sec-label" style="grid-column:1/-1;">Clientes (${externos.length})</div>`;
+    html += externos.map(mkExternalCard).join('');
+  }
+  if (internos.length && C.filter !== 'ativos') {
+    html += `<div class="cl-sec-label" style="grid-column:1/-1;">Interno ELO (${internos.length})</div>`;
+    html += `<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">${internos.map(mkInternalCard).join('')}</div>`;
+  }
   grid.innerHTML = html;
+}
+
+async function markUnpaid(clientId, payId) {
+  if (!payId) return;
+  const { error } = await sb.from('monthly_payments').update({ is_paid:false, paid_at:null, paid_date:null }).eq('id', payId);
+  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  C.payments = C.payments.map(p => p.id===payId ? {...p,is_paid:false,paid_at:null} : p);
+  renderClientGrid();
+  showToast('Pagamento revertido','ok');
 }
 
 async function markPaid(clientId, payId) {
