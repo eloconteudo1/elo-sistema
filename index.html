@@ -3574,19 +3574,25 @@ async function resRenderHoje() {
 
   const showCost = hourlyMin > 0 || hourlyOpt > 0;
   const fmtBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
-  const col = showCost ? '10px 1fr 55px 90px 90px' : '10px 1fr 55px';
+  const col = showCost ? '10px 1fr 55px 1fr' : '10px 1fr 55px';
   document.getElementById('res-log-hoje').innerHTML = logArr.length === 0
     ? '<div style="font-size:14px;color:var(--text-dim);opacity:.7;padding:24px 0;">Nenhum registro ainda hoje.</div>'
     : `<div style="display:grid;grid-template-columns:${col};gap:10px;padding:0 0 8px;border-bottom:1.5px solid rgba(74,41,118,.1);margin-bottom:4px;">
         <div></div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente / Tarefa</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Tempo</div>
-        ${showCost ? `<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#E07A3A;text-align:right;">Mín/h</div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#2FB989;text-align:right;">Ótimo/h</div>` : ''}
+        ${showCost ? `<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);text-align:right;">Custo</div>` : ''}
       </div>
       ${logArr.slice(0,10).map((x,i) => {
-        const cMin = hourlyMin > 0 ? fmtBRL((x.mins/60)*hourlyMin) : '—';
-        const cOpt = hourlyOpt > 0 ? fmtBRL((x.mins/60)*hourlyOpt) : '—';
+        const h = x.mins / 60;
+        const cMin = hourlyMin > 0 ? fmtBRL(h * hourlyMin) : null;
+        const cOpt = hourlyOpt > 0 ? fmtBRL(h * hourlyOpt) : null;
+        const custoHtml = cMin && cOpt
+          ? `<div style="text-align:right;line-height:1.4;">
+               <div style="font-size:12px;font-weight:800;color:#2FB989;">${cOpt}</div>
+               <div style="font-size:10px;color:#E07A3A;font-weight:600;">mín ${cMin}</div>
+             </div>`
+          : `<div style="font-size:12px;font-weight:700;color:#2FB989;text-align:right;">${cMin||cOpt||'—'}</div>`;
         return `<div style="display:grid;grid-template-columns:${col};gap:10px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
           <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
           <div>
@@ -3594,8 +3600,7 @@ async function resRenderHoje() {
             <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
           </div>
           <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
-          ${showCost ? `<div style="font-size:12px;font-weight:700;color:#E07A3A;text-align:right;">${cMin}</div>
-          <div style="font-size:12px;font-weight:700;color:#2FB989;text-align:right;">${cOpt}</div>` : ''}
+          ${showCost ? custoHtml : ''}
         </div>`;
       }).join('')}`;
 }
