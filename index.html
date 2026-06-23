@@ -985,6 +985,11 @@
                 <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Dias de alerta de vencimento</label>
                 <input id="cfg-alert-days" type="number" min="1" max="10" value="3" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
               </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Meta de receita mensal (R$)</label>
+                <input id="cfg-revenue-goal" type="number" min="0" step="100" placeholder="Ex: 15000" style="width:100%;padding:12px 16px;border:var(--border);border-radius:12px;font-family:inherit;font-size:14px;color:var(--text)">
+                <div id="cfg-revenue-lbl" style="font-size:11px;color:var(--text-dim);margin-top:4px;font-weight:600"></div>
+              </div>
               <button class="elo-btn-primary" onclick="cfgSaveMetas()">Salvar metas</button>
             </div>
           </div>
@@ -1294,14 +1299,17 @@ async function initHome() {
 }
 
 async function loadHomeData() {
-  const [cl, tk, te, st, pa] = await Promise.all([
+  const [cl, tk, te, st, pa, sg] = await Promise.all([
     sb.from('clients').select('*').eq('is_active',true).order('display_order'),
     sb.from('tasks').select('*').eq('is_active',true).order('sort_order'),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
     sb.from('scheduled_tasks').select('*').order('created_at',{ascending:false}),
     sb.from('monthly_payments').select('*').eq('month',new Date().getMonth()+1).eq('year',new Date().getFullYear()).eq('is_paid',false),
+    sb.from('settings').select('*').eq('id',1).single(),
   ]);
   T.clients = cl.data||[];
+  if (sg.data) T.settings = { ...T.settings, ...sg.data };
+  T.settings.revenue_goal = parseFloat(localStorage.getItem('elo_revenue_goal')||'0');
   T.tasks = tk.data||[];
   T.todayEntries = te.data||[];
   T.scheduledTasks = st.data||[];
@@ -2920,30 +2928,59 @@ function renderFinanceiro() {
   const resultado      = totalRecebido - totalCustos;
 
   // KPIs
+  const revenueGoal = T.settings?.revenue_goal || 0;
+  const revenueGoalPct = revenueGoal > 0 ? Math.min(Math.round((totalReceita/revenueGoal)*100),100) : null;
   const kpis = [
-    { label:'Receita',    val: fBRL(totalReceita),  color:'var(--deep)' },
-    { label:'Custos',     val: fBRL(totalCustos),   color:'var(--coral)' },
-    { label:'Resultado',  val: fBRL(resultado),     color: resultado>=0?'#2FB989':'#E83E78' },
-    { label:'Recebido',   val: fBRL(totalRecebido), color:'#2FB989' },
-    { label:'Em aberto',  val: fBRL(totalAberto),   color:'#E07A3A' },
+    { label:'Receita',    val: fBRL(totalReceita),  color:'var(--deep)',   sub: revenueGoalPct !== null ? `${revenueGoalPct}% da meta` : null },
+    { label:'Custos',     val: fBRL(totalCustos),   color:'var(--coral)',  sub: null },
+    { label:'Resultado',  val: fBRL(resultado),     color: resultado>=0?'#2FB989':'#E83E78', sub: null },
+    { label:'Recebido',   val: fBRL(totalRecebido), color:'#2FB989',       sub: null },
+    { label:'Em aberto',  val: fBRL(totalAberto),   color:'#E07A3A',       sub: null },
   ];
   document.getElementById('fin-kpis').innerHTML = kpis.map(k => `
     <div style="background:white;border:var(--border);border-radius:14px;padding:14px 16px;">
       <div style="font-size:10px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">${k.label}</div>
       <div style="font-size:20px;font-weight:800;color:${k.color};">${k.val}</div>
+      ${k.sub ? `<div style="font-size:10px;color:${revenueGoalPct>=100?'#2FB989':'var(--text-dim)'};font-weight:700;margin-top:3px;">${k.sub}</div>` : ''}
     </div>`).join('');
+
+  // Barra de progresso meta de receita
+  if (revenueGoal > 0) {
+    const existing = document.getElementById('fin-meta-bar');
+    const barHtml = `<div id="fin-meta-bar" style="background:white;border:var(--border);border-radius:14px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:11px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Meta ${fBRL(revenueGoal)}</span>
+      <div style="flex:1;height:8px;background:var(--bg2);border-radius:999px;overflow:hidden;">
+        <div style="height:100%;background:${revenueGoalPct>=100?'#2FB989':'var(--purple)'};border-radius:999px;width:${revenueGoalPct}%;transition:width .6s;"></div>
+      </div>
+      <span style="font-size:13px;font-weight:800;color:${revenueGoalPct>=100?'#2FB989':'var(--deep)'};white-space:nowrap;">${revenueGoalPct}%</span>
+    </div>`;
+    const kpisEl = document.getElementById('fin-kpis');
+    if (existing) existing.outerHTML = barHtml;
+    else kpisEl.insertAdjacentHTML('afterend', barHtml);
+  } else {
+    const existing = document.getElementById('fin-meta-bar');
+    if (existing) existing.remove();
+  }
 
   // Tabela recebimentos
   document.getElementById('fin-rec-summary').innerHTML =
     `<span style="color:#2FB989;font-weight:700;">${fBRL(totalRecebido)} recebido</span> · <span style="color:#E07A3A;font-weight:700;">${fBRL(totalAberto)} em aberto</span>`;
   const TDbase = 'padding:10px 8px;font-size:13px;color:var(--deep);border-bottom:.5px solid rgba(74,41,118,.05);vertical-align:middle;';
   const TDnw   = TDbase + 'white-space:nowrap;';
+  const todayNum = new Date().getDate();
+  const isCurrentMonth = FIN.month === new Date().getMonth()+1 && FIN.year === new Date().getFullYear();
+  const isPastMonth = FIN.year < new Date().getFullYear() || (FIN.year === new Date().getFullYear() && FIN.month < new Date().getMonth()+1);
+
   document.getElementById('fin-payments-tbody').innerHTML = payments.length === 0
     ? `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum recebimento cadastrado.</td></tr>`
     : payments.map(p => {
         const isPaid = p.is_paid;
+        const dueDay = p.due_day || (FIN.clients.find(c=>c.id===p.client_id)?.due_day ?? null);
+        const isVencido = !isPaid && (isPastMonth || (isCurrentMonth && dueDay && dueDay < todayNum));
         const status = isPaid
           ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#D5F5E3;color:#0F6E56;white-space:nowrap;">PAGO</span>`
+          : isVencido
+          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FDECEA;color:#A32D2D;white-space:nowrap;">VENCIDO</span>`
           : `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FAEEDA;color:#854F0B;white-space:nowrap;">ABERTO</span>`;
         const action = isPaid
           ? `<button onclick="finMarkPayment(${p.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Desmarcar</button>`
@@ -3628,22 +3665,40 @@ async function cfgLoadMetas() {
     document.getElementById('cfg-daily-lbl').textContent = `${Math.floor(g/60)}h ${g%60}min por dia`;
     document.getElementById('cfg-alert-days').value = data.payment_alert_days || 3;
   }
+  // revenue_goal fica em localStorage (não precisa de coluna no banco)
+  const rg = parseFloat(localStorage.getItem('elo_revenue_goal')||'0');
+  document.getElementById('cfg-revenue-goal').value = rg || '';
+  if (rg) document.getElementById('cfg-revenue-lbl').textContent =
+    `Meta: ${rg.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0})} /mês`;
+  T.settings.revenue_goal = rg;
+
   const inp = document.getElementById('cfg-daily-goal');
   if (inp) inp.oninput = () => {
     const v = parseInt(inp.value)||0;
     document.getElementById('cfg-daily-lbl').textContent = `${Math.floor(v/60)}h ${v%60}min por dia`;
+  };
+  const rinp = document.getElementById('cfg-revenue-goal');
+  if (rinp) rinp.oninput = () => {
+    const v = parseFloat(rinp.value)||0;
+    document.getElementById('cfg-revenue-lbl').textContent = v
+      ? `Meta: ${v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0})} /mês` : '';
   };
 }
 
 async function cfgSaveMetas() {
   const daily = parseInt(document.getElementById('cfg-daily-goal').value)||480;
   const alertDays = parseInt(document.getElementById('cfg-alert-days').value)||3;
+  const revenueGoal = parseFloat(document.getElementById('cfg-revenue-goal').value)||0;
   const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
   const { error } = await sb.from('settings').upsert({ id:1, daily_goal_minutes:daily, payment_alert_days:alertDays }, { onConflict:'id' });
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
+  // Salva revenue_goal em localStorage
+  if (revenueGoal > 0) localStorage.setItem('elo_revenue_goal', String(revenueGoal));
+  else localStorage.removeItem('elo_revenue_goal');
   T.settings.daily_goal_minutes = daily;
+  T.settings.revenue_goal = revenueGoal;
   showToast('Metas salvas ✓','ok');
 }
 
