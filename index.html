@@ -315,12 +315,26 @@
       .topbar-brand .name { font-size:16px; }
       #page-container { padding:12px 10px 80px; }
       #home-grid { grid-template-columns:1fr; gap:14px; }
-      /* Mobile home: mostra só a aba ativa */
-      #home-selector, #home-timer-col, #home-right-sidebar { display:none !important; }
-      #home-selector.mob-active, #home-timer-col.mob-active { display:block !important; }
+
+      /* Por padrão esconde tudo no home-grid no mobile */
+      #home-selector, #home-timer-col, #home-right-sidebar, #mobile-agenda-view { display:none !important; }
+
+      /* Aba Home: seletor + timer (sem activities-card) */
+      #home-grid.mv-home #home-selector { display:block !important; }
+      #home-grid.mv-home #home-timer-col { display:block !important; }
+      #home-grid.mv-home #activities-card { display:none !important; }
+
+      /* Aba Atividades: activities-card + resumo/sidebar */
+      #home-grid.mv-atividades #home-timer-col { display:block !important; }
+      #home-grid.mv-atividades #timer-card { display:none !important; }
+      #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; }
+
+      /* Aba Agenda */
+      #home-grid.mv-agenda #mobile-agenda-view { display:block !important; }
+
       /* Timer SVG responsivo */
-      #home-timer-col .timer-glow { display:none; }
-      #home-timer-col [style*="width:320px"] { width:100% !important; height:auto !important; max-width:300px; margin:0 auto 16px; }
+      #timer-card [style*="width:320px"] { width:100% !important; height:auto !important; max-width:280px; margin:0 auto 12px; }
+
       #bottom-nav {
         display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
         background:var(--deep); border-top:1px solid rgba(255,255,255,.1);
@@ -551,6 +565,10 @@
             <div id="fin-list"></div>
           </div>
         </aside>
+
+        <!-- Mobile Agenda view -->
+        <div id="mobile-agenda-view" style="display:none;"></div>
+
       </div>
     </div>
 
@@ -1200,10 +1218,10 @@
   <!-- Bottom nav (mobile) -->
   <nav id="bottom-nav">
     <button onclick="mobileNav('home')" data-bnav="home" class="active">
-      <span class="bnav-icon">🏠</span>Home
+      <span class="bnav-icon">⏱</span>Timer
     </button>
-    <button onclick="mobileNav('cronometro')" data-bnav="cronometro">
-      <span class="bnav-icon">⏱</span>Cronômetro
+    <button onclick="mobileNav('atividades')" data-bnav="atividades">
+      <span class="bnav-icon">📋</span>Atividades
     </button>
     <button onclick="mobileNav('agenda')" data-bnav="agenda">
       <span class="bnav-icon">📅</span>Agenda
@@ -1307,20 +1325,96 @@ function navigateTo(page) {
 }
 
 function mobileNav(tab) {
-  // Atualiza aba ativa no bottom nav
+  if (window.innerWidth > 768) return;
   document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`#bottom-nav [data-bnav="${tab}"]`);
   if (btn) btn.classList.add('active');
 
-  if (tab === 'agenda') {
-    navigateTo('calendario');
-    return;
-  }
-  // Garante que a página Home está ativa
   navigateTo('home');
-  // Mostra a seção correta dentro da Home
-  document.getElementById('home-selector').classList.toggle('mob-active', tab === 'home');
-  document.getElementById('home-timer-col').classList.toggle('mob-active', tab === 'cronometro');
+  const grid = document.getElementById('home-grid');
+  grid.classList.remove('mv-home','mv-atividades','mv-agenda');
+  grid.classList.add('mv-' + tab);
+
+  if (tab === 'agenda') renderMobileAgenda();
+}
+
+function renderMobileAgenda() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr2 = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+  const fBRL2 = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+
+  // Compromissos próximos (próximos 7 dias)
+  const upcoming = (T.appointments||[]).filter(a => {
+    const d = new Date(a.scheduled_at); d.setHours(0,0,0,0);
+    return d >= today;
+  }).sort((a,b) => a.scheduled_at - b.scheduled_at).slice(0,10);
+
+  // Tarefas agendadas pendentes
+  const tasks = (T.scheduledTasks||[]).filter(t => !t.is_done).slice(0,10);
+
+  // Alertas financeiros
+  const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
+  const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
+
+  const cardStyle = 'background:white;border:var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);';
+  const lblStyle  = 'font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;';
+  const itemStyle = 'padding:10px 0;border-bottom:.5px solid rgba(74,41,118,.07);display:flex;align-items:flex-start;gap:10px;';
+
+  let html = '';
+
+  // Alertas financeiros
+  if (vencidos.length || avencer.length) {
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">💰 Alertas financeiros</div>`;
+    vencidos.forEach(a => {
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">🔴</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.clientName}</div>
+        <div style="font-size:11px;color:#C4487A;font-weight:600;">VENCIDO · ${fBRL2(a.amount)}</div></div></div>`;
+    });
+    avencer.forEach(a => {
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">🟡</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.clientName}</div>
+        <div style="font-size:11px;color:#E07A3A;font-weight:600;">Vence em ${a.daysLeft}d · ${fBRL2(a.amount)}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Compromissos
+  if (upcoming.length) {
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">📅 Próximos compromissos</div>`;
+    upcoming.forEach(a => {
+      const d = new Date(a.scheduled_at);
+      const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const client = T.clients.find(c=>c.id===a.client_id);
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">${a.is_done?'✅':'🗓'}</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.title}</div>
+        <div style="font-size:11px;color:var(--text-dim);">${dateStr}${client?' · '+client.name:''}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Tarefas agendadas
+  if (tasks.length) {
+    const prioColor = {alta:'#C4487A',media:'#E07A3A',baixa:'#2FB989'};
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">✅ Tarefas pendentes</div>`;
+    tasks.forEach(t => {
+      const client = T.clients.find(c=>c.id===t.client_id);
+      html += `<div style="${itemStyle}">
+        <span style="width:8px;height:8px;border-radius:50%;background:${prioColor[t.priority||'media']};flex-shrink:0;margin-top:5px;display:inline-block;"></span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${t.title}</div>
+        <div style="font-size:11px;color:var(--text-dim);">${t.scheduled_date||''}${client?' · '+client.name:''}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!html) html = `<div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:14px;">Nenhum compromisso ou alerta.</div>`;
+
+  document.getElementById('mobile-agenda-view').innerHTML = html;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1446,10 +1540,11 @@ setInterval(refreshTodayPill, 30000);
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
 async function initHome() {
-  // Mobile: garante que Home começa na aba seletora
+  // Mobile: começa na aba Timer (selector + cronômetro)
   if (window.innerWidth <= 768) {
-    document.getElementById('home-selector').classList.add('mob-active');
-    document.getElementById('home-timer-col').classList.remove('mob-active');
+    const grid = document.getElementById('home-grid');
+    if (!grid.classList.contains('mv-atividades') && !grid.classList.contains('mv-agenda'))
+      grid.classList.add('mv-home');
   }
   await loadHomeData();
   renderClientList();
@@ -1620,8 +1715,7 @@ function selectTask(id, name) {
   renderTaskTree();
   renderTimerCenter();
   renderTimerButtons();
-  // Mobile: vai direto para o cronômetro ao selecionar tarefa
-  if (window.innerWidth <= 768) mobileNav('cronometro');
+  // Mobile: permanece na aba home (timer visível junto com selector)
 }
 
 // ════════════════════════════════════════════════════════════════
