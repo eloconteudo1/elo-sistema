@@ -59,8 +59,9 @@ const sb = supabase.createClient(
 ```js
 // Home / Timer
 const T = {
-  clients: [], tasks: [], todayEntries: [],
+  clients: [], tasks: [], todayEntries: [], notes: [],
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
+  selectedClientId: null, clientDropOpen: false,
   settings: { daily_goal_minutes: 480, revenue_goal: 0, hourly_rate_min: 0, hourly_rate_optimal: 0 },
 };
 
@@ -86,8 +87,11 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Toasts:** `showToast(msg, type)` — type: `'ok'`, `'err'`, `'warn'`
 - **Confirmação:** `openConfirmModal(title, body, callbackAsync)` — nunca `confirm()` nativo
 - **Soft-delete clientes:** `is_active: false` (nunca deletar do banco)
-- **Modais dinâmicos:** inserir no `document.body` via `insertAdjacentHTML('beforeend', html)`
+- **Modais dinâmicos:** inserir via `#modal-container` → `mc.className='open'; mc.innerHTML=...`
 - **Inputs/Selects:** classes `.elo-input` e `.elo-select` (nunca `fin-input` / `fin-select`)
+- **Event delegation:** usar `{ once: true }` em listas re-renderizadas para evitar handlers duplicados
+- **Formatação de tempo:** `fMin(minutes)` → `"1h 30m"` ou `"45min"`
+- **Highlight de busca:** `highlight(text, term)` → envolve o trecho encontrado em `<strong>` coral
 
 ---
 
@@ -96,7 +100,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | Tabela | Descrição |
 |---|---|
 | `users` | Usuários autenticados (auth_id, name, email, role) |
-| `clients` | Clientes (is_active, is_internal, is_favorite, color, contract_value, due_day) |
+| `clients` | Clientes (is_active, is_internal, **is_favorite**, color, contract_value, due_day) |
 | `tasks` | Tarefas do timer (name, category, is_favorite, sort_order) |
 | `categories` | Categorias de tarefas — CRUD completo na Config |
 | `time_entries` | Registros de horas (client_id, task_id, task_name, start_time ms, duration_minutes, notes) |
@@ -106,7 +110,21 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
 | `cost_items` | Custos/despesas (month, year, amount, description, is_paid) |
 | `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal, scratchpad (não usado) |
-| `notes` | Anotações livres (id, content text, created_at timestamptz). Sem user_id, sem RLS. |
+| `notes` | Anotações livres (id, content text, created_at timestamptz). **Sem user_id. RLS desativado.** |
+
+**SQL aplicado no banco:**
+```sql
+-- Campo de favorito nos clientes (Sessão 4)
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS is_favorite boolean DEFAULT false;
+
+-- Tabela de anotações (Sessão 3)
+CREATE TABLE notes (
+  id bigint generated always as identity primary key,
+  content text not null,
+  created_at timestamptz default now()
+);
+ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
+```
 
 **Constraints importantes:**
 - `monthly_payments` tem UNIQUE(client_id, month, year) para não-manuais
@@ -118,37 +136,74 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 ## 7. Funcionalidades implementadas (V3.0)
 
 ### Home (Timer)
+
 - Cronômetro circular SVG com gradiente
 - Seletor de cliente + árvore de tarefas por categoria
 - Registro de horas (start/stop com `start_time` em ms)
 - Seção "Recentes" — agrupa por cliente+tarefa, soma minutos, badge `2x`
 - Sidebar direita: KPIs do dia, Próximas Tarefas (scheduled_tasks + appointments mesclados), alertas de pagamento, resumo financeiro
-- **Lançamento manual:** botão "Lançar horas manualmente" abaixo do cronômetro (visível só quando parado). Modal com cliente, tarefa, horas, minutos, data e notas. Grava em `time_entries` (mesmo formato do cronômetro). Contabiliza em Resultado e Financeiro.
-- **Edição de tempo:** botão ✏️ em cada atividade do dia. Abre o mesmo modal preenchido, permite alterar cliente, tarefa, tempo e notas.
-- **Funções novas:** `openManualEntryModal(editId)`, `saveManualEntry(editId)`. Event delegation em `#activities-list` com `data-action` (sem onclick inline nos botões de ação).
-- **Dropdown de clientes:** ordenação alfabética em cada grupo. Favoritos (`is_favorite` em `clients`) aparecem no topo em grupo "⭐ Favoritos". Campo de busca por digitação com destaque do termo em coral. Favorito configurável no modal da tela Clientes (aba Geral). Função `highlight(text, term)` adicionada.
-- **Anotações:** card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**. Input de texto + botão Salvar (funciona com Enter). Cada nota é um item na tabela `notes` (id, content, created_at). Botão × para deletar. Espelho na sidebar do Calendário (`#cal-notes-panel`), abaixo do Resumo do Mês — notas deletáveis também pelo Calendário. Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`. Legenda removida do Calendário. `settings.scratchpad` não é mais usado.
+
+**Lançamento manual de horas (Sessão 1)**
+- Botão "✏️ Lançar horas manualmente" abaixo do cronômetro — visível apenas quando parado (`T.isRunning === false`)
+- Modal com campos: cliente, tarefa (árvore por categoria), horas, minutos, data, notas
+- Grava em `time_entries` no mesmo formato que o cronômetro
+- Contabiliza em Resultado e Financeiro
+- Funções: `openManualEntryModal(editId)`, `saveManualEntry(editId)`
+
+**Edição de tempo (Sessão 1)**
+- Botão ✏️ em cada linha de atividade do dia
+- Abre o mesmo modal preenchido com os dados existentes
+- Permite alterar cliente, tarefa, tempo e notas
+- Event delegation em `#activities-list` com atributo `data-action` — sem `onclick` inline nos botões
+
+**Anotações (Sessão 3)**
+- Card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**
+- Input de texto + botão Salvar (Enter também salva)
+- Cada nota = 1 linha na tabela `notes` (id, content, created_at)
+- Botão × para deletar via `openConfirmModal`
+- **Edição inline:** clicar no texto da nota transforma em `<input>` in-place; Enter ou blur salva; Escape cancela (flag `_cancel` no elemento)
+- Espelho em `#cal-notes-panel` na sidebar do Calendário, abaixo do Resumo do Mês — deletável também pelo Calendário
+- `renderCalNotes()` busca direto do Supabase (não de `T.notes`), pois o Calendário pode abrir sem passar pela Home
+- Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`, `editNoteInline(el, id)`
+- Legenda removida do Calendário; `settings.scratchpad` não é mais usado
+
+**Dropdown de clientes (Sessão 4)**
+- Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
+- Filtragem em tempo real: cada tecla re-renderiza a lista
+- Termo encontrado destacado em coral via `highlight(text, term)`
+- Grupo "⭐ Favoritos" no topo para clientes com `is_favorite = true`, com dot colorido
+- Todos os grupos ordenados alfabeticamente (locale `pt-BR`)
+- Grupos: Favoritos → Clientes → Interno
+- Checkbox "⭐ Cliente favorito" no modal de cliente (aba Geral), salvo em `clients.is_favorite`
+- Event delegation com `{ once: true }` nas opções — sem `onclick` inline
+- Função `highlight(text, term)` adicionada aos utilitários
 
 ### Resultado
+
 - **Aba Hoje:** KPIs, donut SVG por cliente, log de tarefas com colunas Tempo + Custo (mín/ótimo calculados)
-- **Aba Mês:** KPIs, donut por cliente, calendário meta, donut por tarefa + **card "Valor real da hora"** (recebido/h vs previsto/h vs mín/ótimo, status PREJUÍZO/COBRINDO/ÓTIMO)
+- **Aba Mês:** KPIs, donut por cliente, calendário meta, donut por tarefa + card "Valor real da hora" (recebido/h vs previsto/h vs mín/ótimo, status PREJUÍZO/COBRINDO/ÓTIMO)
 
 ### Calendário
+
 - Grade mensal 7 colunas com chips de eventos
 - Cada célula mostra horas trabalhadas no dia (chip verde ⏱)
-- Sidebar: lista do dia selecionado, legenda, resumo
+- Sidebar: lista do dia selecionado, resumo do mês, painel de anotações `#cal-notes-panel`
 - Modal de evento: abas Compromisso / Tarefa, cliente, horário, alerta
 - Aba Alertas: CRUD de alarmes pessoais (intervalo ou horário diário)
+- Legenda removida (Sessão 3)
 - **Bug conhecido:** clientes no modal usam `T.clients` (não `C.clients`)
 
 ### Clientes
+
 - Grid de cards com expand/collapse (Set `clExpandedCards`)
 - Dois grupos: clientes externos + internos ELO
 - Border esquerda colorida por cliente
 - Modal com 4 abas (underline): Dados, Contrato, Pagamento, Histórico
+- Aba Dados: checkbox "Cliente interno ELO" + checkbox "⭐ Cliente favorito" (Sessão 4)
 - Soft-delete com `is_active: false`
 
 ### Financeiro
+
 - 5 KPIs: Receita, Custos, Resultado, Recebido, Em aberto
 - Barra de progresso da meta de receita (roxa/verde)
 - Gráfico de barras Chart.js (Receita × Custos, 6 meses)
@@ -158,12 +213,20 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - Sidebar: resumo financeiro + custos em aberto
 
 ### Config
+
 - **Aba Tarefas:** CRUD de categorias (tabela `categories`) + CRUD de tarefas. Modal usa categorias dinâmicas do banco.
 - **Aba Metas:** Layout 2 colunas
   - Esquerda: Meta de trabalho (horas/dia, dias úteis, alerta vencimento) + Metas financeiras (pró-labore, lucro desejado)
   - Direita: Cards calculados automaticamente — "Para cobrir contas" e "Para lucrar" — buscando despesas do `cost_items` do mês atual
   - Fórmula: Hora mín = (Despesas empresa + Pró-labore) ÷ Horas/mês | Hora ótima = (Mín + Lucro) ÷ Horas/mês
 - **Aba Sobre:** info do sistema
+
+### Topbar e Rodapé (Sessão 5A)
+
+- **Logo:** `logo-elo.png` na raiz do repositório, exibido no `.topbar-brand` com `height:34px`
+  - Substitui o texto "ELO / Sistema de gestão" que existia antes
+  - CSS `.name` e `.tagline` removidos
+- **Rodapé:** elemento `#build-date` dentro do `<footer class="elo-footer">` — atualizar a cada commit
 
 ---
 
@@ -184,19 +247,19 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Toasts visíveis** para todo erro/sucesso (Helô não acessa o console).
 - **Confirmação via modal** antes de excluir (nunca `confirm()` nativo).
 - **Atualização otimista** no financeiro.
-- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em Jun/2026 (Sessão 1)`
+- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em Jun/2026`
 - Interface toda em **português do Brasil**.
 - Status financeiro: `PAGO` / `ABERTO` / `VENCIDO` (maiúsculas).
 
 ---
 
-## 10. Atualização de versão
+## 10. Regra de versionamento — atualizar a cada commit
 
-A cada commit, atualizar o texto do elemento `#build-date` no footer e o texto "Atualizado em" na aba Sobre (Config) com o mês e ano atual em português.
-Formato: "Mês/AAAA" — ex: "Jun/2026", "Jul/2026".
+A cada commit que altera funcionalidades visíveis, atualizar:
 
-**Logo:** `logo-elo.png` na raiz do repositório, referenciado no `.topbar-brand` com `height:34px`.
-**Rodapé:** elemento `#build-date` — atualizar a cada commit com mês/ano em português.
+1. **`#build-date`** no footer do `index.html` — texto `"Mês/AAAA"` em português (ex: `"Jun/2026"`, `"Jul/2026"`)
+2. **Aba Sobre** na tela Config — mesmo formato
+3. **Este CLAUDE.md** — seção 7 e/ou 8 conforme o que foi implementado
 
 ---
 
