@@ -372,6 +372,8 @@
     .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; white-space:nowrap; margin-top:1px; }
     .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:14px; line-height:1; padding:0 2px; opacity:.5; transition:opacity .15s; flex-shrink:0; }
     .note-del-btn:hover { opacity:1; color:var(--coral); }
+    .note-item-text { cursor:text; }
+    .note-item-text:hover { color:var(--purple); }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
@@ -2094,12 +2096,36 @@ function renderNotesList() {
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
       <div style="flex:1;">
-        <div class="note-item-text">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
       <button class="note-del-btn" data-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
+}
+
+function editNoteInline(el, id) {
+  if (el.querySelector('input')) return; // já editando
+  const original = el.textContent;
+  el.innerHTML = `<input type="text" value="${original.replace(/"/g,'&quot;')}"
+    style="width:100%;border:none;outline:none;background:transparent;
+           font-size:12px;color:var(--text);font-family:inherit;line-height:1.45;"
+    onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}
+               if(event.key==='Escape'){this._cancel=true;this.blur();}" />`;
+  const input = el.querySelector('input');
+  input.focus();
+  input.select();
+  input.addEventListener('blur', async function() {
+    if (this._cancel) { el.textContent = original; return; }
+    const newText = this.value.trim();
+    if (!newText || newText === original) { el.textContent = original; return; }
+    const { error } = await sb.from('notes').update({ content: newText }).eq('id', id);
+    if (error) { showToast('Erro ao salvar','err'); el.textContent = original; return; }
+    const note = T.notes.find(n => n.id === id);
+    if (note) note.content = newText;
+    el.textContent = newText;
+    if (document.getElementById('cal-notes-list')) renderCalNotes();
+  });
 }
 
 async function saveNote() {
@@ -2130,7 +2156,7 @@ async function renderCalNotes() {
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
       <div style="flex:1;">
-        <div class="note-item-text">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
       <button class="note-del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
