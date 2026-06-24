@@ -315,6 +315,12 @@
       .topbar-brand .name { font-size:16px; }
       #page-container { padding:12px 10px 80px; }
       #home-grid { grid-template-columns:1fr; gap:14px; }
+      /* Mobile home: mostra só a aba ativa */
+      #home-selector, #home-timer-col, #home-right-sidebar { display:none !important; }
+      #home-selector.mob-active, #home-timer-col.mob-active { display:block !important; }
+      /* Timer SVG responsivo */
+      #home-timer-col .timer-glow { display:none; }
+      #home-timer-col [style*="width:320px"] { width:100% !important; height:auto !important; max-width:300px; margin:0 auto 16px; }
       #bottom-nav {
         display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
         background:var(--deep); border-top:1px solid rgba(255,255,255,.1);
@@ -327,7 +333,7 @@
         font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
         cursor:pointer; padding:4px 2px; border-radius:8px; transition:color .15s;
       }
-      #bottom-nav button .bnav-icon { font-size:20px; line-height:1; }
+      #bottom-nav button .bnav-icon { font-size:22px; line-height:1; }
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
     }
@@ -414,7 +420,7 @@
       <div id="home-grid">
 
         <!-- Left sidebar -->
-        <aside style="padding:4px 0 24px;overflow-y:auto;">
+        <aside id="home-selector" style="padding:4px 0 24px;overflow-y:auto;">
           <div class="sec-label" style="margin-bottom:10px;margin-top:4px;">Cliente</div>
           <div style="position:relative;margin-bottom:6px;">
             <button id="client-btn" onclick="toggleClientDrop()">
@@ -433,7 +439,7 @@
         </aside>
 
         <!-- Center -->
-        <div>
+        <div id="home-timer-col">
           <!-- Timer card -->
           <div id="timer-card">
             <div class="timer-glow"></div>
@@ -490,7 +496,7 @@
         </div>
 
         <!-- Right sidebar -->
-        <aside style="overflow-y:auto;position:sticky;top:20px;">
+        <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;">
 
           <!-- Resumo -->
           <div class="right-card">
@@ -1193,23 +1199,14 @@
 
   <!-- Bottom nav (mobile) -->
   <nav id="bottom-nav">
-    <button onclick="navigateTo('home')" data-bnav="home" class="active">
-      <span class="bnav-icon">⏱</span>Home
+    <button onclick="mobileNav('home')" data-bnav="home" class="active">
+      <span class="bnav-icon">🏠</span>Home
     </button>
-    <button onclick="navigateTo('resultado')" data-bnav="resultado">
-      <span class="bnav-icon">📊</span>Resultado
+    <button onclick="mobileNav('cronometro')" data-bnav="cronometro">
+      <span class="bnav-icon">⏱</span>Cronômetro
     </button>
-    <button onclick="navigateTo('calendario')" data-bnav="calendario">
+    <button onclick="mobileNav('agenda')" data-bnav="agenda">
       <span class="bnav-icon">📅</span>Agenda
-    </button>
-    <button onclick="navigateTo('clientes')" data-bnav="clientes">
-      <span class="bnav-icon">👥</span>Clientes
-    </button>
-    <button onclick="navigateTo('financeiro')" data-bnav="financeiro">
-      <span class="bnav-icon">💰</span>Financeiro
-    </button>
-    <button onclick="navigateTo('config')" data-bnav="config">
-      <span class="bnav-icon">⚙️</span>Config
     </button>
   </nav>
 </div>
@@ -1307,6 +1304,23 @@ function navigateTo(page) {
   if (page === 'calendario' && appUser) initCalendario();
   if (page === 'financeiro' && appUser) initFinanceiro();
   if (page === 'config'     && appUser) initConfig();
+}
+
+function mobileNav(tab) {
+  // Atualiza aba ativa no bottom nav
+  document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`#bottom-nav [data-bnav="${tab}"]`);
+  if (btn) btn.classList.add('active');
+
+  if (tab === 'agenda') {
+    navigateTo('calendario');
+    return;
+  }
+  // Garante que a página Home está ativa
+  navigateTo('home');
+  // Mostra a seção correta dentro da Home
+  document.getElementById('home-selector').classList.toggle('mob-active', tab === 'home');
+  document.getElementById('home-timer-col').classList.toggle('mob-active', tab === 'cronometro');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1432,6 +1446,11 @@ setInterval(refreshTodayPill, 30000);
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
 async function initHome() {
+  // Mobile: garante que Home começa na aba seletora
+  if (window.innerWidth <= 768) {
+    document.getElementById('home-selector').classList.add('mob-active');
+    document.getElementById('home-timer-col').classList.remove('mob-active');
+  }
   await loadHomeData();
   renderClientList();
   renderTaskTree();
@@ -1601,6 +1620,8 @@ function selectTask(id, name) {
   renderTaskTree();
   renderTimerCenter();
   renderTimerButtons();
+  // Mobile: vai direto para o cronômetro ao selecionar tarefa
+  if (window.innerWidth <= 768) mobileNav('cronometro');
 }
 
 // ════════════════════════════════════════════════════════════════
