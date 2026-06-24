@@ -190,7 +190,17 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 
 ---
 
-## 10. Pasta `referencia-manus/`
+## 10. Atualização de versão
+
+A cada commit, atualizar o texto do elemento `#build-date` no footer e o texto "Atualizado em" na aba Sobre (Config) com o mês e ano atual em português.
+Formato: "Mês/AAAA" — ex: "Jun/2026", "Jul/2026".
+
+**Logo:** `logo-elo.png` na raiz do repositório, referenciado no `.topbar-brand` com `height:34px`.
+**Rodapé:** elemento `#build-date` — atualizar a cada commit com mês/ano em português.
+
+---
+
+## 11. Pasta `referencia-manus/`
 
 Código do protótipo Manus. **Somente consulta** — nunca importar para o build.
 Usar para copiar estilos inline, lógica de cálculos e estrutura de dados.

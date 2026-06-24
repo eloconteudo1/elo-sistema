@@ -63,9 +63,7 @@
 
     /* ── Topbar ── */
     .elo-topbar { height:72px; background:linear-gradient(90deg,var(--deep) 0%,var(--deep2) 100%); display:flex; align-items:center; padding:0 32px; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,.18); }
-    .topbar-brand { display:flex; flex-direction:column; flex-shrink:0; line-height:1.1; }
-    .topbar-brand .name { font-size:18px; font-weight:900; color:white; letter-spacing:.5px; }
-    .topbar-brand .tagline { font-size:10px; font-weight:600; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:1px; }
+    .topbar-brand { display:flex; align-items:center; flex-shrink:0; }
     .elo-nav { flex:1; display:flex; justify-content:center; }
     .elo-nav-inner { display:flex; align-items:center; gap:2px; background:rgba(255,255,255,.07); border-radius:14px; padding:4px; }
     .elo-top-tab { padding:8px 20px; border-radius:10px; background:transparent; border:none; color:rgba(255,255,255,.6); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:all .18s; white-space:nowrap; }
@@ -316,7 +314,6 @@
       .elo-nav { display:none; }
       .topbar-clock { display:none; }
       .elo-topbar { padding:0 14px; height:52px; }
-      .topbar-brand .name { font-size:15px; }
       #page-container { padding:10px 10px 84px; }
       #home-grid { grid-template-columns:1fr; gap:12px; }
 
@@ -367,7 +364,7 @@
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
     }
-    @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; } .topbar-brand .tagline { display:none; } }
+    @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
     /* Anotações */
     .note-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:10px; border-left:3px solid var(--lavender); animation:fadeInUp .2s ease; }
     .note-item-text { flex:1; font-size:12px; color:var(--text); line-height:1.45; word-break:break-word; }
@@ -426,8 +423,8 @@
 <div id="app">
   <header class="elo-topbar">
     <div class="topbar-brand">
-      <span class="name">ELO</span>
-      <span class="tagline">Sistema de gestão</span>
+      <img src="logo-elo.png" alt="ELO Comunicação"
+        style="height:34px;width:auto;object-fit:contain;display:block;" />
     </div>
     <nav class="elo-nav">
       <div class="elo-nav-inner">
@@ -1296,7 +1293,7 @@
     <span>Sistema ELO</span><span class="sep">|</span>
     <span>Versão 3.0</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em Jun/2026</span>
+    <span>Atualizado em <span id="build-date">Jun/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
