@@ -1,4 +1,4 @@
-# CLAUDE.md — Regras do repositório `sistema-elo-v3`
+# CLAUDE.md — Regras do repositório `elo-sistema`
 
 Leia este arquivo **inteiro** antes de qualquer alteração.
 
