@@ -88,6 +88,8 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Soft-delete clientes:** `is_active: false` (nunca deletar do banco)
 - **Modais dinâmicos:** inserir no `document.body` via `insertAdjacentHTML('beforeend', html)`
 - **Inputs/Selects:** classes `.elo-input` e `.elo-select` (nunca `fin-input` / `fin-select`)
+- **Datas:** banco usa `YYYY-MM-DD`. Input do usuário aceita `DD/MM/AAAA` e é convertido por `inputToDbDate()`. Exibição usa `dbDateToDisplay()` (YYYY-MM-DD → DD/MM/AAAA). Nunca salvar `DD/MM/AAAA` direto no banco.
+- **Mobile:** `mobileNav(tab)` controla as 3 abas (`home`, `atividades`, `agenda`) adicionando classe `mv-{tab}` ao `#home-grid`. Verificar `window.innerWidth <= 768` antes de lógicas mobile-only.
 
 ---
 
@@ -100,8 +102,8 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `tasks` | Tarefas do timer (name, category, is_favorite, sort_order) |
 | `categories` | Categorias de tarefas — CRUD completo na Config |
 | `time_entries` | Registros de horas (client_id, task_id, task_name, start_time ms, duration_minutes, notes) |
-| `scheduled_tasks` | Tarefas agendadas (title, priority, scheduled_date YYYY-MM-DD, scheduled_time, is_done, client_id) |
-| `appointments` | Compromissos do Calendário (title, scheduled_at ms, is_done, client_id, alert_minutes_before) |
+| `scheduled_tasks` | Tarefas agendadas (title, priority, **scheduled_date YYYY-MM-DD**, scheduled_time HH:MM, is_done, client_id) |
+| `appointments` | Compromissos do Calendário (title, **scheduled_at ms epoch**, is_done, client_id, alert_minutes_before) — sem user_id |
 | `reminders` | Alarmes pessoais (type: interval/daily, interval_minutes, daily_time HH:MM) |
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
 | `cost_items` | Custos/despesas (month, year, amount, description, is_paid) |
@@ -111,69 +113,76 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - `monthly_payments` tem UNIQUE(client_id, month, year) para não-manuais
 - `settings.user_id` é nullable (DROP NOT NULL já aplicado)
 - Usar `upsert` com `onConflict:'id'` para settings
+- `appointments` usa `scheduled_at` em ms (epoch), não texto — diferente de `scheduled_tasks`
 
 ---
 
-## 7. Funcionalidades implementadas (V3.0)
+## 7. Funções utilitárias de data
 
-### Home (Timer)
-- Cronômetro circular SVG com gradiente
-- Seletor de cliente + árvore de tarefas por categoria
-- Registro de horas (start/stop com `start_time` em ms)
-- Seção "Recentes" — agrupa por cliente+tarefa, soma minutos, badge `2x`
-- Sidebar direita: KPIs do dia, Próximas Tarefas (scheduled_tasks + appointments mesclados), alertas de pagamento, resumo financeiro
+```js
+todayStr()              // → "2026-06-24" (YYYY-MM-DD, para comparar com banco)
+dbDateToDisplay(s)      // → "24/06/2026" (para exibir ao usuário)
+inputToDbDate(s)        // → "2026-06-24" (converte DD/MM/AAAA ou YYYY-MM-DD)
+dbDateToTs(s)           // → timestamp ms (para ordenação e comparação)
+```
+
+---
+
+## 8. Funcionalidades implementadas (V3.0)
+
+### Home / Timer (desktop: 3 colunas | mobile: 3 abas)
+
+**Desktop:**
+- Coluna esquerda: seletor de cliente + árvore de tarefas por categoria
+- Centro: cronômetro circular SVG com gradiente, botões start/stop, entradas recentes agrupadas
+- Coluna direita: KPIs do dia, Próximas Tarefas (scheduled_tasks + appointments mesclados), alertas de pagamento, resumo financeiro
+
+**Mobile (bottom nav — TIMER / ATIVIDADES / AGENDA):**
+- **TIMER:** barra cliente + barra tarefa compacta (abre bottom-sheet com seletor) + cronômetro SVG
+- **ATIVIDADES:** atividades do dia + resumo de hoje + próximas tarefas (rolagem)
+- **AGENDA:** 4 blocos — Compromissos próximos, Tarefas pendentes, Lembretes ativos, Alertas financeiros
 
 ### Resultado
-- **Aba Hoje:** KPIs, donut SVG por cliente, log de tarefas com colunas Tempo + Custo (mín/ótimo calculados)
-- **Aba Mês:** KPIs, donut por cliente, calendário meta, donut por tarefa + **card "Valor real da hora"** (recebido/h vs previsto/h vs mín/ótimo, status PREJUÍZO/COBRINDO/ÓTIMO)
+- **Aba Hoje:** KPIs, donut SVG por cliente, log de tarefas com Tempo + Custo (mín/ótimo)
+- **Aba Mês:** KPIs, comparativo vs mês anterior (horas/dias/receita com ▲▼%), donut por cliente, calendário meta, donut por tarefa, card "Valor real da hora" (PREJUÍZO/COBRINDO/ÓTIMO)
 
 ### Calendário
-- Grade mensal 7 colunas com chips de eventos
-- Cada célula mostra horas trabalhadas no dia (chip verde ⏱)
-- Sidebar: lista do dia selecionado, legenda, resumo
+- Grade mensal 7 colunas com chips de eventos e horas trabalhadas por dia
+- Sidebar: lista do dia selecionado, legenda, resumo mensal
 - Modal de evento: abas Compromisso / Tarefa, cliente, horário, alerta
 - Aba Alertas: CRUD de alarmes pessoais (intervalo ou horário diário)
-- **Bug conhecido:** clientes no modal usam `T.clients` (não `C.clients`)
 
 ### Clientes
-- Grid de cards com expand/collapse (Set `clExpandedCards`)
-- Dois grupos: clientes externos + internos ELO
-- Border esquerda colorida por cliente
-- Modal com 4 abas (underline): Dados, Contrato, Pagamento, Histórico
+- Grid de cards com expand/collapse (`clExpandedCards` Set)
+- Dois grupos: externos + internos ELO; border colorida por cliente
+- Modal com 4 abas: Dados, Contrato, Pagamento, Histórico
 - Soft-delete com `is_active: false`
 
 ### Financeiro
 - 5 KPIs: Receita, Custos, Resultado, Recebido, Em aberto
-- Barra de progresso da meta de receita (roxa/verde)
-- Gráfico de barras Chart.js (Receita × Custos, 6 meses)
-- Tabela de recebimentos com status PAGO/ABERTO/VENCIDO
-- Tabela de custos
-- Auto-gera recebimentos mensais para clientes ativos (upsert com onConflict)
+- Barra de progresso meta com cores: vermelho (<60%), laranja (60–99%), verde (100%+) + label de status
+- Gráfico Chart.js 6 meses (Receita × Custos)
+- Tabelas de recebimentos (PAGO/ABERTO/VENCIDO) e custos
+- Auto-gera recebimentos mensais para clientes ativos
 - Sidebar: resumo financeiro + custos em aberto
 
 ### Config
-- **Aba Tarefas:** CRUD de categorias (tabela `categories`) + CRUD de tarefas. Modal usa categorias dinâmicas do banco.
-- **Aba Metas:** Layout 2 colunas
-  - Esquerda: Meta de trabalho (horas/dia, dias úteis, alerta vencimento) + Metas financeiras (pró-labore, lucro desejado)
-  - Direita: Cards calculados automaticamente — "Para cobrir contas" e "Para lucrar" — buscando despesas do `cost_items` do mês atual
-  - Fórmula: Hora mín = (Despesas empresa + Pró-labore) ÷ Horas/mês | Hora ótima = (Mín + Lucro) ÷ Horas/mês
+- **Aba Tarefas:** CRUD de categorias + tarefas com categorias dinâmicas do banco
+- **Aba Metas:** layout 2 colunas — metas de trabalho + financeiras; cards calculados (hora mín/ótima) com fórmula baseada em despesas reais do mês
 - **Aba Sobre:** info do sistema
 
 ---
 
-## 8. O que ainda falta implementar
+## 9. O que ainda falta implementar
 
 | # | Tarefa | Prioridade |
 |---|--------|-----------|
-| C | Barra meta Financeiro com cores vermelho/amarelo/verde | Alta |
-| E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
-| 4 | Mobile iOS — bottom nav, timer responsivo 375px | Alta |
 
 ---
 
-## 9. UX obrigatória
+## 10. UX obrigatória
 
 - **Toasts visíveis** para todo erro/sucesso (Helô não acessa o console).
 - **Confirmação via modal** antes de excluir (nunca `confirm()` nativo).
@@ -184,7 +193,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 
 ---
 
-## 10. Pasta `referencia-manus/`
+## 11. Pasta `referencia-manus/`
 
 Código do protótipo Manus. **Somente consulta** — nunca importar para o build.
 Usar para copiar estilos inline, lógica de cálculos e estrutura de dados.
