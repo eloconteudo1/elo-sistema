@@ -96,7 +96,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | Tabela | Descrição |
 |---|---|
 | `users` | Usuários autenticados (auth_id, name, email, role) |
-| `clients` | Clientes (is_active, is_internal, color, contract_value, due_day) |
+| `clients` | Clientes (is_active, is_internal, is_favorite, color, contract_value, due_day) |
 | `tasks` | Tarefas do timer (name, category, is_favorite, sort_order) |
 | `categories` | Categorias de tarefas — CRUD completo na Config |
 | `time_entries` | Registros de horas (client_id, task_id, task_name, start_time ms, duration_minutes, notes) |
@@ -126,6 +126,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Lançamento manual:** botão "Lançar horas manualmente" abaixo do cronômetro (visível só quando parado). Modal com cliente, tarefa, horas, minutos, data e notas. Grava em `time_entries` (mesmo formato do cronômetro). Contabiliza em Resultado e Financeiro.
 - **Edição de tempo:** botão ✏️ em cada atividade do dia. Abre o mesmo modal preenchido, permite alterar cliente, tarefa, tempo e notas.
 - **Funções novas:** `openManualEntryModal(editId)`, `saveManualEntry(editId)`. Event delegation em `#activities-list` com `data-action` (sem onclick inline nos botões de ação).
+- **Dropdown de clientes:** ordenação alfabética em cada grupo. Favoritos (`is_favorite` em `clients`) aparecem no topo em grupo "⭐ Favoritos". Campo de busca por digitação com destaque do termo em coral. Favorito configurável no modal da tela Clientes (aba Geral). Função `highlight(text, term)` adicionada.
 - **Anotações:** card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**. Input de texto + botão Salvar (funciona com Enter). Cada nota é um item na tabela `notes` (id, content, created_at). Botão × para deletar. Espelho na sidebar do Calendário (`#cal-notes-panel`), abaixo do Resumo do Mês — notas deletáveis também pelo Calendário. Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`. Legenda removida do Calendário. `settings.scratchpad` não é mais usado.
 
 ### Resultado

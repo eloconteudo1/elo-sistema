@@ -147,6 +147,8 @@
     .client-option-dot { width:7px; height:7px; border-radius:50%; background:rgba(46,27,78,.12); flex-shrink:0; }
     .client-option.selected .client-option-dot { background:var(--coral); }
     .client-option-mins { margin-left:auto; font-size:11px; color:var(--coral); font-weight:700; background:rgba(196,114,90,.12); padding:2px 8px; border-radius:10px; }
+    .client-option.fav-item { background:rgba(196,114,90,.04); }
+    .client-option.fav-item .client-option-dot { background:var(--coral); }
     .client-group-label { font-size:10px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:rgba(46,27,78,.35); padding:8px 16px 4px; }
 
     /* Task tree */
@@ -471,6 +473,20 @@
               <span class="chevron">▼</span>
             </button>
             <div id="client-dropdown">
+              <div style="padding:10px 12px 6px;position:sticky;top:0;background:#fff;z-index:1;border-bottom:1px solid rgba(74,41,118,.07);">
+                <input
+                  id="client-search"
+                  type="text"
+                  placeholder="Buscar cliente…"
+                  autocomplete="off"
+                  style="width:100%;padding:7px 12px;border-radius:10px;border:1.5px solid rgba(74,41,118,.15);
+                         font-family:inherit;font-size:13px;color:var(--deep);outline:none;
+                         transition:border-color .15s;background:var(--bg);"
+                  oninput="renderClientList()"
+                  onfocus="this.style.borderColor='rgba(196,114,90,.5)'"
+                  onblur="this.style.borderColor='rgba(74,41,118,.15)'"
+                />
+              </div>
               <div id="client-list"></div>
             </div>
           </div>
@@ -1339,6 +1355,12 @@ function fDur(ms) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 function fMin(m) { const h = Math.floor(m/60), min = m%60; return h>0 ? `${h}h ${min}m` : `${min}min`; }
+function highlight(text, term) {
+  if (!term) return text;
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0,idx) + `<strong style="color:var(--coral);">${text.slice(idx,idx+term.length)}</strong>` + text.slice(idx+term.length);
+}
 function fBRL(v) { return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 // Datas: banco usa YYYY-MM-DD, exibição usa DD/MM/YYYY
 function todayStr() {
@@ -1757,7 +1779,13 @@ function toggleClientDrop() {
   T.clientDropOpen = !T.clientDropOpen;
   document.getElementById('client-btn').classList.toggle('open', T.clientDropOpen);
   document.getElementById('client-dropdown').classList.toggle('open', T.clientDropOpen);
-  if (T.clientDropOpen) renderClientList();
+  if (T.clientDropOpen) {
+    renderClientList();
+    setTimeout(() => { const s = document.getElementById('client-search'); if (s) s.focus(); }, 50);
+  } else {
+    const s = document.getElementById('client-search');
+    if (s) s.value = '';
+  }
 }
 document.addEventListener('click', e => {
   const btn = document.getElementById('client-btn');
@@ -1771,34 +1799,40 @@ document.addEventListener('click', e => {
 
 function renderClientList() {
   const list = document.getElementById('client-list');
-  const internals = T.clients.filter(c=>c.is_internal);
-  const externals = T.clients.filter(c=>!c.is_internal);
+  if (!list) return;
+  const searchEl = document.getElementById('client-search');
+  const term = (searchEl ? searchEl.value : '').toLowerCase().trim();
+  const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+  const applySearch = arr => term ? arr.filter(c => c.name.toLowerCase().includes(term)) : arr;
+  const internals = T.clients.filter(c => c.is_internal);
+  const externals = T.clients.filter(c => !c.is_internal);
+  const favs      = applySearch(alpha(externals.filter(c => c.is_favorite)));
+  const nonFavs   = applySearch(alpha(externals.filter(c => !c.is_favorite)));
+  const ints      = applySearch(alpha(internals));
+  const optHtml = (c, extraClass='') => {
+    const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
+    const sel = T.selectedClientId===c.id;
+    return `<div class="client-option${sel?' selected':''}${extraClass}" data-client-id="${c.id}">
+      <div class="client-option-dot" style="background:${c.color||(extraClass?' var(--coral)':'rgba(46,27,78,.12)')};"></div>
+      <span style="flex:1;">${highlight(c.name,term)}</span>
+      ${minsToday>0?`<span class="client-option-mins">${fMin(minsToday)}</span>`:''}
+    </div>`;
+  };
   let html = '';
-  if (internals.length) {
-    html += `<div class="client-group-label">Interno</div>`;
-    for (const c of internals) {
-      const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
-      const sel = T.selectedClientId===c.id;
-      html += `<div class="client-option${sel?' selected':''}" onclick="selectClient(${c.id})">
-        <div class="client-option-dot"></div>
-        <span style="flex:1;">${c.name}</span>
-        ${minsToday>0?`<span class="client-option-mins">${fMin(minsToday)}</span>`:''}
-      </div>`;
-    }
-  }
-  if (externals.length) {
-    html += `<div class="client-group-label">Clientes</div>`;
-    for (const c of externals) {
-      const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
-      const sel = T.selectedClientId===c.id;
-      html += `<div class="client-option${sel?' selected':''}" onclick="selectClient(${c.id})">
-        <div class="client-option-dot"></div>
-        <span style="flex:1;">${c.name}</span>
-        ${minsToday>0?`<span class="client-option-mins">${fMin(minsToday)}</span>`:''}
-      </div>`;
-    }
+  if (favs.length)    { html += `<div class="client-group-label">⭐ Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (nonFavs.length) { html += `<div class="client-group-label">Clientes</div>`;    nonFavs.forEach(c => html += optHtml(c,'')); }
+  if (ints.length)    { html += `<div class="client-group-label">Interno</div>`;     ints.forEach(c => html += optHtml(c,'')); }
+  if (!favs.length && !nonFavs.length && !ints.length) {
+    html = `<div style="padding:20px 16px;text-align:center;font-size:13px;color:var(--text-dim);opacity:.6;">Nenhum cliente encontrado</div>`;
   }
   list.innerHTML = html;
+  list.addEventListener('click', function(ev) {
+    const opt = ev.target.closest('[data-client-id]');
+    if (!opt) return;
+    selectClient(Number(opt.dataset.clientId));
+    const s = document.getElementById('client-search');
+    if (s) s.value = '';
+  }, { once: true });
 }
 
 function selectClient(id) {
@@ -2903,6 +2937,7 @@ function collectClientTabData() {
       _clientData.whatsapp      = get('cf-whatsapp');
       _clientData.notes         = get('cf-notes');
       _clientData.is_internal   = getCheck('cf-internal');
+      _clientData.is_favorite   = getCheck('cf-favorite');
       break;
     case 'financeiro':
       _clientData.contract_value  = parseFloat(get('cf-value')||'0') || 0;
@@ -2980,6 +3015,10 @@ function renderClientTabContent() {
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-dim);font-weight:600;margin-top:4px;">
         <input type="checkbox" id="cf-internal" ${d.is_internal?'checked':''} style="width:16px;height:16px;cursor:pointer;" />
         Cliente interno ELO (não conta no faturamento)
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-dim);font-weight:600;margin-top:8px;">
+        <input type="checkbox" id="cf-favorite" ${d.is_favorite?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--coral);" />
+        ⭐ Cliente favorito (aparece no topo da lista)
       </label>`;
   } else if (_clientModalTab === 'financeiro') {
     html = `
@@ -3042,6 +3081,7 @@ async function saveClient(id) {
     whatsapp: _clientData.whatsapp||null,
     notes: _clientData.notes||null,
     is_internal: !!_clientData.is_internal,
+    is_favorite: !!_clientData.is_favorite,
     contract_value: _clientData.contract_value||0,
     due_day: _clientData.due_day||null,
     payment_method: _clientData.payment_method||null,
