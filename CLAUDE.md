@@ -105,7 +105,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `reminders` | Alarmes pessoais (type: interval/daily, interval_minutes, daily_time HH:MM) |
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
 | `cost_items` | Custos/despesas (month, year, amount, description, is_paid) |
-| `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal |
+| `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal, **scratchpad** (text, anotações livres) |
 
 **Constraints importantes:**
 - `monthly_payments` tem UNIQUE(client_id, month, year) para não-manuais
@@ -122,6 +122,10 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - Registro de horas (start/stop com `start_time` em ms)
 - Seção "Recentes" — agrupa por cliente+tarefa, soma minutos, badge `2x`
 - Sidebar direita: KPIs do dia, Próximas Tarefas (scheduled_tasks + appointments mesclados), alertas de pagamento, resumo financeiro
+- **Lançamento manual:** botão "Lançar horas manualmente" abaixo do cronômetro (visível só quando parado). Modal com cliente, tarefa, horas, minutos, data e notas. Grava em `time_entries` (mesmo formato do cronômetro). Contabiliza em Resultado e Financeiro.
+- **Edição de tempo:** botão ✏️ em cada atividade do dia. Abre o mesmo modal preenchido, permite alterar cliente, tarefa, tempo e notas.
+- **Funções novas:** `openManualEntryModal(editId)`, `saveManualEntry(editId)`. Event delegation em `#activities-list` com `data-action` (sem onclick inline nos botões de ação).
+- **Anotações (scratchpad):** card "Anotações" na sidebar direita da Home, entre Próximas tarefas e Alerta Pausa. Textarea de texto livre com auto-save (1.2s debounce) via upsert em `settings.scratchpad` (id=1). Indicador "salvo ✓" discreto. Desktop e mobile (aba ATIVIDADES). Função: `initScratchpad()`.
 
 ### Resultado
 - **Aba Hoje:** KPIs, donut SVG por cliente, log de tarefas com colunas Tempo + Custo (mín/ótimo calculados)
@@ -178,7 +182,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Toasts visíveis** para todo erro/sucesso (Helô não acessa o console).
 - **Confirmação via modal** antes de excluir (nunca `confirm()` nativo).
 - **Atualização otimista** no financeiro.
-- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em Jun/2026`
+- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em Jun/2026 (Sessão 1)`
 - Interface toda em **português do Brasil**.
 - Status financeiro: `PAGO` / `ABERTO` / `VENCIDO` (maiúsculas).
 

@@ -190,7 +190,7 @@
 
     /* Activities card */
     #activities-card { background:rgba(255,255,255,.88); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:24px 28px; margin-top:20px; }
-    .activity-row { display:grid; grid-template-columns:42px 1fr 60px 56px 28px; align-items:center; min-height:60px; border-bottom:1px solid rgba(74,41,118,.07); gap:8px; font-size:13px; }
+    .activity-row { display:grid; grid-template-columns:42px 1fr 60px 56px 28px 28px; align-items:center; min-height:60px; border-bottom:1px solid rgba(74,41,118,.07); gap:8px; font-size:13px; }
     .activity-avatar { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; color:white; flex-shrink:0; }
 
     /* Right sidebar cards */
@@ -366,6 +366,12 @@
       #bottom-nav button:active { opacity:.7; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; } .topbar-brand .tagline { display:none; } }
+    @media (max-width:768px) {
+      .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
+      #manual-entry-link { margin-top:8px; }
+      .activity-row [data-action] { min-width:30px; min-height:30px; display:flex; align-items:center; justify-content:center; }
+      #scratchpad-card textarea { min-height:64px; font-size:14px; }
+    }
   </style>
 </head>
 <body>
@@ -514,6 +520,15 @@
               <!-- rendered by JS -->
             </div>
 
+            <div id="manual-entry-link" style="margin-top:12px;text-align:center;">
+              <button onclick="openManualEntryModal()"
+                style="background:none;border:none;color:var(--purple);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:8px 16px;border-radius:10px;transition:background .15s;"
+                onmouseover="this.style.background='rgba(74,41,118,.06)'"
+                onmouseout="this.style.background='none'">
+                ✏️ Lançar horas manualmente
+              </button>
+            </div>
+
             <!-- Recent entries -->
             <div id="recent-entries" style="width:100%;max-width:500px;margin-top:24px;display:none;">
               <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);opacity:.6;margin:14px 0 7px;">Recentes — clique para retomar</div>
@@ -572,6 +587,25 @@
               <div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma tarefa cadastrada.</div>
             </div>
             <div id="sched-done-count" style="display:none;font-size:11px;color:#aaa;margin-top:8px;"></div>
+          </div>
+
+          <!-- Anotações -->
+          <div class="right-card" id="scratchpad-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span class="sec-label">Anotações</span>
+              <span id="scratchpad-status" style="font-size:10px;color:var(--text-dim);opacity:.6;transition:opacity .3s;"></span>
+            </div>
+            <textarea
+              id="scratchpad-input"
+              placeholder="Ideias, lembretes, próximos passos…"
+              style="width:100%;min-height:80px;max-height:200px;resize:vertical;
+                     border:1px solid rgba(74,41,118,.12);border-radius:12px;
+                     padding:10px 12px;font-family:inherit;font-size:13px;
+                     color:var(--text);background:rgba(46,27,78,.03);
+                     outline:none;line-height:1.5;transition:border-color .2s;"
+              onfocus="this.style.borderColor='rgba(196,114,90,.45)'"
+              onblur="this.style.borderColor='rgba(74,41,118,.12)'"
+            ></textarea>
           </div>
 
           <!-- Alerta Pausa -->
@@ -1262,12 +1296,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ════════════════════════════════════════════════════════════════
 let appUser = null;       // row from users table { id, name, email, ... }
 let authUser = null;      // supabase auth user
+let scratchpadTimer = null;
 
 // Timer state
 const T = {
   clients: [], tasks: [], todayEntries: [],
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
-  settings: { daily_goal_minutes: 480 },
+  settings: { daily_goal_minutes: 480, scratchpad: '' },
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
   expandedCats: new Set(['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO']),
@@ -1619,6 +1654,31 @@ setInterval(refreshTodayPill, 30000);
 // ════════════════════════════════════════════════════════════════
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
+function initScratchpad() {
+  const textarea = document.getElementById('scratchpad-input');
+  if (!textarea) return;
+  textarea.value = T.settings.scratchpad || '';
+  textarea.addEventListener('input', () => {
+    clearTimeout(scratchpadTimer);
+    const statusEl = document.getElementById('scratchpad-status');
+    if (statusEl) { statusEl.textContent = ''; statusEl.style.opacity = '.4'; }
+    scratchpadTimer = setTimeout(async () => {
+      const text = textarea.value;
+      const { error } = await sb.from('settings').upsert(
+        { id: 1, scratchpad: text },
+        { onConflict: 'id' }
+      );
+      if (error) { showToast('Erro ao salvar anotação','err'); return; }
+      T.settings.scratchpad = text;
+      if (statusEl) {
+        statusEl.textContent = 'salvo ✓';
+        statusEl.style.opacity = '1';
+        setTimeout(() => { statusEl.style.opacity = '0'; }, 2000);
+      }
+    }, 1200);
+  });
+}
+
 async function initHome() {
   // Mobile: começa na aba Timer (selector + cronômetro)
   if (window.innerWidth <= 768) {
@@ -1633,6 +1693,19 @@ async function initHome() {
   renderTimerButtons();
   renderTodayActivities();
   renderRightSidebar();
+  initScratchpad();
+  // Event delegation for activity rows (edit + delete)
+  const actList = document.getElementById('activities-list');
+  if (actList && !actList._delegated) {
+    actList._delegated = true;
+    actList.addEventListener('click', function(ev) {
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const id = Number(btn.dataset.id);
+      if (btn.dataset.action === 'edit-entry') openManualEntryModal(id);
+      else if (btn.dataset.action === 'del-entry') deleteEntry(id);
+    });
+  }
 }
 
 async function loadHomeData() {
@@ -1833,6 +1906,8 @@ function renderTimerCenter() {
 
 function renderTimerButtons() {
   const wrap = document.getElementById('timer-buttons');
+  const manualLink = document.getElementById('manual-entry-link');
+  if (manualLink) manualLink.style.display = T.isRunning ? 'none' : '';
   if (!T.isRunning) {
     wrap.innerHTML = `
       <button class="timer-btn-wrap" onclick="startTimer()">
@@ -2006,6 +2081,105 @@ async function deleteEntry(id) {
   });
 }
 
+function openManualEntryModal(editId) {
+  const entry = editId ? T.todayEntries.find(e => e.id === editId) : null;
+  const isEdit = !!entry;
+  const title = isEdit ? 'Editar registro' : 'Lançar horas manualmente';
+  const btnLabel = isEdit ? 'Salvar alterações' : 'Registrar';
+  const selClient = entry ? entry.client_id : (T.selectedClientId || '');
+  const selTask = entry ? (entry.task_id || '') : (T.selectedTaskId || '');
+  const durH = entry ? Math.floor((entry.duration_minutes || 0) / 60) : '';
+  const durM = entry ? ((entry.duration_minutes || 0) % 60) : '';
+  const notes = entry ? (entry.notes || '') : '';
+  const entryDate = entry ? new Date(entry.start_time) : new Date();
+  const dateVal = `${String(entryDate.getDate()).padStart(2,'0')}/${String(entryDate.getMonth()+1).padStart(2,'0')}/${entryDate.getFullYear()}`;
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">${title}</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Cliente *</label>
+        <select class="field-input" id="me-client" style="cursor:pointer;">
+          <option value="">Selecionar cliente</option>
+          ${T.clients.map(c=>`<option value="${c.id}"${c.id===selClient?' selected':''}>${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tarefa *</label>
+        <select class="field-input" id="me-task" style="cursor:pointer;">
+          <option value="">Selecionar tarefa</option>
+          ${T.tasks.map(t=>`<option value="${t.id}"${t.id===selTask?' selected':''}>${t.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tempo gasto *</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="field-input" id="me-hours" type="number" min="0" max="23" placeholder="0" value="${durH}" style="width:70px;text-align:center;" />
+          <span style="font-weight:700;color:var(--text-dim);font-size:14px;">h</span>
+          <input class="field-input" id="me-minutes" type="number" min="0" max="59" placeholder="00" value="${durM}" style="width:70px;text-align:center;" />
+          <span style="font-weight:700;color:var(--text-dim);font-size:14px;">min</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Data</label>
+        <input class="field-input" id="me-date" placeholder="DD/MM/AAAA" value="${dateVal}" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Descrição (opcional)</label>
+        <input class="field-input" id="me-notes" placeholder="Detalhes..." value="${notes.replace(/"/g,'&quot;')}" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" id="me-save-btn" onclick="saveManualEntry(${editId||'null'})">${btnLabel}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function saveManualEntry(editId) {
+  const clientId = Number(document.getElementById('me-client').value);
+  const taskEl = document.getElementById('me-task');
+  const taskId = taskEl.value ? Number(taskEl.value) : null;
+  const taskName = taskEl.options[taskEl.selectedIndex]?.text || '';
+  const hours = parseInt(document.getElementById('me-hours').value) || 0;
+  const minutes = parseInt(document.getElementById('me-minutes').value) || 0;
+  const totalMinutes = (hours * 60) + minutes;
+  const dateStr = document.getElementById('me-date').value.trim();
+  const notes = document.getElementById('me-notes').value.trim() || null;
+  if (!clientId) { showToast('Selecione um cliente','warn'); return; }
+  if (!taskId) { showToast('Selecione uma tarefa','warn'); return; }
+  if (totalMinutes <= 0) { showToast('Informe o tempo gasto','warn'); return; }
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)','warn'); return; }
+  const [dd, mm, yyyy] = parts.map(Number);
+  if (!dd || !mm || !yyyy) { showToast('Data inválida','warn'); return; }
+  const startTime = new Date(yyyy, mm-1, dd, 12, 0, 0).getTime();
+  const btn = document.getElementById('me-save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  if (editId) {
+    const { error } = await sb.from('time_entries').update({
+      client_id: clientId, task_id: taskId, task_name: taskName,
+      duration_minutes: totalMinutes, start_time: startTime, notes,
+    }).eq('id', editId);
+    if (error) { showToast('Erro ao atualizar: '+error.message,'err'); btn.disabled=false; btn.textContent='Salvar alterações'; return; }
+    showToast('Registro atualizado ✓','ok');
+  } else {
+    const { error } = await sb.from('time_entries').insert({
+      user_id: appUser.id, client_id: clientId, task_id: taskId, task_name: taskName,
+      start_time: startTime, end_time: startTime + (totalMinutes*60000),
+      duration_minutes: totalMinutes, paused_duration: 0, notes,
+    });
+    if (error) { showToast('Erro ao registrar: '+error.message,'err'); btn.disabled=false; btn.textContent='Registrar'; return; }
+    showToast(`Registrado: ${fMin(totalMinutes)} ✓`,'ok');
+  }
+  closeModal();
+  await reloadTodayData();
+}
+
 async function repeatEntry(clientId, taskId, taskName) {
   T.selectedClientId = clientId;
   T.selectedTaskId = taskId;
@@ -2056,7 +2230,8 @@ function renderTodayActivities() {
       </div>
       <div style="color:var(--text-dim);font-size:12px;">${time}</div>
       <div style="font-weight:800;font-size:14px;color:var(--coral);">${fMin(e.duration_minutes||0)}</div>
-      <button class="del-btn" onclick="deleteEntry(${e.id})">×</button>
+      <button class="del-btn" data-action="edit-entry" data-id="${e.id}" title="Editar" style="font-size:14px;">✏️</button>
+      <button class="del-btn" data-action="del-entry" data-id="${e.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
 
