@@ -357,12 +357,11 @@
         box-shadow:0 -4px 24px rgba(0,0,0,.25);
       }
       #bottom-nav button {
-        flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+        flex:1; display:flex; align-items:center; justify-content:center;
         background:none; border:none; color:rgba(255,255,255,.5); font-family:inherit;
-        font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
-        cursor:pointer; padding:4px 0; border-radius:8px; transition:color .15s;
+        font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+        cursor:pointer; padding:10px 4px; border-radius:8px; transition:color .15s;
       }
-      #bottom-nav button .bnav-icon { font-size:24px; line-height:1; }
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
     }
@@ -1241,15 +1240,9 @@
 
   <!-- Bottom nav (mobile) -->
   <nav id="bottom-nav">
-    <button onclick="mobileNav('home')" data-bnav="home" class="active">
-      <span class="bnav-icon">⏱</span>Timer
-    </button>
-    <button onclick="mobileNav('atividades')" data-bnav="atividades">
-      <span class="bnav-icon">📋</span>Atividades
-    </button>
-    <button onclick="mobileNav('agenda')" data-bnav="agenda">
-      <span class="bnav-icon">📅</span>Agenda
-    </button>
+    <button onclick="mobileNav('home')" data-bnav="home" class="active">Timer</button>
+    <button onclick="mobileNav('atividades')" data-bnav="atividades">Atividades</button>
+    <button onclick="mobileNav('agenda')" data-bnav="agenda">Agenda</button>
   </nav>
 </div>
 
@@ -1301,9 +1294,28 @@ function fDur(ms) {
 }
 function fMin(m) { const h = Math.floor(m/60), min = m%60; return h>0 ? `${h}h ${min}m` : `${min}min`; }
 function fBRL(v) { return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+// Datas: banco usa YYYY-MM-DD, exibição usa DD/MM/YYYY
 function todayStr() {
   const d = new Date();
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function dbDateToDisplay(s) {
+  if (!s) return '';
+  const [yyyy,mm,dd] = s.split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
+function inputToDbDate(s) {
+  // aceita DD/MM/AAAA ou YYYY-MM-DD
+  if (!s) return null;
+  if (s.includes('-')) return s; // já está em YYYY-MM-DD
+  const [dd,mm,yyyy] = s.split('/');
+  if (!dd||!mm||!yyyy) return null;
+  return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+}
+function dbDateToTs(s) {
+  if (!s) return Infinity;
+  const [yyyy,mm,dd] = s.split('-').map(Number);
+  return new Date(yyyy, mm-1, dd).getTime();
 }
 function startOfToday() { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
 function endOfToday() { return startOfToday() + 86400000; }
@@ -1403,8 +1415,8 @@ async function renderMobileAgenda() {
   }).sort((a,b) => a.scheduled_at - b.scheduled_at).slice(0,15);
   const tasks = (T.scheduledTasks||[]).filter(t => !t.is_done)
     .sort((a,b) => {
-      const tsA = a.scheduled_date ? (() => { const [dd,mm,yy]=a.scheduled_date.split('/').map(Number); return new Date(yy,mm-1,dd).getTime(); })() : Infinity;
-      const tsB = b.scheduled_date ? (() => { const [dd,mm,yy]=b.scheduled_date.split('/').map(Number); return new Date(yy,mm-1,dd).getTime(); })() : Infinity;
+      const tsA = dbDateToTs(a.scheduled_date);
+      const tsB = dbDateToTs(b.scheduled_date);
       return tsA - tsB;
     }).slice(0,15);
   const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
@@ -2116,7 +2128,7 @@ function renderScheduledTasks() {
     client_id: t.client_id,
     date_str: t.scheduled_date || null,
     time_str: t.scheduled_time || null,
-    sort_ts: t.scheduled_date ? (() => { const [dd,mm,yyyy]=t.scheduled_date.split('/').map(Number); return new Date(yyyy,mm-1,dd).getTime(); })() : Infinity,
+    sort_ts: dbDateToTs(t.scheduled_date),
   }));
 
   const upcomingAppts = (T.appointments||[]).filter(a => !a.is_done && a.scheduled_at >= todayTs).map(a => {
@@ -2173,8 +2185,7 @@ function renderAlertCard() {
   const urgent = T.scheduledTasks.filter(t=>!t.is_done&&t.priority==='alta'&&t.scheduled_date===today);
   const overdue = T.scheduledTasks.filter(t=>{
     if (t.is_done||!t.scheduled_date) return false;
-    const [dd,mm,yyyy] = t.scheduled_date.split('/').map(Number);
-    const td = new Date(yyyy,mm-1,dd);
+    const td = new Date(dbDateToTs(t.scheduled_date));
     const now = new Date(); now.setHours(0,0,0,0);
     return td < now;
   });
@@ -2192,7 +2203,7 @@ function renderAlertCard() {
       <span style="font-size:14px;flex-shrink:0;">${isOv?'⚠️':'🔴'}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title}</div>
-        ${t.scheduled_date?`<div style="font-size:10px;color:${isOv?'#DC2626':'var(--text-dim)'};">${isOv?'⏰ Atrasada: ':''}${t.scheduled_date}${t.scheduled_time?` às ${t.scheduled_time}`:''}</div>`:''}
+        ${t.scheduled_date?`<div style="font-size:10px;color:${isOv?'#DC2626':'var(--text-dim)'};">${isOv?'⏰ Atrasada: ':''}${dbDateToDisplay(t.scheduled_date)}${t.scheduled_time?` às ${t.scheduled_time}`:''}</div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2319,7 +2330,7 @@ async function saveTask() {
   const { data, error } = await sb.from('scheduled_tasks').insert({
     user_id: appUser.id, title,
     description: document.getElementById('mt-desc').value.trim()||null,
-    scheduled_date: document.getElementById('mt-date').value.trim()||null,
+    scheduled_date: inputToDbDate(document.getElementById('mt-date').value.trim())||null,
     scheduled_time: document.getElementById('mt-time').value||null,
     priority: document.getElementById('mt-priority').value,
     client_id: document.getElementById('mt-client').value ? Number(document.getElementById('mt-client').value) : null,
@@ -2883,9 +2894,9 @@ function getEventsByDay() {
   }
   for (const task of CAL.scheduledTasks) {
     if (!task.scheduled_date) continue;
-    const parts = task.scheduled_date.split('/');
+    const parts = task.scheduled_date.split('-');
     if (parts.length !== 3) continue;
-    const [dd, mm, yyyy] = parts.map(Number);
+    const [yyyy, mm, dd] = parts.map(Number);
     if (mm-1 === CAL.month && yyyy === CAL.year) {
       if (!map[dd]) map[dd] = [];
       map[dd].push({ type:'task', title:task.title, time:task.scheduled_time||null, priority:task.priority||'media', isDone:task.is_done });
@@ -2957,8 +2968,8 @@ function renderCalSidebar() {
   const apptCount = CAL.appointments.length;
   const taskCount = CAL.scheduledTasks.filter(t => {
     if (!t.scheduled_date) return false;
-    const p = t.scheduled_date.split('/');
-    return p.length === 3 && Number(p[1])-1 === CAL.month && Number(p[2]) === CAL.year;
+    const p = t.scheduled_date.split('-');
+    return p.length === 3 && Number(p[1])-1 === CAL.month && Number(p[0]) === CAL.year;
   }).length;
 
   let panelHtml = '';
@@ -3109,7 +3120,7 @@ async function saveCalEvent() {
     const priority = document.getElementById('cme-priority').value;
     const { data, error } = await sb.from('scheduled_tasks').insert({
       title, description: desc||null,
-      scheduled_date: date||null, scheduled_time: time||null,
+      scheduled_date: inputToDbDate(date), scheduled_time: time||null,
       priority, client_id: clientId ? Number(clientId) : null,
       alert_minutes_before: alertMin ? Number(alertMin) : null,
       is_done: false,

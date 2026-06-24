@@ -100,7 +100,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `tasks` | Tarefas do timer (name, category, is_favorite, sort_order) |
 | `categories` | Categorias de tarefas — CRUD completo na Config |
 | `time_entries` | Registros de horas (client_id, task_id, task_name, start_time ms, duration_minutes, notes) |
-| `scheduled_tasks` | Tarefas agendadas (title, priority, scheduled_date DD/MM/YYYY, scheduled_time, is_done, client_id) |
+| `scheduled_tasks` | Tarefas agendadas (title, priority, scheduled_date YYYY-MM-DD, scheduled_time, is_done, client_id) |
 | `appointments` | Compromissos do Calendário (title, scheduled_at ms, is_done, client_id, alert_minutes_before) |
 | `reminders` | Alarmes pessoais (type: interval/daily, interval_minutes, daily_time HH:MM) |
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
