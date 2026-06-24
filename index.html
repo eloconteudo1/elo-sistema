@@ -366,11 +366,16 @@
       #bottom-nav button:active { opacity:.7; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; } .topbar-brand .tagline { display:none; } }
+    /* Anotações */
+    .note-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:10px; border-left:3px solid var(--lavender); animation:fadeInUp .2s ease; }
+    .note-item-text { flex:1; font-size:12px; color:var(--text); line-height:1.45; word-break:break-word; }
+    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; white-space:nowrap; margin-top:1px; }
+    .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:14px; line-height:1; padding:0 2px; opacity:.5; transition:opacity .15s; flex-shrink:0; }
+    .note-del-btn:hover { opacity:1; color:var(--coral); }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
       .activity-row [data-action] { min-width:30px; min-height:30px; display:flex; align-items:center; justify-content:center; }
-      #scratchpad-card textarea { min-height:64px; font-size:14px; }
     }
   </style>
 </head>
@@ -577,6 +582,29 @@
             </div>
           </div>
 
+          <!-- Anotações -->
+          <div class="right-card" id="notes-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <span class="sec-label">Anotações</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <input
+                id="notes-input"
+                class="elo-input"
+                placeholder="Nova ideia ou lembrete…"
+                style="flex:1;"
+                onkeydown="if(event.key==='Enter')saveNote()"
+              />
+              <button
+                onclick="saveNote()"
+                style="padding:8px 14px;border-radius:8px;border:none;background:var(--coral);
+                       color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;
+                       white-space:nowrap;"
+              >Salvar</button>
+            </div>
+            <div id="notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+          </div>
+
           <!-- Próximas tarefas -->
           <div class="right-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -587,25 +615,6 @@
               <div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma tarefa cadastrada.</div>
             </div>
             <div id="sched-done-count" style="display:none;font-size:11px;color:#aaa;margin-top:8px;"></div>
-          </div>
-
-          <!-- Anotações -->
-          <div class="right-card" id="scratchpad-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <span class="sec-label">Anotações</span>
-              <span id="scratchpad-status" style="font-size:10px;color:var(--text-dim);opacity:.6;transition:opacity .3s;"></span>
-            </div>
-            <textarea
-              id="scratchpad-input"
-              placeholder="Ideias, lembretes, próximos passos…"
-              style="width:100%;min-height:80px;max-height:200px;resize:vertical;
-                     border:1px solid rgba(74,41,118,.12);border-radius:12px;
-                     padding:10px 12px;font-family:inherit;font-size:13px;
-                     color:var(--text);background:rgba(46,27,78,.03);
-                     outline:none;line-height:1.5;transition:border-color .2s;"
-              onfocus="this.style.borderColor='rgba(196,114,90,.45)'"
-              onblur="this.style.borderColor='rgba(74,41,118,.12)'"
-            ></textarea>
           </div>
 
           <!-- Alerta Pausa -->
@@ -1296,13 +1305,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ════════════════════════════════════════════════════════════════
 let appUser = null;       // row from users table { id, name, email, ... }
 let authUser = null;      // supabase auth user
-let scratchpadTimer = null;
 
 // Timer state
 const T = {
   clients: [], tasks: [], todayEntries: [],
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
-  settings: { daily_goal_minutes: 480, scratchpad: '' },
+  settings: { daily_goal_minutes: 480 },
+  notes: [],
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
   expandedCats: new Set(['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO']),
@@ -1654,31 +1663,6 @@ setInterval(refreshTodayPill, 30000);
 // ════════════════════════════════════════════════════════════════
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
-function initScratchpad() {
-  const textarea = document.getElementById('scratchpad-input');
-  if (!textarea) return;
-  textarea.value = T.settings.scratchpad || '';
-  textarea.addEventListener('input', () => {
-    clearTimeout(scratchpadTimer);
-    const statusEl = document.getElementById('scratchpad-status');
-    if (statusEl) { statusEl.textContent = ''; statusEl.style.opacity = '.4'; }
-    scratchpadTimer = setTimeout(async () => {
-      const text = textarea.value;
-      const { error } = await sb.from('settings').upsert(
-        { id: 1, scratchpad: text },
-        { onConflict: 'id' }
-      );
-      if (error) { showToast('Erro ao salvar anotação','err'); return; }
-      T.settings.scratchpad = text;
-      if (statusEl) {
-        statusEl.textContent = 'salvo ✓';
-        statusEl.style.opacity = '1';
-        setTimeout(() => { statusEl.style.opacity = '0'; }, 2000);
-      }
-    }, 1200);
-  });
-}
-
 async function initHome() {
   // Mobile: começa na aba Timer (selector + cronômetro)
   if (window.innerWidth <= 768) {
@@ -1693,7 +1677,7 @@ async function initHome() {
   renderTimerButtons();
   renderTodayActivities();
   renderRightSidebar();
-  initScratchpad();
+  renderNotesList();
   // Event delegation for activity rows (edit + delete)
   const actList = document.getElementById('activities-list');
   if (actList && !actList._delegated) {
@@ -1706,6 +1690,21 @@ async function initHome() {
       else if (btn.dataset.action === 'del-entry') deleteEntry(id);
     });
   }
+  // Event delegation for notes list (delete)
+  const notesList = document.getElementById('notes-list');
+  if (notesList && !notesList._delegated) {
+    notesList._delegated = true;
+    notesList.addEventListener('click', async function(ev) {
+      const btn = ev.target.closest('[data-note-id]');
+      if (!btn) return;
+      const id = Number(btn.dataset.noteId);
+      const { error } = await sb.from('notes').delete().eq('id', id);
+      if (error) { showToast('Erro ao excluir nota','err'); return; }
+      T.notes = T.notes.filter(n => n.id !== id);
+      renderNotesList();
+      if (document.getElementById('cal-notes-list')) renderCalNotes();
+    });
+  }
 }
 
 async function loadHomeData() {
@@ -1714,7 +1713,7 @@ async function loadHomeData() {
   const todayTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const futureTs = todayTs + 60 * 86400000;
 
-  const [cl, tk, te, st, pa, sg, ap] = await Promise.all([
+  const [cl, tk, te, st, pa, sg, ap, no] = await Promise.all([
     sb.from('clients').select('*').eq('is_active',true).order('display_order'),
     sb.from('tasks').select('*').eq('is_active',true).order('sort_order'),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
@@ -1722,6 +1721,7 @@ async function loadHomeData() {
     sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
     sb.from('settings').select('*').eq('id',1).single(),
     sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'),
+    sb.from('notes').select('*').order('created_at',{ascending:false}),
   ]);
   T.clients = cl.data||[];
   if (sg.data) T.settings = { ...T.settings, ...sg.data };
@@ -1730,6 +1730,7 @@ async function loadHomeData() {
   T.todayEntries = te.data||[];
   T.scheduledTasks = st.data||[];
   T.appointments = ap.data||[];
+  T.notes = no.data||[];
 
   // Build payment alerts from unpaid payments
   const today = new Date(); today.setHours(0,0,0,0);
@@ -2079,6 +2080,72 @@ async function deleteEntry(id) {
     showToast('Registro removido','ok');
     await reloadTodayData();
   });
+}
+
+function renderNotesList() {
+  const list = document.getElementById('notes-list');
+  if (!list) return;
+  if (T.notes.length === 0) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;padding:6px 0;">Nenhuma anotação ainda.</div>`;
+    return;
+  }
+  list.innerHTML = T.notes.map(note => {
+    const d = new Date(note.created_at);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="note-item">
+      <div style="flex:1;">
+        <div class="note-item-text">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="note-item-date">${dateStr}</div>
+      </div>
+      <button class="note-del-btn" data-note-id="${note.id}" title="Excluir">×</button>
+    </div>`;
+  }).join('');
+}
+
+async function saveNote() {
+  const input = document.getElementById('notes-input');
+  if (!input) return;
+  const content = input.value.trim();
+  if (!content) { showToast('Digite algo antes de salvar','warn'); return; }
+  const { data, error } = await sb.from('notes').insert({ content }).select().single();
+  if (error) { showToast('Erro ao salvar nota','err'); return; }
+  T.notes.unshift(data);
+  input.value = '';
+  renderNotesList();
+  if (document.getElementById('cal-notes-list')) renderCalNotes();
+  showToast('Anotação salva ✓','ok');
+}
+
+async function renderCalNotes() {
+  const list = document.getElementById('cal-notes-list');
+  if (!list) return;
+  const { data, error } = await sb.from('notes').select('*').order('created_at',{ascending:false});
+  if (error) { list.innerHTML = '<div style="font-size:12px;color:#aaa;">Erro ao carregar.</div>'; return; }
+  if (!data || data.length === 0) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;">Nenhuma anotação ainda.</div>`;
+    return;
+  }
+  list.innerHTML = data.map(note => {
+    const d = new Date(note.created_at);
+    const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="note-item">
+      <div style="flex:1;">
+        <div class="note-item-text">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="note-item-date">${dateStr}</div>
+      </div>
+      <button class="note-del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
+    </div>`;
+  }).join('');
+  list.addEventListener('click', async function handler(ev) {
+    const btn = ev.target.closest('[data-cal-note-id]');
+    if (!btn) return;
+    const id = Number(btn.dataset.calNoteId);
+    const { error } = await sb.from('notes').delete().eq('id', id);
+    if (error) { showToast('Erro ao excluir nota','err'); return; }
+    if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+    renderNotesList();
+    renderCalNotes();
+  }, { once: true });
 }
 
 function openManualEntryModal(editId) {
@@ -3182,17 +3249,7 @@ function renderCalSidebar() {
       ${evHtml}
     </div>`;
   } else {
-    panelHtml = `<div class="cal-panel">
-      <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0 0 12px;">Legenda</h3>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        ${[['rgba(124,111,205,.3)','Compromisso'],[`${PRIORITY_COLOR.alta}44`,'Tarefa — Alta'],[`${PRIORITY_COLOR.media}44`,'Tarefa — Média'],[`${PRIORITY_COLOR.baixa}44`,'Tarefa — Baixa']].map(([c,l])=>`
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-            <div style="width:12px;height:12px;border-radius:3px;background:${c};flex-shrink:0;"></div>
-            <span style="color:#555;">${l}</span>
-          </div>`).join('')}
-      </div>
-      <p style="font-size:12px;color:#bbb;margin-top:14px;">Clique em um dia ou no <strong>+</strong> para adicionar</p>
-    </div>`;
+    panelHtml = ''; // sem legenda — notas aparecem abaixo
   }
 
   sidebar.innerHTML = panelHtml + `
@@ -3208,7 +3265,14 @@ function renderCalSidebar() {
           <div style="font-size:11px;color:#888;">Tarefas</div>
         </div>
       </div>
+    </div>
+    <div class="cal-panel" id="cal-notes-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0;letter-spacing:.5px;text-transform:uppercase;">Minhas Anotações</h3>
+      </div>
+      <div id="cal-notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
     </div>`;
+  renderCalNotes();
 }
 
 function calPrevMonth() {

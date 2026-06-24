@@ -105,7 +105,8 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `reminders` | Alarmes pessoais (type: interval/daily, interval_minutes, daily_time HH:MM) |
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
 | `cost_items` | Custos/despesas (month, year, amount, description, is_paid) |
-| `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal, **scratchpad** (text, anotações livres) |
+| `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal, scratchpad (não usado) |
+| `notes` | Anotações livres (id, content text, created_at timestamptz). Sem user_id, sem RLS. |
 
 **Constraints importantes:**
 - `monthly_payments` tem UNIQUE(client_id, month, year) para não-manuais
@@ -125,7 +126,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 - **Lançamento manual:** botão "Lançar horas manualmente" abaixo do cronômetro (visível só quando parado). Modal com cliente, tarefa, horas, minutos, data e notas. Grava em `time_entries` (mesmo formato do cronômetro). Contabiliza em Resultado e Financeiro.
 - **Edição de tempo:** botão ✏️ em cada atividade do dia. Abre o mesmo modal preenchido, permite alterar cliente, tarefa, tempo e notas.
 - **Funções novas:** `openManualEntryModal(editId)`, `saveManualEntry(editId)`. Event delegation em `#activities-list` com `data-action` (sem onclick inline nos botões de ação).
-- **Anotações (scratchpad):** card "Anotações" na sidebar direita da Home, entre Próximas tarefas e Alerta Pausa. Textarea de texto livre com auto-save (1.2s debounce) via upsert em `settings.scratchpad` (id=1). Indicador "salvo ✓" discreto. Desktop e mobile (aba ATIVIDADES). Função: `initScratchpad()`.
+- **Anotações:** card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**. Input de texto + botão Salvar (funciona com Enter). Cada nota é um item na tabela `notes` (id, content, created_at). Botão × para deletar. Espelho na sidebar do Calendário (`#cal-notes-panel`), abaixo do Resumo do Mês — notas deletáveis também pelo Calendário. Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`. Legenda removida do Calendário. `settings.scratchpad` não é mais usado.
 
 ### Resultado
 - **Aba Hoje:** KPIs, donut SVG por cliente, log de tarefas com colunas Tempo + Custo (mín/ótimo calculados)
