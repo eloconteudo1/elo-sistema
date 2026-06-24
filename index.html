@@ -315,6 +315,26 @@
       .topbar-brand .name { font-size:16px; }
       #page-container { padding:12px 10px 80px; }
       #home-grid { grid-template-columns:1fr; gap:14px; }
+
+      /* Por padrão esconde tudo no home-grid no mobile */
+      #home-selector, #home-timer-col, #home-right-sidebar, #mobile-agenda-view { display:none !important; }
+
+      /* Aba Home: seletor + timer (sem activities-card) */
+      #home-grid.mv-home #home-selector { display:block !important; }
+      #home-grid.mv-home #home-timer-col { display:block !important; }
+      #home-grid.mv-home #activities-card { display:none !important; }
+
+      /* Aba Atividades: activities-card + resumo/sidebar */
+      #home-grid.mv-atividades #home-timer-col { display:block !important; }
+      #home-grid.mv-atividades #timer-card { display:none !important; }
+      #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; }
+
+      /* Aba Agenda */
+      #home-grid.mv-agenda #mobile-agenda-view { display:block !important; }
+
+      /* Timer SVG responsivo */
+      #timer-card [style*="width:320px"] { width:100% !important; height:auto !important; max-width:280px; margin:0 auto 12px; }
+
       #bottom-nav {
         display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
         background:var(--deep); border-top:1px solid rgba(255,255,255,.1);
@@ -327,7 +347,7 @@
         font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
         cursor:pointer; padding:4px 2px; border-radius:8px; transition:color .15s;
       }
-      #bottom-nav button .bnav-icon { font-size:20px; line-height:1; }
+      #bottom-nav button .bnav-icon { font-size:22px; line-height:1; }
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
     }
@@ -414,7 +434,7 @@
       <div id="home-grid">
 
         <!-- Left sidebar -->
-        <aside style="padding:4px 0 24px;overflow-y:auto;">
+        <aside id="home-selector" style="padding:4px 0 24px;overflow-y:auto;">
           <div class="sec-label" style="margin-bottom:10px;margin-top:4px;">Cliente</div>
           <div style="position:relative;margin-bottom:6px;">
             <button id="client-btn" onclick="toggleClientDrop()">
@@ -433,7 +453,7 @@
         </aside>
 
         <!-- Center -->
-        <div>
+        <div id="home-timer-col">
           <!-- Timer card -->
           <div id="timer-card">
             <div class="timer-glow"></div>
@@ -490,7 +510,7 @@
         </div>
 
         <!-- Right sidebar -->
-        <aside style="overflow-y:auto;position:sticky;top:20px;">
+        <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;">
 
           <!-- Resumo -->
           <div class="right-card">
@@ -545,6 +565,10 @@
             <div id="fin-list"></div>
           </div>
         </aside>
+
+        <!-- Mobile Agenda view -->
+        <div id="mobile-agenda-view" style="display:none;"></div>
+
       </div>
     </div>
 
@@ -1193,23 +1217,14 @@
 
   <!-- Bottom nav (mobile) -->
   <nav id="bottom-nav">
-    <button onclick="navigateTo('home')" data-bnav="home" class="active">
-      <span class="bnav-icon">⏱</span>Home
+    <button onclick="mobileNav('home')" data-bnav="home" class="active">
+      <span class="bnav-icon">⏱</span>Timer
     </button>
-    <button onclick="navigateTo('resultado')" data-bnav="resultado">
-      <span class="bnav-icon">📊</span>Resultado
+    <button onclick="mobileNav('atividades')" data-bnav="atividades">
+      <span class="bnav-icon">📋</span>Atividades
     </button>
-    <button onclick="navigateTo('calendario')" data-bnav="calendario">
+    <button onclick="mobileNav('agenda')" data-bnav="agenda">
       <span class="bnav-icon">📅</span>Agenda
-    </button>
-    <button onclick="navigateTo('clientes')" data-bnav="clientes">
-      <span class="bnav-icon">👥</span>Clientes
-    </button>
-    <button onclick="navigateTo('financeiro')" data-bnav="financeiro">
-      <span class="bnav-icon">💰</span>Financeiro
-    </button>
-    <button onclick="navigateTo('config')" data-bnav="config">
-      <span class="bnav-icon">⚙️</span>Config
     </button>
   </nav>
 </div>
@@ -1307,6 +1322,99 @@ function navigateTo(page) {
   if (page === 'calendario' && appUser) initCalendario();
   if (page === 'financeiro' && appUser) initFinanceiro();
   if (page === 'config'     && appUser) initConfig();
+}
+
+function mobileNav(tab) {
+  if (window.innerWidth > 768) return;
+  document.querySelectorAll('#bottom-nav button').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`#bottom-nav [data-bnav="${tab}"]`);
+  if (btn) btn.classList.add('active');
+
+  navigateTo('home');
+  const grid = document.getElementById('home-grid');
+  grid.classList.remove('mv-home','mv-atividades','mv-agenda');
+  grid.classList.add('mv-' + tab);
+
+  if (tab === 'agenda') renderMobileAgenda();
+}
+
+function renderMobileAgenda() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr2 = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+  const fBRL2 = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+
+  // Compromissos próximos (próximos 7 dias)
+  const upcoming = (T.appointments||[]).filter(a => {
+    const d = new Date(a.scheduled_at); d.setHours(0,0,0,0);
+    return d >= today;
+  }).sort((a,b) => a.scheduled_at - b.scheduled_at).slice(0,10);
+
+  // Tarefas agendadas pendentes
+  const tasks = (T.scheduledTasks||[]).filter(t => !t.is_done).slice(0,10);
+
+  // Alertas financeiros
+  const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
+  const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
+
+  const cardStyle = 'background:white;border:var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);';
+  const lblStyle  = 'font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;';
+  const itemStyle = 'padding:10px 0;border-bottom:.5px solid rgba(74,41,118,.07);display:flex;align-items:flex-start;gap:10px;';
+
+  let html = '';
+
+  // Alertas financeiros
+  if (vencidos.length || avencer.length) {
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">💰 Alertas financeiros</div>`;
+    vencidos.forEach(a => {
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">🔴</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.clientName}</div>
+        <div style="font-size:11px;color:#C4487A;font-weight:600;">VENCIDO · ${fBRL2(a.amount)}</div></div></div>`;
+    });
+    avencer.forEach(a => {
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">🟡</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.clientName}</div>
+        <div style="font-size:11px;color:#E07A3A;font-weight:600;">Vence em ${a.daysLeft}d · ${fBRL2(a.amount)}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Compromissos
+  if (upcoming.length) {
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">📅 Próximos compromissos</div>`;
+    upcoming.forEach(a => {
+      const d = new Date(a.scheduled_at);
+      const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const client = T.clients.find(c=>c.id===a.client_id);
+      html += `<div style="${itemStyle}">
+        <span style="font-size:18px;">${a.is_done?'✅':'🗓'}</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${a.title}</div>
+        <div style="font-size:11px;color:var(--text-dim);">${dateStr}${client?' · '+client.name:''}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Tarefas agendadas
+  if (tasks.length) {
+    const prioColor = {alta:'#C4487A',media:'#E07A3A',baixa:'#2FB989'};
+    html += `<div style="${cardStyle}">
+      <div style="${lblStyle}">✅ Tarefas pendentes</div>`;
+    tasks.forEach(t => {
+      const client = T.clients.find(c=>c.id===t.client_id);
+      html += `<div style="${itemStyle}">
+        <span style="width:8px;height:8px;border-radius:50%;background:${prioColor[t.priority||'media']};flex-shrink:0;margin-top:5px;display:inline-block;"></span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--deep);">${t.title}</div>
+        <div style="font-size:11px;color:var(--text-dim);">${t.scheduled_date||''}${client?' · '+client.name:''}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!html) html = `<div style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:14px;">Nenhum compromisso ou alerta.</div>`;
+
+  document.getElementById('mobile-agenda-view').innerHTML = html;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1432,6 +1540,12 @@ setInterval(refreshTodayPill, 30000);
 // HOME — INIT
 // ════════════════════════════════════════════════════════════════
 async function initHome() {
+  // Mobile: começa na aba Timer (selector + cronômetro)
+  if (window.innerWidth <= 768) {
+    const grid = document.getElementById('home-grid');
+    if (!grid.classList.contains('mv-atividades') && !grid.classList.contains('mv-agenda'))
+      grid.classList.add('mv-home');
+  }
   await loadHomeData();
   renderClientList();
   renderTaskTree();
@@ -1601,6 +1715,7 @@ function selectTask(id, name) {
   renderTaskTree();
   renderTimerCenter();
   renderTimerButtons();
+  // Mobile: permanece na aba home (timer visível junto com selector)
 }
 
 // ════════════════════════════════════════════════════════════════
