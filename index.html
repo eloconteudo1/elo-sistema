@@ -363,8 +363,9 @@
         position:relative;
       }
       #bottom-nav button::before {
-        content:''; display:block; width:24px; height:3px; border-radius:2px;
-        background:transparent; transition:background .2s; margin-bottom:2px;
+        content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+        width:32px; height:3px; background:transparent;
+        border-radius:0 0 3px 3px; transition:background .2s;
       }
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button.active::before { background:var(--coral); }
@@ -383,17 +384,20 @@
       #home-grid.mv-atividades #fin-card { display:none !important; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
-    /* Anotações no padrão de lista (igual sched-task) */
+    /* Anotações — padrão visual igual a sched-task */
     .note-row { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:.5px solid rgba(74,41,118,.07); }
     .note-row:last-child { border-bottom:none; }
-    .note-row-done .note-row-text { text-decoration:line-through; opacity:.45; }
-    .note-circle { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; }
-    .note-circle.done { background:var(--green); border-color:var(--green); }
-    .note-circle:hover { opacity:.7; }
+    .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; display:flex; align-items:center; justify-content:center; padding:0; }
+    .note-check-btn:hover { background:var(--green); border-color:var(--green); }
+    .note-row-text { flex:1; font-size:12px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; min-width:0; }
+    .note-row-date { font-size:11px; color:var(--text-dim); margin-top:2px; opacity:.65; }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
       .activity-row [data-action] { min-width:30px; min-height:30px; display:flex; align-items:center; justify-content:center; }
+      .note-row { padding:10px 0; }
+      .note-check-btn { width:22px; height:22px; }
+      .note-row-text { font-size:13px; white-space:normal; }
     }
   </style>
 </head>
@@ -1781,14 +1785,28 @@ async function initHome() {
   if (notesList && !notesList._delegated) {
     notesList._delegated = true;
     notesList.addEventListener('click', async function(ev) {
-      const btn = ev.target.closest('[data-note-id]');
-      if (!btn) return;
-      const id = Number(btn.dataset.noteId);
-      const { error } = await sb.from('notes').delete().eq('id', id);
-      if (error) { showToast('Erro ao excluir nota','err'); return; }
-      T.notes = T.notes.filter(n => n.id !== id);
-      renderNotesList();
-      if (document.getElementById('cal-notes-list')) renderCalNotes();
+      const checkBtn = ev.target.closest('[data-complete-note]');
+      if (checkBtn) {
+        const id = Number(checkBtn.dataset.completeNote);
+        const row = checkBtn.closest('.note-row');
+        if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
+        await new Promise(r => setTimeout(r, 200));
+        const { error } = await sb.from('notes').delete().eq('id', id);
+        if (error) { showToast('Erro ao concluir nota','err'); return; }
+        T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        if (document.getElementById('cal-notes-list')) renderCalNotes();
+        return;
+      }
+      const delBtn = ev.target.closest('[data-note-id]');
+      if (delBtn) {
+        const id = Number(delBtn.dataset.noteId);
+        const { error } = await sb.from('notes').delete().eq('id', id);
+        if (error) { showToast('Erro ao excluir nota','err'); return; }
+        T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        if (document.getElementById('cal-notes-list')) renderCalNotes();
+      }
     });
   }
 }
@@ -2190,20 +2208,14 @@ function renderNotesList() {
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const isDone = !!note.is_done;
-    return `<div class="note-row${isDone ? ' note-row-done' : ''}" data-note-item-id="${note.id}">
+    return `<div class="note-row" data-note-item-id="${note.id}">
+      <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir e remover"></button>
       <div style="flex:1;min-width:0;">
-        <div class="note-row-text"
-          onclick="editNoteInline(this,${note.id})"
-          title="Clique para editar"
-          style="font-size:12px;font-weight:600;color:var(--text);cursor:pointer;
-                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-                 ${isDone ? 'text-decoration:line-through;opacity:.45;' : ''}">
+        <div class="note-row-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">
           ${note.content.replace(/</g,'&lt;')}
         </div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${dateStr}</div>
+        <div class="note-row-date">${dateStr}</div>
       </div>
-      <button class="del-btn" data-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
 }
@@ -2258,46 +2270,26 @@ async function renderCalNotes() {
   list.innerHTML = data.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const isDone = !!note.is_done;
-    return `<div class="note-row${isDone ? ' note-row-done' : ''}" data-note-item-id="${note.id}">
-      <button class="note-circle${isDone ? ' done' : ''}"
-        data-cal-done-id="${note.id}"
-        data-is-done="${isDone}"
-        title="${isDone ? 'Marcar como pendente' : 'Marcar como concluída'}">
-      </button>
+    return `<div class="note-row" data-note-item-id="${note.id}">
+      <button class="note-check-btn" data-cal-complete-note="${note.id}" title="Concluir e remover"></button>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);
-                    ${isDone ? 'text-decoration:line-through;opacity:.45;' : ''}
-                    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        <div class="note-row-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">
           ${note.content.replace(/</g,'&lt;')}
         </div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${dateStr}</div>
+        <div class="note-row-date">${dateStr}</div>
       </div>
-      <button class="del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
 
   list.addEventListener('click', async function handler(ev) {
-    const doneBtn = ev.target.closest('[data-cal-done-id]');
-    if (doneBtn) {
-      const id = Number(doneBtn.dataset.calDoneId);
-      const isDone = doneBtn.dataset.isDone === 'true';
-      const newDone = !isDone;
-      const { error } = await sb.from('notes').update({ is_done: newDone }).eq('id', id);
-      if (error) { showToast('Erro ao atualizar nota', 'err'); return; }
-      if (Array.isArray(T.notes)) {
-        const idx = T.notes.findIndex(n => n.id === id);
-        if (idx !== -1) T.notes[idx].is_done = newDone;
-      }
-      renderCalNotes();
-      renderNotesList();
-      return;
-    }
-    const delBtn = ev.target.closest('[data-cal-note-id]');
-    if (delBtn) {
-      const id = Number(delBtn.dataset.calNoteId);
+    const checkBtn = ev.target.closest('[data-cal-complete-note]');
+    if (checkBtn) {
+      const id = Number(checkBtn.dataset.calCompleteNote);
+      const row = checkBtn.closest('.note-row');
+      if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
+      await new Promise(r => setTimeout(r, 200));
       const { error } = await sb.from('notes').delete().eq('id', id);
-      if (error) { showToast('Erro ao excluir nota', 'err'); return; }
+      if (error) { showToast('Erro ao concluir nota', 'err'); return; }
       if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
       renderCalNotes();
       renderNotesList();

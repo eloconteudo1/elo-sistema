@@ -159,18 +159,16 @@ ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
 - Permite alterar cliente, tarefa, tempo e notas
 - Event delegation em `#activities-list` com atributo `data-action` — sem `onclick` inline nos botões
 
-**Anotações (Sessão 3 + 5A-fix)**
+**Anotações (Sessão 3 + 5A-fix + 6A)**
 - Card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**
 - Input de texto + botão Salvar (Enter também salva)
-- Cada nota = 1 linha na tabela `notes` (id, content, created_at, **is_done**)
+- Cada nota = 1 linha na tabela `notes` (id, content, created_at, is_done)
 - Layout igual `.sched-task` (linhas divisórias com `.note-row`, sem card colorido)
-- Botão × para deletar; texto truncado com ellipsis
-- **Edição inline:** clicar no texto da nota transforma em `<input>` in-place; Enter ou blur salva; Escape cancela (flag `_cancel` no elemento)
-- Espelho em `#cal-notes-panel` na sidebar do Calendário, abaixo do Resumo do Mês — deletável também pelo Calendário
-- **Check de concluído (Calendário):** círculo clicável `.note-circle` à esquerda de cada nota; verde quando feito (`.done`), texto riscado (`.note-row-done`). Estado salvo em `notes.is_done`
+- Bolinha `.note-check-btn` à esquerda — hover fica verde; clicar → fade-out + deleta do banco (deleção direta, sem toggle is_done)
+- Texto clicável para **edição inline** (`editNoteInline`): transforma em `<input>` in-place; Enter ou blur salva; Escape cancela
+- Espelho em `#cal-notes-panel` na sidebar do Calendário — mesma bolinha `.note-check-btn` com mesma interação
 - `renderCalNotes()` busca direto do Supabase (não de `T.notes`), pois o Calendário pode abrir sem passar pela Home
 - Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`, `editNoteInline(el, id)`
-- Legenda removida do Calendário; `settings.scratchpad` não é mais usado
 
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
@@ -238,7 +236,7 @@ ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
 - **Dropdown de cliente:** `position:fixed` no mobile (evita corte por `overflow:hidden`); campo de busca sem `sticky`
 - **Aba ATIVIDADES:** mostra apenas Resumo de hoje + Anotações — `#sched-tasks-card`, `#alert-card`, `#fin-card` ocultos via CSS mobile
 - **Aba AGENDA:** botão `+ Novo` no topo → bottom-sheet `#mobile-new-event-sheet` com 3 opções: Compromisso / Tarefa / Lembrete (redireciona para Calendário e abre o modal correspondente)
-- **Bottom nav:** indicador `::before` coral (barrinha 24×3px) acima do texto na aba ativa
+- **Bottom nav:** indicador `::before` coral (barrinha 32×3px, `position:absolute; top:0`) na aba ativa
 - Funções: `openMobileNewEventSheet()`, `closeMobileSheet()`
 
 ---
