@@ -356,13 +356,32 @@
         box-shadow:0 -4px 24px rgba(0,0,0,.25);
       }
       #bottom-nav button {
-        flex:1; display:flex; align-items:center; justify-content:center;
-        background:none; border:none; color:rgba(255,255,255,.5); font-family:inherit;
-        font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
-        cursor:pointer; padding:10px 4px; border-radius:8px; transition:color .15s;
+        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:4px; background:none; border:none; color:rgba(255,255,255,.5); font-family:inherit;
+        font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+        cursor:pointer; padding:8px 4px; border-radius:8px; transition:color .15s;
+        position:relative;
+      }
+      #bottom-nav button::before {
+        content:''; display:block; width:24px; height:3px; border-radius:2px;
+        background:transparent; transition:background .2s; margin-bottom:2px;
       }
       #bottom-nav button.active { color:var(--coral); }
+      #bottom-nav button.active::before { background:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
+
+      /* Dropdown de cliente mobile */
+      #client-dropdown {
+        position:fixed !important;
+        left:12px !important; right:12px !important; top:auto !important;
+        max-height:60vh !important; z-index:500;
+        border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.18);
+      }
+
+      /* Aba ATIVIDADES: mostrar só Resumo + Anotações */
+      #home-grid.mv-atividades #sched-tasks-card { display:none !important; }
+      #home-grid.mv-atividades #alert-card { display:none !important; }
+      #home-grid.mv-atividades #fin-card { display:none !important; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
     /* Anotações */
@@ -470,7 +489,7 @@
               <span class="chevron">▼</span>
             </button>
             <div id="client-dropdown">
-              <div style="padding:10px 12px 6px;position:sticky;top:0;background:#fff;z-index:1;border-bottom:1px solid rgba(74,41,118,.07);">
+              <div style="padding:10px 12px 6px;background:#fff;z-index:1;border-bottom:1px solid rgba(74,41,118,.07);">
                 <input
                   id="client-search"
                   type="text"
@@ -478,7 +497,7 @@
                   autocomplete="off"
                   style="width:100%;padding:7px 12px;border-radius:10px;border:1.5px solid rgba(74,41,118,.15);
                          font-family:inherit;font-size:13px;color:var(--deep);outline:none;
-                         transition:border-color .15s;background:var(--bg);"
+                         transition:border-color .15s;background:var(--bg);box-sizing:border-box;"
                   oninput="renderClientList()"
                   onfocus="this.style.borderColor='rgba(196,114,90,.5)'"
                   onblur="this.style.borderColor='rgba(74,41,118,.15)'"
@@ -621,7 +640,7 @@
           </div>
 
           <!-- Próximas tarefas -->
-          <div class="right-card">
+          <div id="sched-tasks-card" class="right-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <span class="sec-label">Próximas tarefas</span>
               <button onclick="openTaskModal()" style="background:var(--coral);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit;">+ ADD</button>
@@ -1487,7 +1506,13 @@ async function renderMobileAgenda() {
   const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
   const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
 
-  let html = '';
+  let html = `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);">Agenda</div>
+    <button onclick="openMobileNewEventSheet()"
+      style="background:var(--coral);color:#fff;border:none;border-radius:10px;
+             padding:8px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ Novo</button>
+  </div>`;
 
   // 1. Compromissos
   html += `<div style="${cardS}">
@@ -1560,6 +1585,40 @@ async function renderMobileAgenda() {
   html += `</div>`;
 
   document.getElementById('mobile-agenda-view').innerHTML = html;
+}
+
+function openMobileNewEventSheet() {
+  const existing = document.getElementById('mobile-new-event-sheet');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="mobile-new-event-sheet"
+      style="position:fixed;inset:0;z-index:600;display:flex;flex-direction:column;justify-content:flex-end;">
+      <div onclick="closeMobileSheet()"
+        style="flex:1;background:rgba(0,0,0,.4);"></div>
+      <div style="background:white;border-radius:22px 22px 0 0;padding:24px 20px 40px;">
+        <div style="width:40px;height:4px;background:rgba(0,0,0,.12);border-radius:4px;margin:0 auto 20px;"></div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">O que deseja cadastrar?</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>openCalModal('appt'),300)"
+            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;color:var(--deep);cursor:pointer;text-align:left;">
+            📅 Compromisso
+          </button>
+          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>openCalModal('task'),300)"
+            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;color:var(--deep);cursor:pointer;text-align:left;">
+            ✅ Tarefa agendada
+          </button>
+          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>setCalTab('alertas'),300)"
+            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;color:var(--deep);cursor:pointer;text-align:left;">
+            🔔 Lembrete
+          </button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function closeMobileSheet() {
+  const sheet = document.getElementById('mobile-new-event-sheet');
+  if (sheet) sheet.remove();
 }
 
 // ════════════════════════════════════════════════════════════════
