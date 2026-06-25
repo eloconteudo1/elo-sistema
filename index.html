@@ -1735,8 +1735,8 @@ async function loadHomeData() {
   const futureTs = todayTs + 60 * 86400000;
 
   const [cl, tk, te, st, pa, sg, ap, no] = await Promise.all([
-    sb.from('clients').select('*').eq('is_active',true).order('display_order'),
-    sb.from('tasks').select('*').eq('is_active',true).order('sort_order'),
+    sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
+    sb.from('tasks').select('*').eq('is_active',true).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
     sb.from('scheduled_tasks').select('*').order('created_at',{ascending:false}),
     sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
@@ -1805,7 +1805,8 @@ function renderClientList() {
   const externals = T.clients.filter(c => !c.is_internal);
   const favs      = applySearch(alpha(externals.filter(c => c.is_favorite)));
   const nonFavs   = applySearch(alpha(externals.filter(c => !c.is_favorite)));
-  const ints      = applySearch(alpha(internals));
+  const intFavs   = applySearch(alpha(internals.filter(c => c.is_favorite)));
+  const intNonFavs= applySearch(alpha(internals.filter(c => !c.is_favorite)));
   const optHtml = (c, extraClass='') => {
     const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
     const sel = T.selectedClientId===c.id;
@@ -1816,10 +1817,11 @@ function renderClientList() {
     </div>`;
   };
   let html = '';
-  if (favs.length)    { html += `<div class="client-group-label">⭐ Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
-  if (nonFavs.length) { html += `<div class="client-group-label">Clientes</div>`;    nonFavs.forEach(c => html += optHtml(c,'')); }
-  if (ints.length)    { html += `<div class="client-group-label">Interno</div>`;     ints.forEach(c => html += optHtml(c,'')); }
-  if (!favs.length && !nonFavs.length && !ints.length) {
+  if (favs.length)        { html += `<div class="client-group-label">⭐ Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (nonFavs.length)     { html += `<div class="client-group-label">Clientes</div>`;    nonFavs.forEach(c => html += optHtml(c,'')); }
+  if (intFavs.length)     { html += `<div class="client-group-label">⭐ Interno</div>`;  intFavs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (intNonFavs.length)  { html += `<div class="client-group-label">Interno</div>`;     intNonFavs.forEach(c => html += optHtml(c,'')); }
+  if (!favs.length && !nonFavs.length && !intFavs.length && !intNonFavs.length) {
     html = `<div style="padding:20px 16px;text-align:center;font-size:13px;color:var(--text-dim);opacity:.6;">Nenhum cliente encontrado</div>`;
   }
   list.innerHTML = html;
@@ -1863,15 +1865,33 @@ function updateClientBtn() {
 }
 
 function renderTaskTree() {
+  const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+  const favTasks = alpha(T.tasks.filter(t => t.is_favorite));
   const tasksByCategory = {};
-  for (const t of T.tasks) {
+  for (const t of T.tasks.filter(t => !t.is_favorite)) {
     if (!tasksByCategory[t.category]) tasksByCategory[t.category] = [];
     tasksByCategory[t.category].push(t);
   }
+  const mkTaskBtn = (t, icon) => `
+    <button class="task-btn${T.selectedTaskId===t.id?' selected':''}" onclick="selectTask(${t.id},'${t.name.replace(/'/g,"\\'")}')">
+      <div class="task-icon">${icon}</div>
+      ${t.name}
+    </button>`;
   let html = '';
+  if (favTasks.length) {
+    const expanded = T.expandedCats.has('__favs__');
+    html += `<div>
+      <div class="cat-header" onclick="toggleCat('__favs__')">
+        <div class="cat-dot" style="background:var(--coral);"></div>
+        ⭐ FAVORITAS
+        <span class="cat-toggle">${expanded?'▲':'▼'}</span>
+      </div>
+      ${expanded ? favTasks.map(t => mkTaskBtn(t, (CAT_CONFIG[t.category]||{icon:'⭐'}).icon)).join('') : ''}
+    </div>`;
+  }
   for (const cat of CAT_ORDER) {
     const cfg = CAT_CONFIG[cat] || { color:'#888', icon:'📌' };
-    const catTasks = tasksByCategory[cat] || [];
+    const catTasks = alpha(tasksByCategory[cat] || []);
     const expanded = T.expandedCats.has(cat);
     html += `<div>
       <div class="cat-header" onclick="toggleCat('${cat}')">
@@ -1879,12 +1899,7 @@ function renderTaskTree() {
         ${cat}
         <span class="cat-toggle">${expanded?'▲':'▼'}</span>
       </div>
-      ${expanded ? catTasks.map(t => `
-        <button class="task-btn${T.selectedTaskId===t.id?' selected':''}" onclick="selectTask(${t.id},'${t.name.replace(/'/g,"\\'")}')">
-          <div class="task-icon">${cfg.icon}</div>
-          ${t.name}
-        </button>
-      `).join('') : ''}
+      ${expanded ? catTasks.map(t => mkTaskBtn(t, cfg.icon)).join('') : ''}
     </div>`;
   }
   document.getElementById('task-tree').innerHTML = html;
@@ -2658,7 +2673,7 @@ async function initClientes() {
 async function loadClientesData() {
   const now = new Date();
   const [cl, pm] = await Promise.all([
-    sb.from('clients').select('*').order('display_order').order('name'),
+    sb.from('clients').select('*').order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('monthly_payments').select('*').eq('month', now.getMonth()+1).eq('year', now.getFullYear()),
   ]);
   C.clients = cl.data || [];
@@ -2699,8 +2714,12 @@ function toggleClientExpand(id) {
 
 function renderClientGrid() {
   const list = getFilteredClients();
-  const externos = list.filter(c => !c.is_internal);
-  const internos = list.filter(c => c.is_internal);
+  const sortClients = arr => [...arr].sort((a,b) => {
+    if (b.is_favorite !== a.is_favorite) return b.is_favorite ? 1 : -1;
+    return a.name.localeCompare(b.name,'pt-BR');
+  });
+  const externos = sortClients(list.filter(c => !c.is_internal));
+  const internos = sortClients(list.filter(c => c.is_internal));
   const totalMes = externos.reduce((s,c) => s + Number(c.contract_value||0), 0);
   const totalFmt = totalMes.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
   document.getElementById('cl-subtitle').textContent =
@@ -4494,7 +4513,7 @@ async function cfgRenderTasks() {
   const countEl = document.getElementById('cfg-tasks-count');
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">Carregando...</div>';
   await cfgRenderCats();
-  const { data: tasks, error } = await sb.from('tasks').select('*').order('sort_order');
+  const { data: tasks, error } = await sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true});
   if (error) { el.innerHTML = '<div style="color:red;padding:16px">Erro ao carregar tarefas</div>'; return; }
   T.tasks = tasks || [];
   countEl.textContent = `${T.tasks.length} tarefa${T.tasks.length!==1?'s':''} cadastrada${T.tasks.length!==1?'s':''}`;
@@ -4530,8 +4549,12 @@ function cfgTaskRowHTML(t) {
 }
 
 async function cfgToggleFav(id, isFav) {
-  await sb.from('tasks').update({ is_favorite: isFav }).eq('id', id);
+  const { error } = await sb.from('tasks').update({ is_favorite: isFav }).eq('id', id);
+  if (error) { showToast('Erro ao atualizar favorito', 'err'); return; }
+  const t = T.tasks.find(x => x.id === id);
+  if (t) t.is_favorite = isFav;
   cfgRenderTasks();
+  renderTaskTree();
 }
 
 async function cfgDeleteTask(id, name) {
