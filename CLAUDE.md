@@ -233,6 +233,14 @@ ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
   - CSS `.name` e `.tagline` removidos
 - **Rodapé:** elemento `#build-date` dentro do `<footer class="elo-footer">` — atualizar a cada commit
 
+### Mobile (Sessão 6)
+
+- **Dropdown de cliente:** `position:fixed` no mobile (evita corte por `overflow:hidden`); campo de busca sem `sticky`
+- **Aba ATIVIDADES:** mostra apenas Resumo de hoje + Anotações — `#sched-tasks-card`, `#alert-card`, `#fin-card` ocultos via CSS mobile
+- **Aba AGENDA:** botão `+ Novo` no topo → bottom-sheet `#mobile-new-event-sheet` com 3 opções: Compromisso / Tarefa / Lembrete (redireciona para Calendário e abre o modal correspondente)
+- **Bottom nav:** indicador `::before` coral (barrinha 24×3px) acima do texto na aba ativa
+- Funções: `openMobileNewEventSheet()`, `closeMobileSheet()`
+
 ---
 
 ## 8. O que ainda falta implementar
@@ -243,7 +251,6 @@ ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
-| 4 | Mobile iOS — bottom nav, timer responsivo 375px | Alta |
 
 ---
 
