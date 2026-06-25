@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema ELO · Conteúdo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --coral:#C4725A; --coral-light:#D4866E;
+      --purple:#4A2976; --lavender:#BFA8D9;
+      --deep:#2E1B4E; --deep2:#1D0D31;
+      --off:#F3F0F4; --bg:#F4F1F8; --bg2:#EDE8F5;
+      --surface:#FFFFFF; --surface2:#F0EBF8;
+      --text:#2E1B4E; --text-dim:rgba(46,27,78,0.65);
+      --green:#2FB989; --orange:#E07A3A; --blue:#3B82F6; --pink:#C4487A;
+      --shadow:0 18px 45px rgba(46,24,71,0.10);
+      --shadow-sm:0 4px 16px rgba(46,24,71,0.08);
+      --border:1px solid rgba(74,41,118,0.10);
+      --radius:22px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+    /* ── Topbar ── */
+    .elo-topbar { height:72px; background:linear-gradient(90deg,var(--deep) 0%,var(--deep2) 100%); display:flex; align-items:center; padding:0 32px; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,.18); flex-shrink:0; }
+    .topbar-brand { display:flex; align-items:center; flex-shrink:0; }
+    .elo-nav { flex:1; display:flex; justify-content:center; }
+    .elo-nav-inner { display:flex; align-items:center; gap:2px; background:rgba(255,255,255,.07); border-radius:14px; padding:4px; }
+    .elo-top-tab { padding:8px 20px; border-radius:10px; background:transparent; border:none; color:rgba(255,255,255,.6); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:all .18s; white-space:nowrap; }
+    .elo-top-tab:hover { color:white; background:rgba(255,255,255,.10); }
+    .elo-top-tab.active { color:white; background:rgba(255,255,255,.18); font-weight:800; }
+    .topbar-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
+    .topbar-clock { text-align:right; line-height:1.2; }
+    .topbar-clock .time { font-size:15px; font-weight:700; color:white; }
+    .topbar-clock .date { font-size:11px; color:rgba(255,255,255,.5); text-transform:capitalize; }
+    .topbar-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--lavender),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:white; flex-shrink:0; cursor:pointer; position:relative; user-select:none; }
+    .avatar-menu { display:none; position:absolute; top:calc(100% + 8px); right:0; background:white; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.18); padding:6px; min-width:160px; z-index:200; }
+    .avatar-menu.open { display:block; }
+    .avatar-menu-item { display:block; width:100%; padding:9px 14px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text); text-align:left; cursor:pointer; border-radius:8px; }
+    .avatar-menu-item:hover { background:var(--bg); }
+    .avatar-menu-item.danger { color:#DC2626; }
+
+    /* ── Layout principal ── */
+    .cn-page { display:flex; gap:32px; height:calc(100vh - 72px - 40px); padding:24px 32px; flex:1; }
+
+    /* ── Bloco de notas ── */
+    .cn-block { flex:1.4; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
+    .cn-header { padding:16px 20px; border-bottom:var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .cn-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
+    .cn-sub { font-size:13px; font-weight:600; color:var(--deep); margin-top:2px; }
+    .cn-editor-wrap { flex:1; padding:16px 20px; min-height:0; display:flex; flex-direction:column; }
+    .cn-editor { flex:1; background:var(--surface2); border:var(--border); border-radius:14px; padding:16px; font-size:14px; line-height:1.8; color:var(--text); outline:none; overflow-y:auto; font-family:inherit; }
+    .cn-editor:empty::before { content:attr(data-placeholder); color:var(--lavender); pointer-events:none; }
+    .cn-footer { padding:10px 20px; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--text-dim); flex-shrink:0; border-top:var(--border); }
+
+    /* ── Banco de inspirações ── */
+    .banco-panel { flex:1; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
+    .banco-head { background:var(--deep); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
+    .banco-head-title { color:#fff; font-weight:700; font-size:15px; }
+    .banco-head-sub { color:var(--lavender); font-size:11px; margin-top:2px; }
+    .banco-search-wrap { padding:10px 12px; border-bottom:var(--border); flex-shrink:0; }
+    .banco-search-input { width:100%; }
+    .banco-chips { display:flex; flex-wrap:wrap; gap:5px; padding:8px 12px; border-bottom:var(--border); flex-shrink:0; }
+    .banco-chip { background:var(--surface); border:var(--border); border-radius:18px; padding:3px 10px; font-size:11px; font-weight:500; color:var(--text-dim); cursor:pointer; font-family:inherit; transition:all .15s; display:flex; align-items:center; gap:4px; }
+    .banco-chip:hover { background:var(--bg2); border-color:var(--purple); color:var(--purple); }
+    .banco-chip.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .banco-chip-count { background:rgba(0,0,0,.12); border-radius:6px; padding:0 5px; font-size:10px; }
+    .banco-chip.active .banco-chip-count { background:rgba(255,255,255,.2); }
+    .banco-list { flex:1; overflow-y:auto; padding:8px; }
+    .banco-list::-webkit-scrollbar { width:4px; }
+    .banco-list::-webkit-scrollbar-thumb { background:var(--lavender); border-radius:2px; }
+    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; transition:box-shadow .15s; }
+    .banco-card:hover { box-shadow:var(--shadow-sm); }
+    .banco-card-tags { display:flex; gap:6px; margin-bottom:7px; flex-wrap:wrap; }
+    .banco-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
+    .banco-tag.esp { background:var(--bg2); color:var(--purple); }
+    .banco-tag.fmt { background:rgba(196,114,90,.1); color:var(--coral); }
+    .banco-tag.review { background:rgba(224,122,58,.15); color:var(--orange); }
+    .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); margin-bottom:5px; line-height:1.35; cursor:pointer; }
+    .banco-card-title:hover { color:var(--purple); }
+    .banco-card-caption { font-size:12px; color:var(--text-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .banco-btn-usar:hover { background:var(--coral-light); }
+    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:12px; transition:background .15s; }
+    .banco-btn-icon:hover { background:var(--bg2); }
+    .banco-btn-add { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; font-weight:600; padding:6px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:all .15s; }
+    .banco-btn-add:hover { background:rgba(255,255,255,.25); }
+    .banco-empty { text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
+    .banco-load-more { width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); margin-top:4px; transition:background .15s; }
+    .banco-load-more:hover { background:var(--bg2); }
+
+    /* ── Seletor customizado de cliente ── */
+    .cn-select-wrap { position:relative; }
+    .cn-select-trigger { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--surface); border:var(--border); border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text); min-width:200px; user-select:none; transition:border-color .15s; }
+    .cn-select-trigger:hover { border-color:rgba(74,41,118,.25); }
+    .cn-select-trigger.open { border-color:var(--purple); }
+    .cn-dot { width:8px; height:8px; border-radius:50%; background:var(--lavender); flex-shrink:0; }
+    .cn-dropdown { position:absolute; top:calc(100% + 6px); left:0; right:0; min-width:240px; background:var(--surface); border:var(--border); border-radius:14px; box-shadow:0 12px 40px rgba(46,24,71,.18); z-index:500; display:none; }
+    .cn-dropdown.open { display:block; }
+    .cn-dropdown-search { padding:10px; border-bottom:var(--border); }
+    .cn-dropdown-list { max-height:220px; overflow-y:auto; }
+    .cn-dropdown-item { display:flex; align-items:center; gap:9px; padding:8px 12px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text); transition:background .1s; }
+    .cn-dropdown-item:hover { background:var(--surface2); }
+    .cn-dropdown-item.selected { background:var(--bg2); }
+
+    /* ── Modais ── */
+    .elo-overlay { position:fixed; inset:0; background:rgba(29,13,49,.55); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    .elo-modal { background:var(--surface); border-radius:20px; padding:26px; position:relative; animation:popIn .2s cubic-bezier(.4,0,.2,1); box-shadow:0 32px 80px rgba(46,24,71,.28); max-height:90vh; overflow-y:auto; }
+    @keyframes popIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+    .elo-modal-header { margin-bottom:20px; }
+    .elo-modal-header h3 { font-size:18px; font-weight:700; color:var(--deep); }
+    .elo-modal-body { margin-bottom:20px; }
+    .elo-modal-footer { display:flex; justify-content:flex-end; gap:10px; padding-top:16px; border-top:var(--border); }
+    .elo-modal-close { position:absolute; top:14px; right:14px; background:var(--bg2); border:none; width:28px; height:28px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-dim); }
+
+    /* ── Botões ── */
+    .elo-btn-primary { background:var(--coral); border:none; color:#fff; font-size:13px; font-weight:700; padding:9px 20px; border-radius:10px; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .elo-btn-primary:hover { background:var(--coral-light); }
+    .elo-btn-primary:disabled { background:var(--lavender); cursor:not-allowed; }
+    .elo-btn-ghost { background:transparent; border:var(--border); color:var(--text); font-size:13px; font-weight:600; padding:9px 18px; border-radius:10px; cursor:pointer; font-family:inherit; transition:all .15s; }
+    .elo-btn-ghost:hover { background:var(--bg2); }
+    .elo-btn-danger { background:#DC2626; border:none; color:#fff; font-size:13px; font-weight:700; padding:9px 18px; border-radius:10px; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .elo-btn-danger:hover { background:#B91C1C; }
+
+    /* ── Inputs ── */
+    .elo-label { display:block; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
+    .elo-input, .elo-select { width:100%; padding:10px 14px; border:var(--border); border-radius:10px; font-family:inherit; font-size:13px; color:var(--text); background:var(--surface); outline:none; transition:border-color .2s; }
+    .elo-input:focus, .elo-select:focus { border-color:rgba(196,114,90,.5); }
+    textarea.elo-input { resize:vertical; }
+
+    /* ── Toast ── */
+    .cn-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--deep); color:#fff; padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600; z-index:9999; transition:transform .3s ease; pointer-events:none; box-shadow:var(--shadow); }
+    .cn-toast.show { transform:translateX(-50%) translateY(0); }
+    .cn-toast.cn-toast-err { background:#DC2626; }
+    .cn-toast.cn-toast-warn { background:var(--orange); }
+
+    /* ── Footer ── */
+    .cn-page-footer { height:40px; background:var(--deep); display:flex; align-items:center; justify-content:center; gap:16px; flex-shrink:0; }
+    .cn-page-footer span { font-size:11px; color:rgba(255,255,255,.4); font-weight:600; letter-spacing:1px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="elo-topbar">
+    <div class="topbar-brand">
+      <img src="logo-elo.png" alt="ELO" height="34" onerror="this.style.display='none'">
+    </div>
+    <nav class="elo-nav">
+      <div class="elo-nav-inner">
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Home</button>
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Resultado</button>
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Calendário</button>
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Clientes</button>
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Financeiro</button>
+        <button class="elo-top-tab active">Conteúdo</button>
+        <button class="elo-top-tab" onclick="window.location.href='index.html'">Config.</button>
+      </div>
+    </nav>
+    <div class="topbar-right">
+      <div class="topbar-clock">
+        <div class="time" id="clock-time">--:--</div>
+        <div class="date" id="clock-date">---</div>
+      </div>
+      <div class="topbar-avatar" id="avatarBtn" onclick="toggleAvatarMenu()">E
+        <div class="avatar-menu" id="avatarMenu">
+          <button class="avatar-menu-item danger" onclick="doLogout()">Sair</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="cn-page">
+
+    <!-- BLOCO DE NOTAS -->
+    <div class="cn-block">
+      <div class="cn-header">
+        <div>
+          <div class="cn-label">Anotações de Conteúdo</div>
+          <div class="cn-sub" id="cn-client-hint">Selecione um cliente para começar</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="cn-select-wrap" id="cnSelectWrap">
+            <div class="cn-select-trigger" id="cnTrigger" onclick="cnToggleDropdown()">
+              <span class="cn-dot" id="cnDot"></span>
+              <span id="cnTriggerText">Selecionar cliente</span>
+              <span id="cnArrow" style="font-size:10px;color:var(--text-dim);margin-left:auto;">▼</span>
+            </div>
+            <div class="cn-dropdown" id="cnDropdown">
+              <div class="cn-dropdown-search">
+                <input type="text" placeholder="Buscar cliente..." id="cnSearch" oninput="cnFilter(this.value)" class="elo-input" style="padding:7px 12px;font-size:12px;">
+              </div>
+              <div class="cn-dropdown-list" id="cnList"></div>
+            </div>
+          </div>
+          <button class="elo-btn-primary" id="cnBtnSalvar" onclick="cnSalvar()" disabled>Salvar</button>
+        </div>
+      </div>
+
+      <div class="cn-editor-wrap">
+        <div
+          id="cnEditor"
+          class="cn-editor"
+          contenteditable="false"
+          data-placeholder="Selecione um cliente acima para começar a anotar ideias de conteúdo..."
+          onkeydown="cnHandleKey(event)"
+        ></div>
+      </div>
+
+      <div class="cn-footer">
+        <span>Ctrl+S para salvar · As anotações ficam salvas por cliente</span>
+        <span id="cnSavedBadge" style="display:none;color:var(--green);font-weight:700;">✓ Salvo</span>
+      </div>
+    </div>
+
+    <!-- BANCO DE INSPIRAÇÕES -->
+    <div class="banco-panel">
+      <div class="banco-head">
+        <div>
+          <div class="banco-head-title">Banco de Inspirações</div>
+          <div class="banco-head-sub" id="bancoSub">carregando...</div>
+        </div>
+        <button class="banco-btn-add" onclick="bancoOpenModal(null)">+ Nova ideia</button>
+      </div>
+
+      <div class="banco-search-wrap">
+        <input type="text" class="elo-input banco-search-input"
+          placeholder="Buscar tema, palavra-chave..."
+          oninput="bancoFiltrar(this.value)" id="bancoSearchInput"
+          style="padding:8px 12px;font-size:13px;">
+      </div>
+
+      <div class="banco-chips" id="bancoChips"></div>
+
+      <div class="banco-list" id="bancoList"></div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="cn-page-footer">
+    <span>Sistema ELO</span>
+    <span style="color:rgba(255,255,255,.2);">·</span>
+    <span>Versão 3.0</span>
+    <span style="color:rgba(255,255,255,.2);">·</span>
+    <span>ELO Comunicação · Umuarama-PR</span>
+    <span style="color:rgba(255,255,255,.2);">·</span>
+    <span>Conteúdo</span>
+  </footer>
+
+  <script>
+    const sb = supabase.createClient(
+      'https://vatkfkdnflbdfomglvme.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhdGtma2RuZmxiZGZvbWdsdm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDIzMDUsImV4cCI6MjA5NzcxODMwNX0.DhcxD1Z9HERL4128bKrIIZ8KajcYK5hny8zLxBwHmGM'
+    );
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
+    async function initPage() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'index.html'; return; }
+      startClock();
+      await Promise.all([cnInit(), bancoInit()]);
+    }
+
+    async function doLogout() {
+      await sb.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    function toggleAvatarMenu() {
+      document.getElementById('avatarMenu').classList.toggle('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#avatarBtn')) {
+        document.getElementById('avatarMenu').classList.remove('open');
+      }
+    });
+
+    // ── Relógio ───────────────────────────────────────────────────────────────
+
+    function startClock() {
+      function tick() {
+        const n = new Date();
+        document.getElementById('clock-time').textContent =
+          n.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+        document.getElementById('clock-date').textContent =
+          n.toLocaleDateString('pt-BR', { weekday:'short', day:'numeric', month:'short' });
+        setTimeout(tick, 1000);
+      }
+      tick();
+    }
+
+    // ── Utilitários ───────────────────────────────────────────────────────────
+
+    function showToast(msg, type='ok') {
+      const t = document.createElement('div');
+      t.className = `cn-toast cn-toast-${type}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 10);
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+    }
+
+    function openConfirmModal(title, body, cb) {
+      const html = `
+        <div class="elo-overlay" id="confirmModal">
+          <div class="elo-modal" style="width:420px;max-width:94vw;">
+            <div class="elo-modal-header"><h3>${title}</h3></div>
+            <div class="elo-modal-body"><p style="font-size:14px;color:var(--text-dim);">${body}</p></div>
+            <div class="elo-modal-footer">
+              <button class="elo-btn-ghost" onclick="document.getElementById('confirmModal').remove()">Cancelar</button>
+              <button class="elo-btn-danger" id="confirmDeleteBtn">Excluir</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+      document.getElementById('confirmDeleteBtn').onclick = () => {
+        document.getElementById('confirmModal').remove();
+        cb();
+      };
+    }
+
+    // ── BLOCO DE NOTAS ────────────────────────────────────────────────────────
+
+    const cnState = {
+      clients: [],
+      selectedClient: null,
+      dropdownOpen: false,
+      filterText: '',
+    };
+
+    async function cnInit() {
+      const { data, error } = await sb.from('clients')
+        .select('id, name, color')
+        .eq('is_active', true)
+        .order('name');
+      if (error) { showToast('Erro ao carregar clientes: ' + error.message, 'err'); return; }
+      cnState.clients = data || [];
+      cnRenderList();
+    }
+
+    function cnToggleDropdown() {
+      cnState.dropdownOpen = !cnState.dropdownOpen;
+      const dd = document.getElementById('cnDropdown');
+      const trigger = document.getElementById('cnTrigger');
+      dd.classList.toggle('open', cnState.dropdownOpen);
+      trigger.classList.toggle('open', cnState.dropdownOpen);
+      if (cnState.dropdownOpen) {
+        setTimeout(() => document.getElementById('cnSearch').focus(), 50);
+      } else {
+        document.getElementById('cnSearch').value = '';
+        cnState.filterText = '';
+        cnRenderList();
+      }
+    }
+
+    function cnFilter(v) {
+      cnState.filterText = v.toLowerCase();
+      cnRenderList();
+    }
+
+    function cnRenderList() {
+      const q = cnState.filterText;
+      const filtered = q
+        ? cnState.clients.filter(c => c.name.toLowerCase().includes(q))
+        : cnState.clients;
+      const el = document.getElementById('cnList');
+      if (!filtered.length) {
+        el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-dim);text-align:center;">Nenhum cliente encontrado</div>';
+        return;
+      }
+      el.innerHTML = filtered.map(c => `
+        <div class="cn-dropdown-item${cnState.selectedClient?.id === c.id ? ' selected' : ''}"
+          data-id="${c.id}" onclick="cnSelectClient(${c.id})">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c.color || 'var(--lavender)'};flex-shrink:0;display:inline-block;"></span>
+          ${c.name}
+        </div>
+      `).join('');
+    }
+
+    async function cnSelectClient(id) {
+      const c = cnState.clients.find(x => x.id === id);
+      if (!c) return;
+      cnState.selectedClient = c;
+      document.getElementById('cnDot').style.background = c.color || 'var(--lavender)';
+      document.getElementById('cnTriggerText').textContent = c.name;
+      document.getElementById('cnBtnSalvar').disabled = false;
+      const editor = document.getElementById('cnEditor');
+      editor.contentEditable = 'true';
+      document.getElementById('cn-client-hint').textContent = c.name;
+      editor.innerHTML = '<div style="color:var(--lavender);font-size:13px;">Carregando...</div>';
+      const { data } = await sb.from('content_notes')
+        .select('content')
+        .eq('client_id', id)
+        .maybeSingle();
+      editor.innerHTML = data?.content || '';
+      if (!data?.content) editor.focus();
+      cnToggleDropdown();
+    }
+
+    function cnHandleKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        cnSalvar();
+      }
+    }
+
+    async function cnSalvar() {
+      if (!cnState.selectedClient) return;
+      const content = document.getElementById('cnEditor').innerHTML;
+      const { error } = await sb.from('content_notes')
+        .upsert(
+          { client_id: cnState.selectedClient.id, content, updated_at: new Date().toISOString() },
+          { onConflict: 'client_id' }
+        );
+      if (error) { showToast('Erro ao salvar: ' + error.message, 'err'); return; }
+      const badge = document.getElementById('cnSavedBadge');
+      badge.style.display = 'inline';
+      setTimeout(() => { badge.style.display = 'none'; }, 2500);
+      showToast('Anotações salvas ✓', 'ok');
+    }
+
+    // Fecha dropdown ao clicar fora
+    document.addEventListener('click', e => {
+      if (cnState.dropdownOpen && !e.target.closest('#cnSelectWrap')) {
+        cnToggleDropdown();
+      }
+    });
+
+    // ── BANCO DE INSPIRAÇÕES ──────────────────────────────────────────────────
+
+    const BANCO = {
+      posts: [],
+      filtered: [],
+      specialty: 'todas',
+      search: '',
+      page: 0,
+      PAGE_SIZE: 50,
+    };
+
+    const SPECIALTY_LABELS = {
+      'neuropsicologia': 'Neuropsicologia',
+      'endocrinologia': 'Endocrinologia',
+      'elo': 'Elo Conteúdo',
+      'pediatria': 'Pediatria',
+      'cardiologia': 'Cardiologia',
+      'negocios': 'Negócios',
+      'ginecologia': 'Ginecologia',
+      'pedagogia': 'Pedagogia',
+      'exames': 'Exames de Imagem',
+      'nutricao': 'Nutrição',
+      'motivacional': 'Motivacional',
+      'gastroenterologia': 'Gastroenterologia',
+      'sazonal': 'Datas Comemorativas',
+      'geriatria': 'Geriatria',
+      'evoa': 'Instituto Evoá',
+      'oftalmologia': 'Oftalmologia',
+      'referencias': 'Referências',
+      'ref_visual': 'Ref. Visual',
+      'festa': 'Festa Infantil',
+      'pessoal': 'Pessoal',
+    };
+
+    async function bancoInit() {
+      const { data, error } = await sb.from('inspiration_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { showToast('Erro ao carregar banco: ' + error.message, 'err'); return; }
+      BANCO.posts = data || [];
+      bancoRenderChips();
+      bancoAplicarFiltro();
+    }
+
+    function bancoRenderChips() {
+      const counts = {};
+      BANCO.posts.forEach(p => {
+        counts[p.specialty_key] = (counts[p.specialty_key] || 0) + 1;
+      });
+      const total = BANCO.posts.length;
+      const chips = [
+        { key: 'todas', label: 'Todas', count: total },
+        ...Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .map(([key, count]) => ({ key, label: SPECIALTY_LABELS[key] || key, count }))
+      ];
+      document.getElementById('bancoChips').innerHTML = chips.map(c =>
+        `<button class="banco-chip${BANCO.specialty === c.key ? ' active' : ''}"
+          data-key="${c.key}" onclick="bancoSetSpecialty('${c.key}')">
+          ${c.label} <span class="banco-chip-count">${c.count}</span>
+        </button>`
+      ).join('');
+      document.getElementById('bancoSub').textContent =
+        `${total} posts · ${Object.keys(counts).length} especialidades`;
+    }
+
+    function bancoFiltrar(v) {
+      BANCO.search = v.toLowerCase();
+      BANCO.page = 0;
+      bancoAplicarFiltro();
+    }
+
+    function bancoSetSpecialty(key) {
+      BANCO.specialty = key;
+      BANCO.page = 0;
+      bancoRenderChips();
+      bancoAplicarFiltro();
+    }
+
+    function bancoAplicarFiltro() {
+      BANCO.filtered = BANCO.posts.filter(p => {
+        const okEsp = BANCO.specialty === 'todas' || p.specialty_key === BANCO.specialty;
+        const q = BANCO.search;
+        const okSearch = !q ||
+          (p.title || '').toLowerCase().includes(q) ||
+          (p.caption || '').toLowerCase().includes(q) ||
+          (p.specialty || '').toLowerCase().includes(q);
+        return okEsp && okSearch;
+      });
+      bancoRenderList();
+    }
+
+    function bancoRenderList() {
+      const el = document.getElementById('bancoList');
+      const slice = BANCO.filtered.slice(0, (BANCO.page + 1) * BANCO.PAGE_SIZE);
+      if (!slice.length) {
+        el.innerHTML = '<div class="banco-empty">Nenhum post encontrado</div>';
+        return;
+      }
+      el.innerHTML = slice.map(p => `
+        <div class="banco-card" data-id="${p.id}">
+          <div class="banco-card-tags">
+            <span class="banco-tag esp">${p.specialty || ''}</span>
+            <span class="banco-tag fmt">${p.format || ''}</span>
+            ${p.needs_review ? '<span class="banco-tag review">Revisar</span>' : ''}
+          </div>
+          <div class="banco-card-title" data-id="${p.id}" onclick="bancoOpenView(${p.id})">${p.title || '(sem título)'}</div>
+          <div class="banco-card-caption">${(p.caption || '').slice(0, 120)}${p.caption && p.caption.length > 120 ? '...' : ''}</div>
+          <div class="banco-card-foot">
+            <button class="banco-btn-usar" data-id="${p.id}" onclick="bancoUsarBase(${p.id})">↓ Usar como base</button>
+            <div style="display:flex;gap:6px;">
+              <button class="banco-btn-icon" data-id="${p.id}" onclick="bancoOpenModal(${p.id})" title="Editar">✏️</button>
+              <button class="banco-btn-icon" data-id="${p.id}" onclick="bancoConfirmDelete(${p.id})" title="Excluir">🗑</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      if (BANCO.filtered.length > slice.length) {
+        el.insertAdjacentHTML('beforeend', `
+          <button class="banco-load-more" onclick="bancoLoadMore()">
+            Carregar mais (${BANCO.filtered.length - slice.length} restantes)
+          </button>
+        `);
+      }
+    }
+
+    function bancoLoadMore() {
+      BANCO.page++;
+      bancoRenderList();
+    }
+
+    function bancoOpenModal(id) {
+      const p = id ? BANCO.posts.find(x => x.id === id) : null;
+      const isEdit = !!p;
+      const escTitle = (p?.title || '').replace(/"/g, '&quot;');
+
+      const html = `
+        <div class="elo-overlay" id="bancoModal" onclick="if(event.target===this)bancoCloseModal()">
+          <div class="elo-modal" style="width:600px;max-width:94vw;">
+            <div class="elo-modal-header">
+              <h3>${isEdit ? 'Editar ideia' : 'Nova ideia'}</h3>
+              <button class="elo-modal-close" onclick="bancoCloseModal()">×</button>
+            </div>
+            <div class="elo-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <label class="elo-label">Título</label>
+                <input id="bm-title" class="elo-input" type="text" value="${escTitle}" placeholder="Título do post de referência">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label class="elo-label">Especialidade</label>
+                  <select id="bm-specialty" class="elo-select">
+                    ${Object.entries(SPECIALTY_LABELS).map(([k,v]) =>
+                      `<option value="${k}"${p?.specialty_key === k ? ' selected' : ''}>${v}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="elo-label">Formato</label>
+                  <select id="bm-format" class="elo-select">
+                    ${['Carrossel','Reels','Card único'].map(f =>
+                      `<option${p?.format === f ? ' selected' : ''}>${f}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label class="elo-label">Legenda / Rascunho</label>
+                <textarea id="bm-caption" class="elo-input" rows="5" style="resize:vertical;">${p?.caption || ''}</textarea>
+              </div>
+              <div>
+                <label class="elo-label">Link do post original</label>
+                <input id="bm-link" class="elo-input" type="url" value="${p?.reference_link || ''}" placeholder="https://www.instagram.com/p/...">
+              </div>
+              <div>
+                <label class="elo-label">Status</label>
+                <select id="bm-status" class="elo-select">
+                  ${['Ideia','Aprovado','Usado'].map(s =>
+                    `<option${p?.status === s ? ' selected' : ''}>${s}</option>`
+                  ).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="elo-modal-footer">
+              <button class="elo-btn-ghost" onclick="bancoCloseModal()">Cancelar</button>
+              <button class="elo-btn-primary" onclick="bancoSalvarModal(${id || 'null'})">
+                ${isEdit ? 'Salvar alterações' : 'Adicionar ao banco'}
+              </button>
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    function bancoCloseModal() {
+      document.getElementById('bancoModal')?.remove();
+    }
+
+    async function bancoSalvarModal(id) {
+      const title   = document.getElementById('bm-title').value.trim();
+      const spKey   = document.getElementById('bm-specialty').value;
+      const sp      = SPECIALTY_LABELS[spKey] || spKey;
+      const format  = document.getElementById('bm-format').value;
+      const caption = document.getElementById('bm-caption').value.trim();
+      const link    = document.getElementById('bm-link').value.trim();
+      const status  = document.getElementById('bm-status').value;
+
+      if (!title && !caption) { showToast('Preencha ao menos o título ou a legenda', 'warn'); return; }
+
+      const payload = { specialty: sp, specialty_key: spKey, format, title, caption,
+                        reference_link: link || null, status, needs_review: false };
+
+      let error;
+      if (id) {
+        ({ error } = await sb.from('inspiration_posts').update(payload).eq('id', id));
+        if (!error) {
+          const idx = BANCO.posts.findIndex(x => x.id === id);
+          if (idx > -1) BANCO.posts[idx] = { ...BANCO.posts[idx], ...payload };
+        }
+      } else {
+        const { data, error: e } = await sb.from('inspiration_posts').insert(payload).select().single();
+        error = e;
+        if (!error && data) BANCO.posts.unshift(data);
+      }
+
+      if (error) { showToast('Erro: ' + error.message, 'err'); return; }
+      bancoCloseModal();
+      bancoRenderChips();
+      bancoAplicarFiltro();
+      showToast(id ? 'Ideia atualizada ✓' : 'Ideia adicionada ✓', 'ok');
+    }
+
+    function bancoConfirmDelete(id) {
+      const p = BANCO.posts.find(x => x.id === id);
+      openConfirmModal(
+        'Excluir ideia',
+        `Excluir "${p?.title || 'este post'}" do banco de inspirações?`,
+        async () => {
+          const { error } = await sb.from('inspiration_posts').delete().eq('id', id);
+          if (error) { showToast('Erro: ' + error.message, 'err'); return; }
+          BANCO.posts = BANCO.posts.filter(x => x.id !== id);
+          bancoRenderChips();
+          bancoAplicarFiltro();
+          showToast('Ideia excluída', 'ok');
+        }
+      );
+    }
+
+    function bancoOpenView(id) {
+      const p = BANCO.posts.find(x => x.id === id);
+      if (!p) return;
+      const html = `
+        <div class="elo-overlay" id="bancoViewModal" onclick="if(event.target===this)document.getElementById('bancoViewModal').remove()">
+          <div class="elo-modal" style="width:580px;max-width:94vw;">
+            <button class="elo-modal-close" onclick="document.getElementById('bancoViewModal').remove()">×</button>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <span class="banco-tag esp">${p.specialty || ''}</span>
+              <span class="banco-tag fmt">${p.format || ''}</span>
+            </div>
+            <div style="font-size:18px;font-weight:700;color:var(--deep);margin-bottom:16px;line-height:1.3;">${p.title || '(sem título)'}</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Legenda / Rascunho</div>
+            <div style="background:var(--surface2);border:var(--border);border-radius:12px;padding:14px;font-size:14px;line-height:1.75;color:var(--text);margin-bottom:16px;white-space:pre-line;max-height:300px;overflow-y:auto;">${p.caption || '(sem legenda)'}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Formato</div>
+                <div style="font-size:14px;font-weight:600;">${p.format || '—'}</div>
+              </div>
+              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Especialidade</div>
+                <div style="font-size:14px;font-weight:600;">${p.specialty || '—'}</div>
+              </div>
+              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Status</div>
+                <div style="font-size:14px;font-weight:600;color:var(--green);">${p.status || '—'}</div>
+              </div>
+              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Coleção</div>
+                <div style="font-size:14px;font-weight:600;">${p.collection || '—'}</div>
+              </div>
+              ${p.reference_link ? `
+              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;grid-column:1/-1;">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Link Original</div>
+                <a href="${p.reference_link}" target="_blank" rel="noopener" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
+              </div>` : ''}
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:var(--border);">
+              <button class="elo-btn-ghost" onclick="document.getElementById('bancoViewModal').remove();bancoOpenModal(${p.id})">✏️ Editar</button>
+              <button class="elo-btn-primary" onclick="document.getElementById('bancoViewModal').remove();bancoUsarBase(${p.id})">↓ Usar como base</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    function bancoUsarBase(id) {
+      const p = BANCO.posts.find(x => x.id === id);
+      if (!p) return;
+      const editor = document.getElementById('cnEditor');
+      if (editor.contentEditable !== 'true') {
+        showToast('Selecione um cliente no bloco de notas primeiro', 'warn');
+        return;
+      }
+      const div = document.createElement('div');
+      div.innerHTML = `<p><strong>• ${p.title || p.specialty}</strong> — ${p.format || ''}${p.reference_link ? ` <a href="${p.reference_link}" target="_blank" rel="noopener" style="color:var(--purple);font-size:12px;">↗ ver post</a>` : ''}</p>`;
+      editor.appendChild(div);
+      editor.scrollTop = editor.scrollHeight;
+      showToast('Tema adicionado ao bloco de notas', 'ok');
+    }
+
+    // ── Start ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>
