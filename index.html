@@ -365,14 +365,13 @@
       #bottom-nav button:active { opacity:.7; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
-    /* Anotações */
-    .note-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:10px; border-left:3px solid var(--lavender); animation:fadeInUp .2s ease; }
-    .note-item-text { flex:1; font-size:12px; color:var(--text); line-height:1.45; word-break:break-word; }
-    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; white-space:nowrap; margin-top:1px; }
-    .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:14px; line-height:1; padding:0 2px; opacity:.5; transition:opacity .15s; flex-shrink:0; }
-    .note-del-btn:hover { opacity:1; color:var(--coral); }
-    .note-item-text { cursor:text; }
-    .note-item-text:hover { color:var(--purple); }
+    /* Anotações no padrão de lista (igual sched-task) */
+    .note-row { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:.5px solid rgba(74,41,118,.07); }
+    .note-row:last-child { border-bottom:none; }
+    .note-row-done .note-row-text { text-decoration:line-through; opacity:.45; }
+    .note-circle { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; }
+    .note-circle.done { background:var(--green); border-color:var(--green); }
+    .note-circle:hover { opacity:.7; }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
@@ -617,7 +616,7 @@
                        white-space:nowrap;"
               >Salvar</button>
             </div>
-            <div id="notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+            <div id="notes-list" style="display:flex;flex-direction:column;max-height:200px;overflow-y:auto;"></div>
           </div>
 
           <!-- Próximas tarefas -->
@@ -2118,19 +2117,27 @@ async function deleteEntry(id) {
 function renderNotesList() {
   const list = document.getElementById('notes-list');
   if (!list) return;
-  if (T.notes.length === 0) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;padding:6px 0;">Nenhuma anotação ainda.</div>`;
+  if (!T.notes || T.notes.length === 0) {
+    list.innerHTML = `<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma anotação ainda.</div>`;
     return;
   }
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="note-item">
-      <div style="flex:1;">
-        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
-        <div class="note-item-date">${dateStr}</div>
+    const isDone = !!note.is_done;
+    return `<div class="note-row${isDone ? ' note-row-done' : ''}" data-note-item-id="${note.id}">
+      <div style="flex:1;min-width:0;">
+        <div class="note-row-text"
+          onclick="editNoteInline(this,${note.id})"
+          title="Clique para editar"
+          style="font-size:12px;font-weight:600;color:var(--text);cursor:pointer;
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                 ${isDone ? 'text-decoration:line-through;opacity:.45;' : ''}">
+          ${note.content.replace(/</g,'&lt;')}
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${dateStr}</div>
       </div>
-      <button class="note-del-btn" data-note-id="${note.id}" title="Excluir">×</button>
+      <button class="del-btn" data-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
 }
@@ -2179,29 +2186,56 @@ async function renderCalNotes() {
   const { data, error } = await sb.from('notes').select('*').order('created_at',{ascending:false});
   if (error) { list.innerHTML = '<div style="font-size:12px;color:#aaa;">Erro ao carregar.</div>'; return; }
   if (!data || data.length === 0) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;">Nenhuma anotação ainda.</div>`;
+    list.innerHTML = `<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma anotação ainda.</div>`;
     return;
   }
   list.innerHTML = data.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="note-item">
-      <div style="flex:1;">
-        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
-        <div class="note-item-date">${dateStr}</div>
+    const isDone = !!note.is_done;
+    return `<div class="note-row${isDone ? ' note-row-done' : ''}" data-note-item-id="${note.id}">
+      <button class="note-circle${isDone ? ' done' : ''}"
+        data-cal-done-id="${note.id}"
+        data-is-done="${isDone}"
+        title="${isDone ? 'Marcar como pendente' : 'Marcar como concluída'}">
+      </button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);
+                    ${isDone ? 'text-decoration:line-through;opacity:.45;' : ''}
+                    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          ${note.content.replace(/</g,'&lt;')}
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${dateStr}</div>
       </div>
-      <button class="note-del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
+      <button class="del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
+
   list.addEventListener('click', async function handler(ev) {
-    const btn = ev.target.closest('[data-cal-note-id]');
-    if (!btn) return;
-    const id = Number(btn.dataset.calNoteId);
-    const { error } = await sb.from('notes').delete().eq('id', id);
-    if (error) { showToast('Erro ao excluir nota','err'); return; }
-    if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
-    renderNotesList();
-    renderCalNotes();
+    const doneBtn = ev.target.closest('[data-cal-done-id]');
+    if (doneBtn) {
+      const id = Number(doneBtn.dataset.calDoneId);
+      const isDone = doneBtn.dataset.isDone === 'true';
+      const newDone = !isDone;
+      const { error } = await sb.from('notes').update({ is_done: newDone }).eq('id', id);
+      if (error) { showToast('Erro ao atualizar nota', 'err'); return; }
+      if (Array.isArray(T.notes)) {
+        const idx = T.notes.findIndex(n => n.id === id);
+        if (idx !== -1) T.notes[idx].is_done = newDone;
+      }
+      renderCalNotes();
+      renderNotesList();
+      return;
+    }
+    const delBtn = ev.target.closest('[data-cal-note-id]');
+    if (delBtn) {
+      const id = Number(delBtn.dataset.calNoteId);
+      const { error } = await sb.from('notes').delete().eq('id', id);
+      if (error) { showToast('Erro ao excluir nota', 'err'); return; }
+      if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+      renderCalNotes();
+      renderNotesList();
+    }
   }, { once: true });
 }
 
@@ -3333,7 +3367,7 @@ function renderCalSidebar() {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0;letter-spacing:.5px;text-transform:uppercase;">Minhas Anotações</h3>
       </div>
-      <div id="cal-notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+      <div id="cal-notes-list" style="display:flex;flex-direction:column;max-height:280px;overflow-y:auto;"></div>
     </div>`;
   renderCalNotes();
 }

@@ -110,7 +110,7 @@ let clExpandedCards = new Set(); // IDs dos cards expandidos
 | `monthly_payments` | Recebimentos mensais (client_id, month, year, amount, is_paid, due_day, is_manual) |
 | `cost_items` | Custos/despesas (month, year, amount, description, is_paid) |
 | `settings` | Configurações únicas (id=1): daily_goal_minutes, payment_alert_days, revenue_goal, despesas_mensais, pro_labore, lucro_desejado, dias_uteis, hourly_rate_min, hourly_rate_optimal, scratchpad (não usado) |
-| `notes` | Anotações livres (id, content text, created_at timestamptz). **Sem user_id. RLS desativado.** |
+| `notes` | Anotações livres (id, content text, created_at timestamptz, **is_done boolean default false**). **Sem user_id. RLS desativado.** |
 
 **SQL aplicado no banco:**
 ```sql
@@ -124,6 +124,9 @@ CREATE TABLE notes (
   created_at timestamptz default now()
 );
 ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
+
+-- Campo de concluído nas anotações (Sessão 5A-fix)
+ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
 ```
 
 **Constraints importantes:**
@@ -156,13 +159,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Permite alterar cliente, tarefa, tempo e notas
 - Event delegation em `#activities-list` com atributo `data-action` — sem `onclick` inline nos botões
 
-**Anotações (Sessão 3)**
+**Anotações (Sessão 3 + 5A-fix)**
 - Card `#notes-card` na sidebar direita da Home, **acima de Próximas tarefas**
 - Input de texto + botão Salvar (Enter também salva)
-- Cada nota = 1 linha na tabela `notes` (id, content, created_at)
-- Botão × para deletar via `openConfirmModal`
+- Cada nota = 1 linha na tabela `notes` (id, content, created_at, **is_done**)
+- Layout igual `.sched-task` (linhas divisórias com `.note-row`, sem card colorido)
+- Botão × para deletar; texto truncado com ellipsis
 - **Edição inline:** clicar no texto da nota transforma em `<input>` in-place; Enter ou blur salva; Escape cancela (flag `_cancel` no elemento)
 - Espelho em `#cal-notes-panel` na sidebar do Calendário, abaixo do Resumo do Mês — deletável também pelo Calendário
+- **Check de concluído (Calendário):** círculo clicável `.note-circle` à esquerda de cada nota; verde quando feito (`.done`), texto riscado (`.note-row-done`). Estado salvo em `notes.is_done`
 - `renderCalNotes()` busca direto do Supabase (não de `T.notes`), pois o Calendário pode abrir sem passar pela Home
 - Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`, `editNoteInline(el, id)`
 - Legenda removida do Calendário; `settings.scratchpad` não é mais usado
