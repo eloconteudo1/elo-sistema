@@ -351,18 +351,24 @@
 
       #bottom-nav {
         display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
-        background:var(--deep); border-top:1px solid rgba(255,255,255,.1);
-        padding:6px 0; padding-bottom:max(6px, env(safe-area-inset-bottom));
-        box-shadow:0 -4px 24px rgba(0,0,0,.25);
+        background:var(--surface); border-top:var(--border);
+        box-shadow:0 -4px 20px rgba(46,24,71,.08);
+        height:calc(64px + env(safe-area-inset-bottom));
+        padding-bottom:env(safe-area-inset-bottom);
+        align-items:stretch;
       }
       #bottom-nav button {
-        flex:1; display:flex; align-items:center; justify-content:center;
-        background:none; border:none; color:rgba(255,255,255,.5); font-family:inherit;
-        font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
-        cursor:pointer; padding:10px 4px; border-radius:8px; transition:color .15s;
+        flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+        gap:3px; background:none; border:none; color:rgba(46,27,78,.4); font-family:inherit;
+        cursor:pointer; padding:8px 4px 4px; transition:color .18s;
+        -webkit-tap-highlight-color:transparent;
       }
       #bottom-nav button.active { color:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
+      .bnav-icon { font-size:22px; line-height:1; }
+      .bnav-label { font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
+      .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--coral); opacity:0; transition:opacity .18s; margin-top:1px; }
+      #bottom-nav button.active .bnav-dot { opacity:1; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
     /* Anotações */
@@ -438,6 +444,9 @@
     </nav>
     <div class="topbar-right">
       <div class="topbar-pill" id="today-pill">0m hoje</div>
+      <div id="alert-badge" onclick="navigateTo('financeiro')" style="display:none;background:#DC2626;color:white;border-radius:50%;width:22px;height:22px;font-size:11px;font-weight:800;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="Alertas de pagamento">
+        <span id="alert-badge-count">0</span>
+      </div>
       <div class="topbar-clock">
         <div class="time" id="clock-time">--:--</div>
         <div class="date" id="clock-date">---</div>
@@ -1298,9 +1307,21 @@
 
   <!-- Bottom nav (mobile) -->
   <nav id="bottom-nav">
-    <button onclick="mobileNav('home')" data-bnav="home" class="active">Timer</button>
-    <button onclick="mobileNav('atividades')" data-bnav="atividades">Atividades</button>
-    <button onclick="mobileNav('agenda')" data-bnav="agenda">Agenda</button>
+    <button onclick="mobileNav('home')" data-bnav="home" class="active">
+      <span class="bnav-icon">⏱️</span>
+      <span class="bnav-label">Timer</span>
+      <span class="bnav-dot"></span>
+    </button>
+    <button onclick="mobileNav('atividades')" data-bnav="atividades">
+      <span class="bnav-icon">📋</span>
+      <span class="bnav-label">Atividades</span>
+      <span class="bnav-dot"></span>
+    </button>
+    <button onclick="mobileNav('agenda')" data-bnav="agenda">
+      <span class="bnav-icon">📅</span>
+      <span class="bnav-label">Agenda</span>
+      <span class="bnav-dot"></span>
+    </button>
   </nav>
 </div>
 
@@ -1352,11 +1373,16 @@ function fDur(ms) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 function fMin(m) { const h = Math.floor(m/60), min = m%60; return h>0 ? `${h}h ${min}m` : `${min}min`; }
+function normalizeStr(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 function highlight(text, term) {
   if (!term) return text;
-  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  const normText = normalizeStr(text);
+  const normTerm = normalizeStr(term);
+  const idx = normText.indexOf(normTerm);
   if (idx === -1) return text;
-  return text.slice(0,idx) + `<strong style="color:var(--coral);">${text.slice(idx,idx+term.length)}</strong>` + text.slice(idx+term.length);
+  return text.slice(0,idx) + `<strong style="color:var(--coral);">${text.slice(idx, idx + term.length)}</strong>` + text.slice(idx + term.length);
 }
 function fBRL(v) { return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 // Datas: banco usa YYYY-MM-DD, exibição usa DD/MM/YYYY
@@ -1544,16 +1570,28 @@ async function renderMobileAgenda() {
   html += `<div style="${cardS}">
     <div style="${lblS}">💰 Alertas de pagamento</div>`;
   if (vencidos.length || avencer.length) {
-    vencidos.forEach(a => {
-      html += `<div style="${rowS}"><span style="font-size:20px;">🔴</span>
-        <div><div style="${titleS}">${a.clientName}</div>
-        <div style="font-size:11px;color:#C4487A;font-weight:700;margin-top:2px;">VENCIDO · ${fBRL2(a.amount)}</div></div></div>`;
-    });
-    avencer.forEach(a => {
-      html += `<div style="${rowS}"><span style="font-size:20px;">🟡</span>
-        <div><div style="${titleS}">${a.clientName}</div>
-        <div style="font-size:11px;color:#E07A3A;font-weight:700;margin-top:2px;">Vence em ${a.daysLeft}d · ${fBRL2(a.amount)}</div></div></div>`;
-    });
+    const sortedVencidos = [...vencidos].sort((a,b) => (b.daysOverdue||0) - (a.daysOverdue||0));
+    const sortedAvencer  = [...avencer].sort((a,b) => (a.daysLeft||0) - (b.daysLeft||0));
+    if (sortedVencidos.length) {
+      html += `<div style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;margin-bottom:6px;">🔴 VENCIDO</div>`;
+      sortedVencidos.forEach(a => {
+        const daysStr = a.daysOverdue > 0 ? `venceu há ${a.daysOverdue} dia${a.daysOverdue>1?'s':''}` : 'venceu hoje';
+        const amtStr = a.amount ? ` · ${fBRL2(a.amount)}` : '';
+        html += `<div style="${rowS}padding:8px 10px;background:rgba(220,38,38,.06);border-radius:10px;border-left:3px solid #DC2626;margin-bottom:4px;">
+          <div><div style="${titleS}color:#DC2626;">${a.clientName}</div>
+          <div style="font-size:11px;color:#DC2626;opacity:.8;font-weight:600;margin-top:2px;">${daysStr}${amtStr}</div></div></div>`;
+      });
+    }
+    if (sortedAvencer.length) {
+      html += `<div style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#EA580C;margin-top:8px;margin-bottom:6px;">🟠 VENCE EM BREVE</div>`;
+      sortedAvencer.forEach(a => {
+        const daysStr = a.daysLeft === 0 ? 'vence hoje' : a.daysLeft === 1 ? 'vence amanhã' : `vence em ${a.daysLeft} dias`;
+        const amtStr = a.amount ? ` · ${fBRL2(a.amount)}` : '';
+        html += `<div style="${rowS}padding:8px 10px;background:rgba(234,88,12,.06);border-radius:10px;border-left:3px solid #EA580C;margin-bottom:4px;">
+          <div><div style="${titleS}color:#EA580C;">${a.clientName}</div>
+          <div style="font-size:11px;color:#EA580C;opacity:.8;font-weight:600;margin-top:2px;">${daysStr}${amtStr}</div></div></div>`;
+      });
+    }
   } else {
     html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhum alerta de pagamento.</div>`;
   }
@@ -1698,6 +1736,7 @@ async function initHome() {
   renderTimerButtons();
   renderTodayActivities();
   renderRightSidebar();
+  updateAlertBadge();
   renderNotesList();
   // Event delegation for activity rows (edit + delete)
   const actList = document.getElementById('activities-list');
@@ -1763,10 +1802,26 @@ async function loadHomeData() {
     if (!dueDay) continue;
     const dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
     const diff = Math.floor((dueDate - today) / 86400000);
-    if (diff < 0) alerts.push({ type:'vencido', clientName: name, dueDay, clientId: p.client_id||p.id });
-    else if (diff <= 5) alerts.push({ type:'avencer', clientName: name, dueDay, clientId: p.client_id||p.id });
+    if (diff < 0) alerts.push({ type:'vencido', clientName: name, dueDay, clientId: p.client_id||p.id, amount: p.amount, daysOverdue: Math.abs(diff) });
+    else if (diff <= 5) alerts.push({ type:'avencer', clientName: name, dueDay, clientId: p.client_id||p.id, amount: p.amount, daysLeft: diff });
   }
   T.paymentAlerts = alerts;
+}
+
+function updateAlertBadge() {
+  const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
+  const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
+  const total = vencidos.length + avencer.length;
+  const badge = document.getElementById('alert-badge');
+  const count = document.getElementById('alert-badge-count');
+  if (!badge) return;
+  if (total === 0) {
+    badge.style.display = 'none';
+  } else {
+    badge.style.display = 'flex';
+    badge.style.background = vencidos.length > 0 ? '#DC2626' : '#EA580C';
+    count.textContent = total;
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1800,7 +1855,7 @@ function renderClientList() {
   const searchEl = document.getElementById('client-search');
   const term = (searchEl ? searchEl.value : '').toLowerCase().trim();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
-  const applySearch = arr => term ? arr.filter(c => c.name.toLowerCase().includes(term)) : arr;
+  const applySearch = arr => term ? arr.filter(c => normalizeStr(c.name).includes(normalizeStr(term))) : arr;
   const internals = T.clients.filter(c => c.is_internal);
   const externals = T.clients.filter(c => !c.is_internal);
   const favs      = applySearch(alpha(externals.filter(c => c.is_favorite)));
@@ -3750,9 +3805,11 @@ function renderFinanceiro() {
         const avulso = p.is_manual
           ? `<span style="font-size:9px;background:#e8f5e9;color:#2e7d32;border-radius:6px;padding:1px 5px;font-weight:700;margin-right:5px;white-space:nowrap;">AVULSO</span>`
           : '';
-        return `<tr>
+        const rowBg = isVencido ? 'background:rgba(220,38,38,.05);' : '';
+        const amtStyle = isVencido ? 'color:#DC2626;' : '';
+        return `<tr style="${rowBg}">
           <td style="${TDbase}">${avulso}${finClientName(p)}</td>
-          <td style="${TDnw}text-align:right;font-weight:700;">${fBRL(Number(p.amount))}</td>
+          <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(p.amount))}</td>
           <td style="${TDnw}text-align:center;">${finClientDueDay(p)}</td>
           <td style="${TDnw}text-align:center;">${status}</td>
           <td style="${TDnw}text-align:center;">${action}${del}</td>

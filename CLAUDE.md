@@ -236,6 +236,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 |---|--------|-----------|
 | C | Barra meta Financeiro com cores vermelho/amarelo/verde | Alta |
 | S1 | ~~Ordenação tarefas favoritas + clientes — Sprint 1~~ | **Concluído** |
+| S2 | ~~Melhorias UX: busca cliente, alertas visuais, mobile nav — Sprint 2~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
