@@ -44,8 +44,21 @@
     .avatar-menu-item:hover { background:var(--bg); }
     .avatar-menu-item.danger { color:#DC2626; }
 
+    /* ── Barra KPIs ── */
+    .cn-topbar-kpis { background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); padding:16px 24px; display:flex; align-items:center; gap:24px; margin:16px 32px 0; flex-shrink:0; }
+    .cn-kpi-info { flex:0 0 auto; }
+    .cn-kpi-label { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
+    .cn-kpi-title { font-size:18px; font-weight:800; color:var(--deep); line-height:1.2; }
+    .cn-kpi-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+    .cn-kpi-cards { display:flex; gap:10px; flex:1; }
+    .cn-kpi-card { background:var(--surface); border:var(--border); border-radius:14px; padding:10px 18px; flex:1; box-shadow:0 1px 4px rgba(46,24,71,.05); }
+    .cn-kpi-card-label { font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
+    .cn-kpi-card-val { font-size:26px; font-weight:800; color:var(--deep); line-height:1.1; }
+    .cn-kpi-card-hint { font-size:10px; color:var(--text-dim); margin-top:2px; }
+    .cn-kpi-actions { flex-shrink:0; }
+
     /* ── Layout principal ── */
-    .cn-page { display:flex; gap:32px; height:calc(100vh - 72px - 40px); padding:24px 32px; flex:1; }
+    .cn-page { display:flex; gap:32px; height:calc(100vh - 72px - 40px - 90px); padding:16px 32px 0; flex:1; }
 
     /* ── Bloco de notas ── */
     .cn-block { flex:1.4; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
@@ -59,7 +72,7 @@
 
     /* ── Banco de inspirações ── */
     .banco-panel { flex:1; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
-    .banco-head { background:var(--deep); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
+    .banco-head { background:linear-gradient(135deg,var(--purple) 0%,var(--deep) 100%); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
     .banco-head-title { color:#fff; font-weight:700; font-size:15px; }
     .banco-head-sub { color:var(--lavender); font-size:11px; margin-top:2px; }
     .banco-search-wrap { padding:10px 12px; border-bottom:var(--border); flex-shrink:0; }
@@ -67,9 +80,9 @@
     .banco-chips { display:flex; flex-wrap:wrap; gap:5px; padding:8px 12px; border-bottom:var(--border); flex-shrink:0; }
     .banco-chip { background:var(--surface); border:var(--border); border-radius:18px; padding:3px 10px; font-size:11px; font-weight:500; color:var(--text-dim); cursor:pointer; font-family:inherit; transition:all .15s; display:flex; align-items:center; gap:4px; }
     .banco-chip:hover { background:var(--bg2); border-color:var(--purple); color:var(--purple); }
-    .banco-chip.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+    .banco-chip.active { background:var(--coral); border-color:var(--coral); color:#fff; }
     .banco-chip-count { background:rgba(0,0,0,.12); border-radius:6px; padding:0 5px; font-size:10px; }
-    .banco-chip.active .banco-chip-count { background:rgba(255,255,255,.2); }
+    .banco-chip.active .banco-chip-count { background:rgba(255,255,255,.25); }
     .banco-list { flex:1; overflow-y:auto; padding:8px; }
     .banco-list::-webkit-scrollbar { width:4px; }
     .banco-list::-webkit-scrollbar-thumb { background:var(--lavender); border-radius:2px; }
@@ -77,8 +90,8 @@
     .banco-card:hover { box-shadow:var(--shadow-sm); }
     .banco-card-tags { display:flex; gap:6px; margin-bottom:7px; flex-wrap:wrap; }
     .banco-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
-    .banco-tag.esp { background:var(--bg2); color:var(--purple); }
-    .banco-tag.fmt { background:rgba(196,114,90,.1); color:var(--coral); }
+    .banco-tag.esp { background:rgba(74,41,118,.12); color:var(--purple); }
+    .banco-tag.fmt { background:rgba(196,114,90,.12); color:var(--coral); }
     .banco-tag.review { background:rgba(224,122,58,.15); color:var(--orange); }
     .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); margin-bottom:5px; line-height:1.35; cursor:pointer; }
     .banco-card-title:hover { color:var(--purple); }
@@ -86,8 +99,11 @@
     .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
     .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
     .banco-btn-usar:hover { background:var(--coral-light); }
-    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:12px; transition:background .15s; }
-    .banco-btn-icon:hover { background:var(--bg2); }
+    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:11px; font-weight:600; font-family:inherit; transition:background .15s; }
+    .banco-btn-icon.edit { color:var(--purple); border-color:rgba(74,41,118,.2); }
+    .banco-btn-icon.edit:hover { background:var(--bg2); }
+    .banco-btn-icon.del { color:#DC2626; border-color:rgba(220,38,38,.2); }
+    .banco-btn-icon.del:hover { background:#FEF2F2; }
     .banco-btn-add { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; font-weight:600; padding:6px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:all .15s; }
     .banco-btn-add:hover { background:rgba(255,255,255,.25); }
     .banco-empty { text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
@@ -139,6 +155,14 @@
     .cn-toast.cn-toast-err { background:#DC2626; }
     .cn-toast.cn-toast-warn { background:var(--orange); }
 
+    /* ── Toolbar formatação ── */
+    .cn-toolbar { display:flex; align-items:center; gap:4px; padding:8px 16px; border-bottom:var(--border); background:var(--surface2); flex-shrink:0; flex-wrap:wrap; }
+    .cn-toolbar-group { display:flex; gap:2px; }
+    .cn-toolbar-sep { width:1px; height:20px; background:rgba(74,41,118,.15); margin:0 6px; }
+    .cn-tb-btn { background:none; border:none; border-radius:6px; padding:4px 8px; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-dim); cursor:pointer; transition:all .15s; line-height:1; }
+    .cn-tb-btn:hover { background:var(--bg2); color:var(--purple); }
+    .cn-tb-sym { font-size:14px; padding:3px 7px; }
+
     /* ── Footer ── */
     .cn-page-footer { height:40px; background:var(--deep); display:flex; align-items:center; justify-content:center; gap:16px; flex-shrink:0; }
     .cn-page-footer span { font-size:11px; color:rgba(255,255,255,.4); font-weight:600; letter-spacing:1px; }
@@ -175,6 +199,19 @@
     </div>
   </header>
 
+  <!-- BARRA DE KPIs -->
+  <div class="cn-topbar-kpis">
+    <div class="cn-kpi-info">
+      <div class="cn-kpi-label">DASHBOARD</div>
+      <div class="cn-kpi-title">Banco de Inspirações</div>
+      <div class="cn-kpi-sub" id="kpiSub">carregando...</div>
+    </div>
+    <div class="cn-kpi-cards" id="kpiCards"></div>
+    <div class="cn-kpi-actions">
+      <button class="elo-btn-primary" onclick="bancoOpenModal(null)">+ Nova ideia</button>
+    </div>
+  </div>
+
   <!-- CONTEÚDO PRINCIPAL -->
   <main class="cn-page">
 
@@ -203,6 +240,32 @@
         </div>
       </div>
 
+      <div class="cn-toolbar">
+        <div class="cn-toolbar-group">
+          <button class="cn-tb-btn" onclick="cnFormat('bold')" title="Negrito (Ctrl+B)"><strong>B</strong></button>
+          <button class="cn-tb-btn" onclick="cnFormat('italic')" title="Itálico (Ctrl+I)"><em>I</em></button>
+          <button class="cn-tb-btn" onclick="cnFormat('underline')" title="Sublinhado"><u>U</u></button>
+          <button class="cn-tb-btn" onclick="cnFormat('insertUnorderedList')" title="Lista">☰</button>
+        </div>
+        <div class="cn-toolbar-sep"></div>
+        <div class="cn-toolbar-group">
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('✓')" title="Check">✓</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('→')" title="Seta">→</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('★')" title="Estrela">★</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('•')" title="Bullet">•</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('▸')" title="Triângulo">▸</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('◆')" title="Losango">◆</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('⚡')" title="Raio">⚡</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('🔴')" title="Vermelho">🔴</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('🟡')" title="Amarelo">🟡</button>
+          <button class="cn-tb-btn cn-tb-sym" onclick="cnInsert('🟢')" title="Verde">🟢</button>
+        </div>
+        <div class="cn-toolbar-sep"></div>
+        <div class="cn-toolbar-group">
+          <button class="cn-tb-btn" onclick="cnFormat('removeFormat')" title="Limpar formatação" style="font-size:11px;">Limpar</button>
+        </div>
+      </div>
+
       <div class="cn-editor-wrap">
         <div
           id="cnEditor"
@@ -226,7 +289,6 @@
           <div class="banco-head-title">Banco de Inspirações</div>
           <div class="banco-head-sub" id="bancoSub">carregando...</div>
         </div>
-        <button class="banco-btn-add" onclick="bancoOpenModal(null)">+ Nova ideia</button>
       </div>
 
       <div class="banco-search-wrap">
@@ -401,15 +463,39 @@
         .eq('client_id', id)
         .maybeSingle();
       editor.innerHTML = data?.content || '';
+      editor.style.borderLeft = `3px solid ${c.color || 'var(--coral)'}`;
       if (!data?.content) editor.focus();
       cnToggleDropdown();
     }
 
-    function cnHandleKey(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        cnSalvar();
+    function cnFormat(cmd) {
+      const editor = document.getElementById('cnEditor');
+      if (editor.contentEditable !== 'true') return;
+      editor.focus();
+      document.execCommand(cmd, false, null);
+    }
+
+    function cnInsert(char) {
+      const editor = document.getElementById('cnEditor');
+      if (editor.contentEditable !== 'true') return;
+      editor.focus();
+      const sel = window.getSelection();
+      if (sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(char));
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        editor.innerHTML += char;
       }
+    }
+
+    function cnHandleKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); cnSalvar(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); cnFormat('bold'); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); cnFormat('italic'); return; }
     }
 
     async function cnSalvar() {
@@ -468,6 +554,12 @@
       'pessoal': 'Pessoal',
     };
 
+    function statusColor(s) {
+      if (s === 'Aprovado') return 'var(--green)';
+      if (s === 'Usado')    return 'var(--orange)';
+      return 'var(--lavender)';
+    }
+
     async function bancoInit() {
       const { data, error } = await sb.from('inspiration_posts')
         .select('*')
@@ -476,6 +568,29 @@
       BANCO.posts = data || [];
       bancoRenderChips();
       bancoAplicarFiltro();
+      renderKpis();
+    }
+
+    function renderKpis() {
+      const total     = BANCO.posts.length;
+      const aprovados = BANCO.posts.filter(p => p.status === 'Aprovado').length;
+      const usados    = BANCO.posts.filter(p => p.status === 'Usado').length;
+      const ideias    = BANCO.posts.filter(p => p.status === 'Ideia').length;
+      const esps      = new Set(BANCO.posts.map(p => p.specialty_key));
+      document.getElementById('kpiSub').textContent =
+        `${total} posts catalogados · ${esps.size} especialidades`;
+      document.getElementById('kpiCards').innerHTML = [
+        { label:'Total de Posts',  val:total,     color:'',                   hint:'em todas as especialidades' },
+        { label:'Disponíveis',     val:ideias,    color:'var(--orange)',       hint:'· Status: Ideia' },
+        { label:'Aprovados',       val:aprovados, color:'var(--green)',        hint:'· Prontos para produzir' },
+        { label:'Usados',          val:usados,    color:'var(--lavender)',     hint:'· Já viraram conteúdo' },
+      ].map(k => `
+        <div class="cn-kpi-card">
+          <div class="cn-kpi-card-label">${k.label}</div>
+          <div class="cn-kpi-card-val"${k.color ? ` style="color:${k.color}"` : ''}>${k.val}</div>
+          <div class="cn-kpi-card-hint">${k.hint}</div>
+        </div>
+      `).join('');
     }
 
     function bancoRenderChips() {
@@ -545,8 +660,8 @@
           <div class="banco-card-foot">
             <button class="banco-btn-usar" data-id="${p.id}" onclick="bancoUsarBase(${p.id})">↓ Usar como base</button>
             <div style="display:flex;gap:6px;">
-              <button class="banco-btn-icon" data-id="${p.id}" onclick="bancoOpenModal(${p.id})" title="Editar">✏️</button>
-              <button class="banco-btn-icon" data-id="${p.id}" onclick="bancoConfirmDelete(${p.id})" title="Excluir">🗑</button>
+              <button class="banco-btn-icon edit" data-id="${p.id}" onclick="bancoOpenModal(${p.id})">editar</button>
+              <button class="banco-btn-icon del" data-id="${p.id}" onclick="bancoConfirmDelete(${p.id})">excluir</button>
             </div>
           </div>
         </div>
@@ -664,6 +779,7 @@
       bancoCloseModal();
       bancoRenderChips();
       bancoAplicarFiltro();
+      renderKpis();
       showToast(id ? 'Ideia atualizada ✓' : 'Ideia adicionada ✓', 'ok');
     }
 
@@ -678,6 +794,7 @@
           BANCO.posts = BANCO.posts.filter(x => x.id !== id);
           bancoRenderChips();
           bancoAplicarFiltro();
+          renderKpis();
           showToast('Ideia excluída', 'ok');
         }
       );
@@ -708,7 +825,7 @@
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Status</div>
-                <div style="font-size:14px;font-weight:600;color:var(--green);">${p.status || '—'}</div>
+                <div style="font-size:14px;font-weight:600;color:${statusColor(p.status)};">${p.status || '—'}</div>
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Coleção</div>
