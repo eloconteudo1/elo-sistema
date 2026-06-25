@@ -328,10 +328,11 @@
       #home-grid.mv-home #home-timer-col { display:block !important; }
       #home-grid.mv-home #activities-card { display:none !important; }
 
-      /* Aba Atividades: activities-card primeiro, sidebar (resumo+próximas) abaixo */
+      /* Aba Atividades: Resumo + Anotações (da sidebar) + Activities */
       #home-grid.mv-atividades #home-timer-col { display:block !important; }
       #home-grid.mv-atividades #timer-card { display:none !important; }
-      #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; }
+      #home-grid.mv-atividades #recent-entries { display:none !important; }
+      #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; order:-1; }
 
       /* Aba Agenda */
       #home-grid.mv-agenda #mobile-agenda-view { display:block !important; }
@@ -374,9 +375,11 @@
       /* Dropdown de cliente mobile — sheet flutuante */
       #client-dropdown {
         position:fixed !important; left:12px !important; right:12px !important;
-        top:auto !important; max-height:60vh !important; z-index:500;
+        top:50% !important; transform:translateY(-50%);
+        max-height:60vh !important; z-index:500;
         border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.18);
       }
+      .mobile-drop-overlay.open { display:block !important; }
 
       /* Aba ATIVIDADES: mostrar só Resumo + Anotações */
       #home-grid.mv-atividades #sched-tasks-card { display:none !important; }
@@ -490,6 +493,7 @@
               <span id="client-btn-mins" style="display:none;" class="client-option-mins"></span>
               <span class="chevron">▼</span>
             </button>
+            <div class="mobile-drop-overlay" onclick="toggleClientDrop()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:499;"></div>
             <div id="client-dropdown">
               <div style="padding:10px 12px 6px;background:#fff;z-index:1;border-bottom:1px solid rgba(74,41,118,.07);border-radius:18px 18px 0 0;">
                 <input
@@ -1859,6 +1863,8 @@ function toggleClientDrop() {
   T.clientDropOpen = !T.clientDropOpen;
   document.getElementById('client-btn').classList.toggle('open', T.clientDropOpen);
   document.getElementById('client-dropdown').classList.toggle('open', T.clientDropOpen);
+  const overlay = document.querySelector('.mobile-drop-overlay');
+  if (overlay && window.innerWidth <= 768) overlay.classList.toggle('open', T.clientDropOpen);
   if (T.clientDropOpen) {
     renderClientList();
     setTimeout(() => { const s = document.getElementById('client-search'); if (s) s.focus(); }, 50);
@@ -1874,6 +1880,8 @@ document.addEventListener('click', e => {
     T.clientDropOpen = false;
     btn.classList.remove('open');
     drop.classList.remove('open');
+    const overlay = document.querySelector('.mobile-drop-overlay');
+    if (overlay) overlay.classList.remove('open');
   }
 });
 
@@ -1920,6 +1928,7 @@ function selectClient(id) {
   T.clientDropOpen = false;
   document.getElementById('client-btn').classList.remove('open');
   document.getElementById('client-dropdown').classList.remove('open');
+  const ov = document.querySelector('.mobile-drop-overlay'); if (ov) ov.classList.remove('open');
   updateClientBtn();
   renderTimerCenter();
   renderTimerButtons();
