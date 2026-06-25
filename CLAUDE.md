@@ -231,13 +231,12 @@ ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false;
   - CSS `.name` e `.tagline` removidos
 - **Rodapé:** elemento `#build-date` dentro do `<footer class="elo-footer">` — atualizar a cada commit
 
-### Mobile (Sessão 6)
+### Mobile (Sessão 6 + 6B)
 
-- **Dropdown de cliente:** `position:fixed` no mobile (evita corte por `overflow:hidden`); campo de busca sem `sticky`
-- **Aba ATIVIDADES:** mostra apenas Resumo de hoje + Anotações — `#sched-tasks-card`, `#alert-card`, `#fin-card` ocultos via CSS mobile
-- **Aba AGENDA:** botão `+ Novo` no topo → bottom-sheet `#mobile-new-event-sheet` com 3 opções: Compromisso / Tarefa / Lembrete (redireciona para Calendário e abre o modal correspondente)
+- **Seletor de cliente:** no mobile, `toggleClientDrop()` detecta `window.innerWidth <= 768` e abre bottom-sheet `#mobile-client-sheet` em vez do dropdown. Funções: `openMobileClientPicker()`, `closeMobileClientPicker()`, `selectClientMobile(id)`, `filterMobileClients()`
+- **Aba ATIVIDADES:** mostra apenas Resumo de hoje + Anotações — `#sched-tasks-card`, `#alert-card`, `#fin-card` ocultos via CSS mobile; sidebar com `order:-1` aparece antes do activities-card
+- **Aba AGENDA:** botão `+ Novo` → bottom-sheet `#mobile-new-item-sheet` com 3 abas (Compromisso / Tarefa / Lembrete), formulários completos e salvamento direto no Supabase. Funções: `openMobileNewItem()`, `closeMobileNewItem()`, `mniSetTab(tab)`, `saveMobileAppt()`, `saveMobileTask()`, `saveMobileReminder()`
 - **Bottom nav:** indicador `::before` coral (barrinha 32×3px, `position:absolute; top:0`) na aba ativa
-- Funções: `openMobileNewEventSheet()`, `closeMobileSheet()`
 
 ---
 

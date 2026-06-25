@@ -372,14 +372,9 @@
       #bottom-nav button.active::before { background:var(--coral); }
       #bottom-nav button:active { opacity:.7; }
 
-      /* Dropdown de cliente mobile — sheet flutuante */
-      #client-dropdown {
-        position:fixed !important; left:12px !important; right:12px !important;
-        top:50% !important; transform:translateY(-50%);
-        max-height:60vh !important; z-index:500;
-        border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,.18);
-      }
-      .mobile-drop-overlay.open { display:block !important; }
+      /* Dropdown de cliente mobile — substituído por bottom-sheet */
+      #client-dropdown { display:none !important; }
+      .mobile-drop-overlay { display:none !important; }
 
       /* Aba ATIVIDADES: mostrar só Resumo + Anotações */
       #home-grid.mv-atividades #sched-tasks-card { display:none !important; }
@@ -1514,7 +1509,7 @@ async function renderMobileAgenda() {
 
   let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);">Agenda</div>
-    <button onclick="openMobileNewEventSheet()"
+    <button onclick="openMobileNewItem()"
       style="background:var(--coral);color:#fff;border:none;border-radius:10px;
              padding:8px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">+ Novo</button>
   </div>`;
@@ -1592,47 +1587,135 @@ async function renderMobileAgenda() {
   document.getElementById('mobile-agenda-view').innerHTML = html;
 }
 
-function openMobileNewEventSheet() {
-  const existing = document.getElementById('mobile-new-event-sheet');
-  if (existing) existing.remove();
-
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="mobile-new-event-sheet"
-      style="position:fixed;inset:0;z-index:600;display:flex;flex-direction:column;justify-content:flex-end;">
-      <div onclick="closeMobileSheet()"
-        style="flex:1;background:rgba(0,0,0,.4);"></div>
-      <div style="background:white;border-radius:22px 22px 0 0;padding:24px 20px 40px;">
-        <div style="width:40px;height:4px;background:rgba(0,0,0,.12);border-radius:4px;
-                    margin:0 auto 20px;"></div>
-        <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
-                    color:var(--text-dim);margin-bottom:16px;">O que deseja cadastrar?</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>{const d=new Date();openCalModal(d.getDate());setCalModalTab('compromisso');},300)"
-            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);
-                   background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;
-                   color:var(--deep);cursor:pointer;text-align:left;">
-            📅 Compromisso
-          </button>
-          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>{const d=new Date();openCalModal(d.getDate());setCalModalTab('tarefa');},300)"
-            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);
-                   background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;
-                   color:var(--deep);cursor:pointer;text-align:left;">
-            ✅ Tarefa agendada
-          </button>
-          <button onclick="closeMobileSheet();navigateTo('calendario');setTimeout(()=>setCalTab('alertas'),300)"
-            style="padding:16px;border-radius:14px;border:1.5px solid rgba(74,41,118,.12);
-                   background:var(--surface2);font-family:inherit;font-size:14px;font-weight:700;
-                   color:var(--deep);cursor:pointer;text-align:left;">
-            🔔 Lembrete
-          </button>
-        </div>
+function openMobileNewItem() {
+  document.getElementById('mobile-new-item-sheet')?.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'mobile-new-item-sheet';
+  sheet.innerHTML = `
+    <div onclick="closeMobileNewItem()" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:301;background:#fff;border-radius:20px 20px 0 0;padding-bottom:max(20px,env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;">
+        <span style="font-size:15px;font-weight:800;color:var(--deep);">Novo item</span>
+        <button onclick="closeMobileNewItem()" style="background:none;border:none;font-size:22px;color:var(--text-dim);cursor:pointer;padding:0;">×</button>
       </div>
-    </div>`);
+      <div style="display:flex;border-bottom:1.5px solid rgba(74,41,118,.08);margin-bottom:16px;">
+        <button id="mni-tab-appt" onclick="mniSetTab('appt')" style="flex:1;padding:10px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--coral);cursor:pointer;border-bottom:2px solid var(--coral);margin-bottom:-1.5px;">Compromisso</button>
+        <button id="mni-tab-task" onclick="mniSetTab('task')" style="flex:1;padding:10px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Tarefa</button>
+        <button id="mni-tab-reminder" onclick="mniSetTab('reminder')" style="flex:1;padding:10px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Lembrete</button>
+      </div>
+      <div id="mni-body" style="padding:0 20px 20px;max-height:55vh;overflow-y:auto;"></div>
+    </div>`;
+  document.body.appendChild(sheet);
+  mniSetTab('appt');
 }
 
-function closeMobileSheet() {
-  const sheet = document.getElementById('mobile-new-event-sheet');
-  if (sheet) sheet.remove();
+function closeMobileNewItem() { document.getElementById('mobile-new-item-sheet')?.remove(); }
+
+function mniSetTab(tab) {
+  ['appt','task','reminder'].forEach(t => {
+    const btn = document.getElementById(`mni-tab-${t}`);
+    if (!btn) return;
+    const active = t === tab;
+    btn.style.color = active ? 'var(--coral)' : 'var(--text-dim)';
+    btn.style.fontWeight = active ? '700' : '600';
+    btn.style.borderBottom = active ? '2px solid var(--coral)' : '2px solid transparent';
+  });
+  const body = document.getElementById('mni-body');
+  if (!body) return;
+  const iS = `width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(74,41,118,.15);font-family:inherit;font-size:14px;color:var(--deep);outline:none;background:var(--bg);box-sizing:border-box;margin-bottom:10px;`;
+  const lS = `display:block;font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;`;
+  const bS = `width:100%;padding:14px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;`;
+  const clientOpts = '<option value="">Nenhum</option>'+T.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const today = todayStr();
+  if (tab === 'appt') {
+    body.innerHTML = `
+      <label style="${lS}">Título *</label><input id="mni-appt-title" class="elo-input" placeholder="Ex: Reunião com cliente" style="${iS}" />
+      <label style="${lS}">Data *</label><input id="mni-appt-date" type="date" value="${today}" style="${iS}" />
+      <label style="${lS}">Horário</label><input id="mni-appt-time" type="time" style="${iS}" />
+      <label style="${lS}">Cliente</label><select id="mni-appt-client" class="elo-select" style="${iS}">${clientOpts}</select>
+      <button style="${bS}" onclick="saveMobileAppt()">Salvar compromisso</button>`;
+  } else if (tab === 'task') {
+    body.innerHTML = `
+      <label style="${lS}">Título *</label><input id="mni-task-title" class="elo-input" placeholder="Ex: Entregar relatório" style="${iS}" />
+      <label style="${lS}">Data *</label><input id="mni-task-date" type="date" value="${today}" style="${iS}" />
+      <label style="${lS}">Horário</label><input id="mni-task-time" type="time" style="${iS}" />
+      <label style="${lS}">Prioridade</label>
+      <select id="mni-task-priority" class="elo-select" style="${iS}">
+        <option value="alta">🔴 Alta</option><option value="media" selected>🟡 Média</option><option value="baixa">🟢 Baixa</option>
+      </select>
+      <label style="${lS}">Cliente</label><select id="mni-task-client" class="elo-select" style="${iS}">${clientOpts}</select>
+      <button style="${bS}" onclick="saveMobileTask()">Salvar tarefa</button>`;
+  } else {
+    body.innerHTML = `
+      <label style="${lS}">Tipo</label>
+      <select id="mni-rem-type" class="elo-select" style="${iS}" onchange="mniToggleReminderFields()">
+        <option value="daily">Horário diário</option><option value="interval">Intervalo</option>
+      </select>
+      <div id="mni-rem-daily">
+        <label style="${lS}">Horário</label><input id="mni-rem-time" type="time" value="08:00" style="${iS}" />
+      </div>
+      <div id="mni-rem-interval" style="display:none;">
+        <label style="${lS}">A cada (minutos)</label>
+        <input id="mni-rem-mins" type="number" min="5" max="480" value="60" style="${iS}" />
+      </div>
+      <button style="${bS}" onclick="saveMobileReminder()">Salvar lembrete</button>`;
+  }
+}
+
+function mniToggleReminderFields() {
+  const type = document.getElementById('mni-rem-type')?.value;
+  document.getElementById('mni-rem-daily').style.display = type==='daily' ? '' : 'none';
+  document.getElementById('mni-rem-interval').style.display = type==='interval' ? '' : 'none';
+}
+
+async function saveMobileAppt() {
+  const title = document.getElementById('mni-appt-title')?.value.trim();
+  const date  = document.getElementById('mni-appt-date')?.value;
+  const time  = document.getElementById('mni-appt-time')?.value || '00:00';
+  const clientId = Number(document.getElementById('mni-appt-client')?.value) || null;
+  if (!title) { showToast('Informe o título','warn'); return; }
+  if (!date)  { showToast('Informe a data','warn'); return; }
+  const [y,m,d] = date.split('-').map(Number);
+  const [h,mn] = time.split(':').map(Number);
+  const scheduledAt = new Date(y,m-1,d,h,mn,0).getTime();
+  const { error } = await sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false });
+  if (error) { showToast('Erro ao salvar compromisso','err'); return; }
+  showToast('Compromisso salvo ✓','ok');
+  closeMobileNewItem();
+  await reloadTodayData();
+  renderMobileAgenda();
+}
+
+async function saveMobileTask() {
+  const title    = document.getElementById('mni-task-title')?.value.trim();
+  const date     = document.getElementById('mni-task-date')?.value;
+  const time     = document.getElementById('mni-task-time')?.value || null;
+  const priority = document.getElementById('mni-task-priority')?.value || 'media';
+  const clientId = Number(document.getElementById('mni-task-client')?.value) || null;
+  if (!title) { showToast('Informe o título','warn'); return; }
+  if (!date)  { showToast('Informe a data','warn'); return; }
+  const { error } = await sb.from('scheduled_tasks').insert({
+    title, scheduled_date:date, scheduled_time:time, priority, client_id:clientId, is_done:false
+  });
+  if (error) { showToast('Erro ao salvar tarefa','err'); return; }
+  showToast('Tarefa salva ✓','ok');
+  closeMobileNewItem();
+  await reloadTodayData();
+  renderMobileAgenda();
+}
+
+async function saveMobileReminder() {
+  const type = document.getElementById('mni-rem-type')?.value;
+  const dailyTime   = document.getElementById('mni-rem-time')?.value || '08:00';
+  const intervalMins = parseInt(document.getElementById('mni-rem-mins')?.value) || 60;
+  const payload = type==='daily'
+    ? { type:'daily', daily_time:dailyTime, interval_minutes:null }
+    : { type:'interval', interval_minutes:intervalMins, daily_time:null };
+  const { error } = await sb.from('reminders').insert(payload);
+  if (error) { showToast('Erro ao salvar lembrete','err'); return; }
+  showToast('Lembrete salvo ✓','ok');
+  closeMobileNewItem();
+  renderMobileAgenda();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1860,11 +1943,10 @@ async function loadHomeData() {
 // HOME — LEFT SIDEBAR
 // ════════════════════════════════════════════════════════════════
 function toggleClientDrop() {
+  if (window.innerWidth <= 768) { openMobileClientPicker(); return; }
   T.clientDropOpen = !T.clientDropOpen;
   document.getElementById('client-btn').classList.toggle('open', T.clientDropOpen);
   document.getElementById('client-dropdown').classList.toggle('open', T.clientDropOpen);
-  const overlay = document.querySelector('.mobile-drop-overlay');
-  if (overlay && window.innerWidth <= 768) overlay.classList.toggle('open', T.clientDropOpen);
   if (T.clientDropOpen) {
     renderClientList();
     setTimeout(() => { const s = document.getElementById('client-search'); if (s) s.focus(); }, 50);
@@ -1874,16 +1956,75 @@ function toggleClientDrop() {
   }
 }
 document.addEventListener('click', e => {
+  if (window.innerWidth <= 768) return;
   const btn = document.getElementById('client-btn');
   const drop = document.getElementById('client-dropdown');
   if (!btn.contains(e.target) && !drop.contains(e.target)) {
     T.clientDropOpen = false;
     btn.classList.remove('open');
     drop.classList.remove('open');
-    const overlay = document.querySelector('.mobile-drop-overlay');
-    if (overlay) overlay.classList.remove('open');
   }
 });
+
+function openMobileClientPicker() {
+  document.getElementById('mobile-client-sheet')?.remove();
+  const renderGroup = (label, arr) => {
+    if (!arr.length) return '';
+    return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.35);padding:10px 20px 4px;">${label}</div>` +
+      arr.map(c => `<div onclick="selectClientMobile(${c.id})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;background:${T.selectedClientId===c.id?'rgba(196,114,90,.07)':'transparent'};">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
+        <span style="font-size:15px;font-weight:${T.selectedClientId===c.id?'700':'500'};color:var(--deep);flex:1;">${c.name}</span>
+        ${T.selectedClientId===c.id?'<span style="color:var(--coral);font-size:14px;">✓</span>':''}
+      </div>`).join('');
+  };
+  const favs      = T.clients.filter(c=>c.is_favorite).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const externals = T.clients.filter(c=>!c.is_favorite&&!c.is_internal).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const internals = T.clients.filter(c=>c.is_internal).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const sheet = document.createElement('div');
+  sheet.id = 'mobile-client-sheet';
+  sheet.innerHTML = `
+    <div onclick="closeMobileClientPicker()" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:301;background:#fff;border-radius:20px 20px 0 0;max-height:75vh;overflow-y:auto;padding-bottom:max(20px,env(safe-area-inset-bottom));box-shadow:0 -8px 40px rgba(0,0,0,.2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px;border-bottom:.5px solid rgba(74,41,118,.07);">
+        <span style="font-size:15px;font-weight:800;color:var(--deep);">Selecionar cliente</span>
+        <button onclick="closeMobileClientPicker()" style="background:none;border:none;font-size:22px;color:var(--text-dim);cursor:pointer;padding:0;">×</button>
+      </div>
+      <div style="padding:10px 16px;">
+        <input id="mobile-client-search" type="text" placeholder="Buscar cliente…" oninput="filterMobileClients()"
+          style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(74,41,118,.15);font-family:inherit;font-size:14px;outline:none;background:var(--bg);box-sizing:border-box;" />
+      </div>
+      <div id="mobile-client-list">
+        ${renderGroup('⭐ Favoritos', favs)}
+        ${renderGroup('Clientes', externals)}
+        ${renderGroup('Interno ELO', internals)}
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+  setTimeout(() => document.getElementById('mobile-client-search')?.focus(), 100);
+}
+
+function closeMobileClientPicker() { document.getElementById('mobile-client-sheet')?.remove(); }
+
+function selectClientMobile(clientId) { selectClient(clientId); closeMobileClientPicker(); }
+
+function filterMobileClients() {
+  const term = document.getElementById('mobile-client-search')?.value.toLowerCase().trim() || '';
+  const filtered = term ? T.clients.filter(c=>c.name.toLowerCase().includes(term)) : T.clients;
+  const renderGroup = (label, arr) => {
+    if (!arr.length) return '';
+    return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.35);padding:10px 20px 4px;">${label}</div>` +
+      arr.map(c=>`<div onclick="selectClientMobile(${c.id})" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
+        <span style="font-size:15px;font-weight:500;color:var(--deep);">${c.name}</span>
+      </div>`).join('');
+  };
+  const favs      = filtered.filter(c=>c.is_favorite).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const externals = filtered.filter(c=>!c.is_favorite&&!c.is_internal).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const internals = filtered.filter(c=>c.is_internal).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  const content = renderGroup('⭐ Favoritos',favs)+renderGroup('Clientes',externals)+renderGroup('Interno ELO',internals);
+  document.getElementById('mobile-client-list').innerHTML = content ||
+    `<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado</div>`;
+}
 
 function renderClientList() {
   const list = document.getElementById('client-list');
