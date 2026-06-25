@@ -371,18 +371,23 @@
       #bottom-nav button.active .bnav-dot { opacity:1; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
-    /* Anotações */
-    .note-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:10px; border-left:3px solid var(--lavender); animation:fadeInUp .2s ease; }
-    .note-item-text { flex:1; font-size:12px; color:var(--text); line-height:1.45; word-break:break-word; }
-    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; white-space:nowrap; margin-top:1px; }
-    .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:14px; line-height:1; padding:0 2px; opacity:.5; transition:opacity .15s; flex-shrink:0; }
-    .note-del-btn:hover { opacity:1; color:var(--coral); }
-    .note-item-text { cursor:text; }
+    /* Anotações — mesmo padrão visual de .sched-task */
+    .note-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:.5px solid rgba(74,41,118,.07); }
+    .note-item:last-child { border-bottom:none; }
+    .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
+    .note-check-btn:hover { background:var(--green); border-color:var(--green); }
+    .note-item-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
     .note-item-text:hover { color:var(--purple); }
+    .note-item-date { font-size:11px; color:var(--text-dim); margin-top:2px; opacity:.65; }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
       .activity-row [data-action] { min-width:30px; min-height:30px; display:flex; align-items:center; justify-content:center; }
+      /* Aba Atividades: esconder cards desnecessários */
+      #home-grid.mv-atividades #activities-card { display:none !important; }
+      #home-grid.mv-atividades #sched-tasks-card { display:none !important; }
+      #home-grid.mv-atividades #alert-card { display:none !important; }
+      #home-grid.mv-atividades #fin-card { display:none !important; }
     }
   </style>
 </head>
@@ -626,11 +631,11 @@
                        white-space:nowrap;"
               >Salvar</button>
             </div>
-            <div id="notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+            <div id="notes-list" style="display:flex;flex-direction:column;max-height:200px;overflow-y:auto;"></div>
           </div>
 
           <!-- Próximas tarefas -->
-          <div class="right-card">
+          <div class="right-card" id="sched-tasks-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <span class="sec-label">Próximas tarefas</span>
               <button onclick="openTaskModal()" style="background:var(--coral);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit;">+ ADD</button>
@@ -1513,7 +1518,15 @@ async function renderMobileAgenda() {
   const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
   const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
 
-  let html = '';
+  let html = `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <span style="font-size:16px;font-weight:900;color:var(--deep);">Agenda</span>
+    <button onclick="openMobileNewItem()"
+      style="background:var(--coral);color:#fff;border:none;border-radius:10px;
+             padding:8px 18px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">
+      + Novo
+    </button>
+  </div>`;
 
   // 1. Compromissos
   html += `<div style="${cardS}">
@@ -1598,6 +1611,159 @@ async function renderMobileAgenda() {
   html += `</div>`;
 
   document.getElementById('mobile-agenda-view').innerHTML = html;
+}
+
+function openMobileNewItem() {
+  document.getElementById('mobile-new-item-sheet')?.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'mobile-new-item-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:400;';
+  const clientOptions = T.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const today = todayStr();
+  const inputS = `width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(74,41,118,.15);font-family:inherit;font-size:14px;color:var(--deep);outline:none;background:var(--bg);box-sizing:border-box;margin-bottom:10px;display:block;`;
+  const labelS = `display:block;font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;`;
+  sheet.innerHTML = `
+    <div onclick="closeMobileNewItem()" style="position:absolute;inset:0;background:rgba(0,0,0,.45);"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;
+                box-shadow:0 -8px 40px rgba(0,0,0,.2);
+                padding-bottom:max(16px,env(safe-area-inset-bottom));">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:.5px solid rgba(74,41,118,.07);">
+        <span style="font-size:15px;font-weight:800;color:var(--deep);">Novo item</span>
+        <button onclick="closeMobileNewItem()" style="background:none;border:none;font-size:24px;color:var(--text-dim);cursor:pointer;line-height:1;">×</button>
+      </div>
+      <div style="display:flex;border-bottom:1.5px solid rgba(74,41,118,.08);">
+        <button id="mni-t-appt" onclick="mniTab('appt')"
+          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--coral);cursor:pointer;border-bottom:2px solid var(--coral);margin-bottom:-1.5px;">Compromisso</button>
+        <button id="mni-t-task" onclick="mniTab('task')"
+          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Tarefa</button>
+        <button id="mni-t-rem" onclick="mniTab('rem')"
+          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Lembrete</button>
+      </div>
+      <div id="mni-body" style="padding:16px 20px 4px;max-height:50vh;overflow-y:auto;"></div>
+    </div>`;
+  document.body.appendChild(sheet);
+  window._mniInputS = inputS;
+  window._mniLabelS = labelS;
+  window._mniClientOptions = clientOptions;
+  window._mniToday = today;
+  mniTab('appt');
+}
+function closeMobileNewItem() {
+  document.getElementById('mobile-new-item-sheet')?.remove();
+}
+function mniTab(tab) {
+  ['appt','task','rem'].forEach(t => {
+    const btn = document.getElementById(`mni-t-${t}`);
+    if (!btn) return;
+    const active = t === tab;
+    btn.style.color = active ? 'var(--coral)' : 'var(--text-dim)';
+    btn.style.fontWeight = active ? '700' : '600';
+    btn.style.borderBottom = active ? '2px solid var(--coral)' : '2px solid transparent';
+  });
+  const S = window._mniInputS || '';
+  const L = window._mniLabelS || '';
+  const co = window._mniClientOptions || '';
+  const td = window._mniToday || '';
+  const btnS = `width:100%;padding:14px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;`;
+  const body = document.getElementById('mni-body');
+  if (tab === 'appt') {
+    body.innerHTML = `
+      <label style="${L}">Título *</label>
+      <input id="mni-appt-title" type="text" placeholder="Ex: Reunião com cliente" style="${S}" />
+      <label style="${L}">Data *</label>
+      <input id="mni-appt-date" type="date" value="${td}" style="${S}" />
+      <label style="${L}">Horário</label>
+      <input id="mni-appt-time" type="time" style="${S}" />
+      <label style="${L}">Cliente</label>
+      <select id="mni-appt-client" style="${S}"><option value="">Nenhum</option>${co}</select>
+      <button style="${btnS}" onclick="saveMobileAppt()">Salvar compromisso</button>`;
+  } else if (tab === 'task') {
+    body.innerHTML = `
+      <label style="${L}">Título *</label>
+      <input id="mni-task-title" type="text" placeholder="Ex: Entregar relatório" style="${S}" />
+      <label style="${L}">Data *</label>
+      <input id="mni-task-date" type="date" value="${td}" style="${S}" />
+      <label style="${L}">Horário</label>
+      <input id="mni-task-time" type="time" style="${S}" />
+      <label style="${L}">Prioridade</label>
+      <select id="mni-task-priority" style="${S}">
+        <option value="alta">🔴 Alta</option>
+        <option value="media" selected>🟡 Média</option>
+        <option value="baixa">🟢 Baixa</option>
+      </select>
+      <label style="${L}">Cliente</label>
+      <select id="mni-task-client" style="${S}"><option value="">Nenhum</option>${co}</select>
+      <button style="${btnS}" onclick="saveMobileTask()">Salvar tarefa</button>`;
+  } else {
+    body.innerHTML = `
+      <label style="${L}">Tipo</label>
+      <select id="mni-rem-type" style="${S}" onchange="mniRemToggle()">
+        <option value="daily">Horário diário</option>
+        <option value="interval">Intervalo</option>
+      </select>
+      <div id="mni-rem-daily">
+        <label style="${L}">Horário</label>
+        <input id="mni-rem-time" type="time" value="08:00" style="${S}" />
+      </div>
+      <div id="mni-rem-interval" style="display:none;">
+        <label style="${L}">A cada (minutos)</label>
+        <input id="mni-rem-mins" type="number" min="5" max="480" value="60" style="${S}" />
+      </div>
+      <button style="${btnS}" onclick="saveMobileReminder()">Salvar lembrete</button>`;
+  }
+}
+function mniRemToggle() {
+  const type = document.getElementById('mni-rem-type')?.value;
+  document.getElementById('mni-rem-daily').style.display = type === 'daily' ? '' : 'none';
+  document.getElementById('mni-rem-interval').style.display = type === 'interval' ? '' : 'none';
+}
+async function saveMobileAppt() {
+  const title = document.getElementById('mni-appt-title')?.value.trim();
+  const date  = document.getElementById('mni-appt-date')?.value;
+  const time  = document.getElementById('mni-appt-time')?.value || '00:00';
+  const clientId = Number(document.getElementById('mni-appt-client')?.value) || null;
+  if (!title) { showToast('Informe o título','warn'); return; }
+  if (!date)  { showToast('Informe a data','warn'); return; }
+  const [y,m,d] = date.split('-').map(Number);
+  const [h,min] = time.split(':').map(Number);
+  const scheduledAt = new Date(y,m-1,d,h,min,0).getTime();
+  const { error } = await sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false });
+  if (error) { showToast('Erro ao salvar','err'); return; }
+  showToast('Compromisso salvo ✓','ok');
+  closeMobileNewItem();
+  await reloadTodayData();
+  renderMobileAgenda();
+}
+async function saveMobileTask() {
+  const title    = document.getElementById('mni-task-title')?.value.trim();
+  const date     = document.getElementById('mni-task-date')?.value;
+  const time     = document.getElementById('mni-task-time')?.value || null;
+  const priority = document.getElementById('mni-task-priority')?.value || 'media';
+  const clientId = Number(document.getElementById('mni-task-client')?.value) || null;
+  if (!title) { showToast('Informe o título','warn'); return; }
+  if (!date)  { showToast('Informe a data','warn'); return; }
+  const { error } = await sb.from('scheduled_tasks').insert({
+    title, scheduled_date:date, scheduled_time:time,
+    priority, client_id:clientId, is_done:false, user_id:appUser.id
+  });
+  if (error) { showToast('Erro ao salvar','err'); return; }
+  showToast('Tarefa salva ✓','ok');
+  closeMobileNewItem();
+  await reloadTodayData();
+  renderMobileAgenda();
+}
+async function saveMobileReminder() {
+  const type = document.getElementById('mni-rem-type')?.value;
+  const dailyTime = document.getElementById('mni-rem-time')?.value || '08:00';
+  const intervalMins = parseInt(document.getElementById('mni-rem-mins')?.value)||60;
+  const payload = type === 'daily'
+    ? { type:'daily', daily_time:dailyTime, interval_minutes:null }
+    : { type:'interval', interval_minutes:intervalMins, daily_time:null };
+  const { error } = await sb.from('reminders').insert(payload);
+  if (error) { showToast('Erro ao salvar','err'); return; }
+  showToast('Lembrete salvo ✓','ok');
+  closeMobileNewItem();
+  renderMobileAgenda();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1755,14 +1921,30 @@ async function initHome() {
   if (notesList && !notesList._delegated) {
     notesList._delegated = true;
     notesList.addEventListener('click', async function(ev) {
-      const btn = ev.target.closest('[data-note-id]');
-      if (!btn) return;
-      const id = Number(btn.dataset.noteId);
-      const { error } = await sb.from('notes').delete().eq('id', id);
-      if (error) { showToast('Erro ao excluir nota','err'); return; }
-      T.notes = T.notes.filter(n => n.id !== id);
-      renderNotesList();
-      if (document.getElementById('cal-notes-list')) renderCalNotes();
+      // Concluir (bolinha)
+      const checkBtn = ev.target.closest('[data-complete-note]');
+      if (checkBtn) {
+        const id = Number(checkBtn.dataset.completeNote);
+        const row = checkBtn.closest('.note-item');
+        if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
+        await new Promise(r => setTimeout(r, 200));
+        const { error } = await sb.from('notes').delete().eq('id', id);
+        if (error) { showToast('Erro ao concluir nota','err'); return; }
+        T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        if (document.getElementById('cal-notes-list')) renderCalNotes();
+        return;
+      }
+      // Deletar (×) — compatibilidade com data-note-id antigo
+      const delBtn = ev.target.closest('[data-note-id]');
+      if (delBtn) {
+        const id = Number(delBtn.dataset.noteId);
+        const { error } = await sb.from('notes').delete().eq('id', id);
+        if (error) { showToast('Erro ao excluir nota','err'); return; }
+        T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        if (document.getElementById('cal-notes-list')) renderCalNotes();
+      }
     });
   }
 }
@@ -1809,25 +1991,19 @@ async function loadHomeData() {
 }
 
 function updateAlertBadge() {
-  const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
-  const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
-  const total = vencidos.length + avencer.length;
+  // Badge removido — alertas financeiros aparecem apenas no card da Home
   const badge = document.getElementById('alert-badge');
-  const count = document.getElementById('alert-badge-count');
-  if (!badge) return;
-  if (total === 0) {
-    badge.style.display = 'none';
-  } else {
-    badge.style.display = 'flex';
-    badge.style.background = vencidos.length > 0 ? '#DC2626' : '#EA580C';
-    count.textContent = total;
-  }
+  if (badge) badge.style.display = 'none';
 }
 
 // ════════════════════════════════════════════════════════════════
 // HOME — LEFT SIDEBAR
 // ════════════════════════════════════════════════════════════════
 function toggleClientDrop() {
+  if (window.innerWidth <= 768) {
+    openMobileClientPicker();
+    return;
+  }
   T.clientDropOpen = !T.clientDropOpen;
   document.getElementById('client-btn').classList.toggle('open', T.clientDropOpen);
   document.getElementById('client-dropdown').classList.toggle('open', T.clientDropOpen);
@@ -1838,6 +2014,84 @@ function toggleClientDrop() {
     const s = document.getElementById('client-search');
     if (s) s.value = '';
   }
+}
+
+function openMobileClientPicker() {
+  document.getElementById('mobile-client-sheet')?.remove();
+  const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite && !c.is_internal));
+  const externos = alpha(T.clients.filter(c => !c.is_favorite && !c.is_internal));
+  const internos = alpha(T.clients.filter(c => c.is_internal));
+  const renderGroup = (label, arr) => {
+    if (!arr.length) return '';
+    return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.4);padding:10px 20px 4px;">${label}</div>` +
+      arr.map(c => `<div onclick="selectClientMobile(${c.id})"
+        style="display:flex;align-items:center;gap:12px;padding:14px 20px;
+               border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;
+               background:${T.selectedClientId===c.id?'rgba(196,114,90,.07)':'#fff'};">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
+        <span style="font-size:15px;font-weight:${T.selectedClientId===c.id?'700':'500'};color:var(--deep);flex:1;">${c.name}</span>
+        ${T.selectedClientId===c.id?'<span style="color:var(--coral);font-weight:700;">✓</span>':''}
+      </div>`).join('');
+  };
+  const sheet = document.createElement('div');
+  sheet.id = 'mobile-client-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:400;';
+  sheet.innerHTML = `
+    <div onclick="closeMobileClientPicker()"
+      style="position:absolute;inset:0;background:rgba(0,0,0,.45);"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;
+                border-radius:20px 20px 0 0;max-height:80vh;display:flex;flex-direction:column;
+                box-shadow:0 -8px 40px rgba(0,0,0,.2);
+                padding-bottom:max(16px,env(safe-area-inset-bottom));">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:.5px solid rgba(74,41,118,.07);">
+        <span style="font-size:15px;font-weight:800;color:var(--deep);">Selecionar cliente</span>
+        <button onclick="closeMobileClientPicker()"
+          style="background:none;border:none;font-size:24px;color:var(--text-dim);cursor:pointer;line-height:1;">×</button>
+      </div>
+      <div style="padding:10px 16px;border-bottom:.5px solid rgba(74,41,118,.07);">
+        <input id="mobile-client-search" type="text" placeholder="Buscar cliente…"
+          oninput="filterMobileClients()"
+          style="width:100%;padding:10px 14px;border-radius:12px;box-sizing:border-box;
+                 border:1.5px solid rgba(74,41,118,.15);font-family:inherit;
+                 font-size:14px;outline:none;background:var(--bg);" />
+      </div>
+      <div id="mobile-client-list" style="overflow-y:auto;flex:1;">
+        ${renderGroup('⭐ Favoritos', favs)}
+        ${renderGroup('Clientes', externos)}
+        ${renderGroup('Interno', internos)}
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+  setTimeout(() => document.getElementById('mobile-client-search')?.focus(), 150);
+}
+function closeMobileClientPicker() {
+  document.getElementById('mobile-client-sheet')?.remove();
+}
+function selectClientMobile(clientId) {
+  selectClient(clientId);
+  closeMobileClientPicker();
+}
+function filterMobileClients() {
+  const term = (document.getElementById('mobile-client-search')?.value||'').toLowerCase().trim();
+  const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
+  const match = c => !term || normalizeStr(c.name).includes(normalizeStr(term));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite && !c.is_internal && match(c)));
+  const externos = alpha(T.clients.filter(c => !c.is_favorite && !c.is_internal && match(c)));
+  const internos = alpha(T.clients.filter(c => c.is_internal && match(c)));
+  const renderGroup = (label, arr) => {
+    if (!arr.length) return '';
+    return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.4);padding:10px 20px 4px;">${label}</div>` +
+      arr.map(c => `<div onclick="selectClientMobile(${c.id})"
+        style="display:flex;align-items:center;gap:12px;padding:14px 20px;
+               border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
+        <span style="font-size:15px;font-weight:500;color:var(--deep);">${c.name}</span>
+      </div>`).join('');
+  };
+  const html = renderGroup('⭐ Favoritos', favs) + renderGroup('Clientes', externos) + renderGroup('Interno', internos);
+  document.getElementById('mobile-client-list').innerHTML = html ||
+    `<div style="padding:24px;text-align:center;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado</div>`;
 }
 document.addEventListener('click', e => {
   const btn = document.getElementById('client-btn');
@@ -2188,19 +2442,19 @@ async function deleteEntry(id) {
 function renderNotesList() {
   const list = document.getElementById('notes-list');
   if (!list) return;
-  if (T.notes.length === 0) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;padding:6px 0;">Nenhuma anotação ainda.</div>`;
+  if (!T.notes || T.notes.length === 0) {
+    list.innerHTML = `<div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma anotação ainda.</div>`;
     return;
   }
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
-      <div style="flex:1;">
+      <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
+      <div style="flex:1;min-width:0;">
         <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
-      <button class="note-del-btn" data-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
 }
@@ -2256,22 +2510,37 @@ async function renderCalNotes() {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
-      <div style="flex:1;">
+      <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
+      <div style="flex:1;min-width:0;">
         <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
-      <button class="note-del-btn" data-cal-note-id="${note.id}" title="Excluir">×</button>
     </div>`;
   }).join('');
   list.addEventListener('click', async function handler(ev) {
-    const btn = ev.target.closest('[data-cal-note-id]');
-    if (!btn) return;
-    const id = Number(btn.dataset.calNoteId);
-    const { error } = await sb.from('notes').delete().eq('id', id);
-    if (error) { showToast('Erro ao excluir nota','err'); return; }
-    if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
-    renderNotesList();
-    renderCalNotes();
+    const btn = ev.target.closest('[data-cal-complete]');
+    if (btn) {
+      const id = Number(btn.dataset.calComplete);
+      const row = btn.closest('.note-item');
+      if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
+      await new Promise(r => setTimeout(r, 200));
+      const { error } = await sb.from('notes').delete().eq('id', id);
+      if (error) { showToast('Erro ao concluir nota','err'); return; }
+      if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+      renderNotesList();
+      renderCalNotes();
+      return;
+    }
+    // compatibilidade com data-cal-note-id antigo
+    const old = ev.target.closest('[data-cal-note-id]');
+    if (old) {
+      const id = Number(old.dataset.calNoteId);
+      const { error } = await sb.from('notes').delete().eq('id', id);
+      if (error) { showToast('Erro ao excluir nota','err'); return; }
+      if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+      renderNotesList();
+      renderCalNotes();
+    }
   }, { once: true });
 }
 
@@ -2579,25 +2848,47 @@ function renderAlertCard() {
 }
 
 function renderFinancialCard() {
-  const vencidos = T.paymentAlerts.filter(a=>a.type==='vencido');
-  const avencer = T.paymentAlerts.filter(a=>a.type==='avencer');
+  const vencidos = T.paymentAlerts.filter(a => a.type === 'vencido');
+  const avencer  = T.paymentAlerts.filter(a => a.type === 'avencer');
   const card = document.getElementById('fin-card');
-  if (vencidos.length===0&&avencer.length===0) { card.style.display='none'; return; }
-  card.style.display='';
-  let html='';
-  if (vencidos.length>0) {
-    html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#DC2626;margin-bottom:8px;">Vencido</div>`;
-    html += vencidos.map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:6px;gap:8px;">
-      <span style="font-weight:700;color:#DC2626;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</span>
-      <span style="font-weight:700;color:#DC2626;font-size:11px;white-space:nowrap;">Dia ${a.dueDay}</span>
-    </div>`).join('');
+  if (vencidos.length === 0 && avencer.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const fBRL = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+  let html = '';
+  if (vencidos.length > 0) {
+    html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#DC2626;margin-bottom:8px;">⚠ Vencidos</div>`;
+    html += vencidos.map(a => `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:#DC2626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:10px;color:#DC2626;opacity:.8;">Venceu dia ${a.dueDay}</div>
+        </div>
+        <span style="font-size:12px;font-weight:800;color:#DC2626;white-space:nowrap;">${fBRL(a.amount)}</span>
+      </div>`).join('');
   }
-  if (avencer.length>0) {
-    html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#16A34A;margin-bottom:8px;margin-top:12px;">Em aberto</div>`;
-    html += avencer.map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:6px;gap:8px;">
-      <span style="font-weight:700;color:var(--deep);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</span>
-      <span style="font-weight:700;color:#16A34A;font-size:11px;white-space:nowrap;">Dia ${a.dueDay}</span>
-    </div>`).join('');
+  const hoje = avencer.filter(a => a.daysLeft === 0);
+  if (hoje.length > 0) {
+    html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--green);margin-bottom:8px;${vencidos.length?'margin-top:12px;':''}">Receber hoje</div>`;
+    html += hoje.map(a => `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:10px;color:var(--text-dim);">Vence hoje</div>
+        </div>
+        <span style="font-size:12px;font-weight:800;color:var(--green);white-space:nowrap;">${fBRL(a.amount)}</span>
+      </div>`).join('');
+  }
+  const proximos = avencer.filter(a => a.daysLeft > 0);
+  if (proximos.length > 0) {
+    html += `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--orange);margin-bottom:8px;${(vencidos.length||hoje.length)?'margin-top:12px;':''}">Em aberto</div>`;
+    html += proximos.map(a => `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:10px;color:var(--text-dim);">Dia ${a.dueDay} · ${a.daysLeft}d</div>
+        </div>
+        <span style="font-size:12px;font-weight:800;color:var(--orange);white-space:nowrap;">${fBRL(a.amount)}</span>
+      </div>`).join('');
   }
   document.getElementById('fin-list').innerHTML = html;
 }
