@@ -139,6 +139,9 @@
     #client-btn.open .chevron { transform:rotate(180deg); }
     #client-dropdown { position:absolute; top:calc(100% + 6px); left:0; right:0; background:white; border:var(--border); border-radius:18px; box-shadow:0 16px 48px rgba(46,27,78,.16); z-index:50; overflow:hidden; max-height:380px; overflow-y:auto; display:none; }
     #client-dropdown.open { display:block; }
+    @media (max-width:768px) {
+      #client-dropdown.open { position:fixed; top:auto; bottom:0; left:0; right:0; border-radius:22px 22px 0 0; max-height:70vh; z-index:300; }
+    }
     .client-option { display:flex; align-items:center; gap:10px; padding:11px 16px; cursor:pointer; font-size:14px; border-bottom:1px solid rgba(74,41,118,.06); transition:background .12s; }
     .client-option:hover, .client-option.selected { background:rgba(196,114,90,.07); }
     .client-option.selected { font-weight:700; color:var(--deep); }
@@ -328,10 +331,13 @@
       #home-grid.mv-home #home-timer-col { display:block !important; }
       #home-grid.mv-home #activities-card { display:none !important; }
 
-      /* Aba Atividades: activities-card primeiro, sidebar (resumo+próximas) abaixo */
+      /* Aba Atividades: activities-card + resumo + anotações */
       #home-grid.mv-atividades #home-timer-col { display:block !important; }
       #home-grid.mv-atividades #timer-card { display:none !important; }
       #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; }
+      #home-grid.mv-atividades #proximas-card { display:none !important; }
+      #home-grid.mv-atividades #alert-card { display:none !important; }
+      #home-grid.mv-atividades #fin-card { display:none !important; }
 
       /* Aba Agenda */
       #home-grid.mv-agenda #mobile-agenda-view { display:block !important; }
@@ -361,18 +367,24 @@
         font-size:13px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
         cursor:pointer; padding:10px 4px; border-radius:8px; transition:color .15s;
       }
+      #bottom-nav button { position:relative; flex-direction:column; gap:2px; padding:8px 4px 10px; }
       #bottom-nav button.active { color:var(--coral); }
+      #bottom-nav button.active::after {
+        content:''; display:block; position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+        width:20px; height:3px; border-radius:2px; background:var(--coral);
+      }
       #bottom-nav button:active { opacity:.7; }
     }
     @media (max-width:768px) { .elo-topbar { padding:0 16px; gap:12px; } .elo-top-tab { padding:5px 11px; font-size:12px; }  }
-    /* Anotações */
-    .note-item { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:10px; border-left:3px solid var(--lavender); animation:fadeInUp .2s ease; }
-    .note-item-text { flex:1; font-size:12px; color:var(--text); line-height:1.45; word-break:break-word; }
-    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; white-space:nowrap; margin-top:1px; }
-    .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:14px; line-height:1; padding:0 2px; opacity:.5; transition:opacity .15s; flex-shrink:0; }
-    .note-del-btn:hover { opacity:1; color:var(--coral); }
-    .note-item-text { cursor:text; }
+    /* Anotações — mesmo padrão de sched-task */
+    .note-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:.5px solid rgba(74,41,118,.07); animation:fadeInUp .2s ease; }
+    .note-item:last-child { border-bottom:none; }
+    .note-item-icon { font-size:14px; flex-shrink:0; margin-top:2px; opacity:.6; }
+    .note-item-text { flex:1; font-size:12px; font-weight:600; color:var(--text); line-height:1.45; word-break:break-word; cursor:text; }
     .note-item-text:hover { color:var(--purple); }
+    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.6; margin-top:2px; }
+    .note-del-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:16px; line-height:1; padding:0 2px; opacity:.4; transition:opacity .15s; flex-shrink:0; }
+    .note-del-btn:hover { opacity:1; color:var(--coral); }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
@@ -571,7 +583,7 @@
         <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;">
 
           <!-- Resumo -->
-          <div class="right-card">
+          <div class="right-card" id="resumo-card">
             <div class="sec-label" style="margin-bottom:14px;">Resumo de hoje</div>
             <div class="kpi-grid">
               <div class="kpi-item">
@@ -617,11 +629,11 @@
                        white-space:nowrap;"
               >Salvar</button>
             </div>
-            <div id="notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+            <div id="notes-list" style="display:flex;flex-direction:column;max-height:240px;overflow-y:auto;"></div>
           </div>
 
           <!-- Próximas tarefas -->
-          <div class="right-card">
+          <div class="right-card" id="proximas-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <span class="sec-label">Próximas tarefas</span>
               <button onclick="openTaskModal()" style="background:var(--coral);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit;">+ ADD</button>
@@ -1464,12 +1476,14 @@ function openMobileTaskPicker() {
 
 async function renderMobileAgenda() {
   const today = new Date(); today.setHours(0,0,0,0);
-  const fBRL2 = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
   const cardS = 'background:white;border:var(--border);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);';
-  const lblS  = 'font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;';
+  const hdrS  = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+  const lblS  = 'font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);';
+  const addBtnS = 'background:var(--coral);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit;';
   const rowS  = 'padding:10px 0;border-bottom:.5px solid rgba(74,41,118,.07);display:flex;align-items:flex-start;gap:10px;';
   const titleS= 'font-size:13px;font-weight:700;color:var(--deep);';
   const subS  = 'font-size:11px;color:var(--text-dim);margin-top:2px;';
+  const delBtnS = 'background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:16px;opacity:.4;padding:0 2px;flex-shrink:0;line-height:1;';
 
   // Busca lembretes do banco
   const { data: reminders } = await sb.from('reminders').select('*');
@@ -1479,27 +1493,26 @@ async function renderMobileAgenda() {
     const d = new Date(a.scheduled_at); d.setHours(0,0,0,0); return d >= today;
   }).sort((a,b) => a.scheduled_at - b.scheduled_at).slice(0,15);
   const tasks = (T.scheduledTasks||[]).filter(t => !t.is_done)
-    .sort((a,b) => {
-      const tsA = dbDateToTs(a.scheduled_date);
-      const tsB = dbDateToTs(b.scheduled_date);
-      return tsA - tsB;
-    }).slice(0,15);
-  const vencidos = (T.paymentAlerts||[]).filter(a=>a.type==='vencido');
-  const avencer  = (T.paymentAlerts||[]).filter(a=>a.type==='avencer');
+    .sort((a,b) => dbDateToTs(a.scheduled_date) - dbDateToTs(b.scheduled_date))
+    .slice(0,15);
 
   let html = '';
 
   // 1. Compromissos
   html += `<div style="${cardS}">
-    <div style="${lblS}">📅 Compromissos</div>`;
+    <div style="${hdrS}"><span style="${lblS}">📅 Compromissos</span>
+    <button style="${addBtnS}" onclick="openCalModal(null)">+ Novo</button></div>`;
   if (upcoming.length) {
     upcoming.forEach(a => {
       const d = new Date(a.scheduled_at);
       const ds = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       const client = T.clients.find(c=>c.id===a.client_id);
-      html += `<div style="${rowS}"><span style="font-size:20px;">${a.is_done?'✅':'🗓'}</span>
-        <div><div style="${titleS}">${a.title}</div>
-        <div style="${subS}">${ds}${client?' · '+client.name:''}</div></div></div>`;
+      html += `<div style="${rowS}">
+        <button style="background:none;border:none;cursor:pointer;font-size:20px;padding:0;line-height:1;flex-shrink:0;" onclick="completeAppt(${a.id})" title="Marcar feito">${a.is_done?'✅':'🗓'}</button>
+        <div style="flex:1;min-width:0;"><div style="${titleS}">${a.title}</div>
+        <div style="${subS}">${ds}${client?' · '+client.name:''}</div></div>
+        <button style="${delBtnS}" onclick="deleteAppt(${a.id})">×</button>
+      </div>`;
     });
   } else {
     html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhum compromisso próximo.</div>`;
@@ -1509,14 +1522,17 @@ async function renderMobileAgenda() {
   // 2. Tarefas agendadas
   const prioColor = {alta:'#C4487A',media:'#E07A3A',baixa:'#2FB989'};
   html += `<div style="${cardS}">
-    <div style="${lblS}">✅ Tarefas pendentes</div>`;
+    <div style="${hdrS}"><span style="${lblS}">✅ Tarefas pendentes</span>
+    <button style="${addBtnS}" onclick="openTaskModal()">+ Nova</button></div>`;
   if (tasks.length) {
     tasks.forEach(t => {
       const client = T.clients.find(c=>c.id===t.client_id);
       html += `<div style="${rowS}">
-        <span style="width:10px;height:10px;border-radius:50%;background:${prioColor[t.priority||'media']};flex-shrink:0;margin-top:4px;display:inline-block;"></span>
-        <div><div style="${titleS}">${t.title}</div>
-        <div style="${subS}">${t.scheduled_date||''}${client?' · '+client.name:''}</div></div></div>`;
+        <button style="width:18px;height:18px;border-radius:50%;border:2px solid ${prioColor[t.priority||'media']};background:none;cursor:pointer;flex-shrink:0;margin-top:3px;padding:0;" onclick="completeTask(${t.id})" title="Concluir"></button>
+        <div style="flex:1;min-width:0;"><div style="${titleS}">${t.title}</div>
+        <div style="${subS}">${t.scheduled_date||''}${client?' · '+client.name:''}</div></div>
+        <button style="${delBtnS}" onclick="deleteTask(${t.id})">×</button>
+      </div>`;
     });
   } else {
     html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhuma tarefa pendente.</div>`;
@@ -1525,41 +1541,32 @@ async function renderMobileAgenda() {
 
   // 3. Lembretes
   html += `<div style="${cardS}">
-    <div style="${lblS}">🔔 Lembretes ativos</div>`;
+    <div style="${hdrS}"><span style="${lblS}">🔔 Lembretes</span>
+    <button style="${addBtnS}" onclick="openReminderModal(null)">+ Novo</button></div>`;
   if (reminders && reminders.length) {
     reminders.forEach(r => {
-      const desc = r.type === 'interval'
-        ? `A cada ${r.interval_minutes}min`
-        : `Todo dia às ${r.daily_time}`;
-      html += `<div style="${rowS}"><span style="font-size:20px;">⏰</span>
-        <div><div style="${titleS}">${desc}</div>
-        <div style="${subS}">${r.type === 'interval' ? 'Intervalo' : 'Horário diário'}</div></div></div>`;
+      const desc = r.type === 'interval' ? `A cada ${r.interval_minutes}min` : `Todo dia às ${r.daily_time}`;
+      html += `<div style="${rowS}"><span style="font-size:18px;flex-shrink:0;">⏰</span>
+        <div style="flex:1;min-width:0;"><div style="${titleS}">${desc}</div>
+        <div style="${subS}">${r.type === 'interval' ? 'Intervalo' : 'Horário diário'}</div></div>
+        <button style="${delBtnS}" onclick="deleteReminderMobile(${r.id})">×</button>
+      </div>`;
     });
   } else {
     html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhum lembrete cadastrado.</div>`;
   }
   html += `</div>`;
 
-  // 4. Alertas financeiros
-  html += `<div style="${cardS}">
-    <div style="${lblS}">💰 Alertas de pagamento</div>`;
-  if (vencidos.length || avencer.length) {
-    vencidos.forEach(a => {
-      html += `<div style="${rowS}"><span style="font-size:20px;">🔴</span>
-        <div><div style="${titleS}">${a.clientName}</div>
-        <div style="font-size:11px;color:#C4487A;font-weight:700;margin-top:2px;">VENCIDO · ${fBRL2(a.amount)}</div></div></div>`;
-    });
-    avencer.forEach(a => {
-      html += `<div style="${rowS}"><span style="font-size:20px;">🟡</span>
-        <div><div style="${titleS}">${a.clientName}</div>
-        <div style="font-size:11px;color:#E07A3A;font-weight:700;margin-top:2px;">Vence em ${a.daysLeft}d · ${fBRL2(a.amount)}</div></div></div>`;
-    });
-  } else {
-    html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhum alerta de pagamento.</div>`;
-  }
-  html += `</div>`;
-
   document.getElementById('mobile-agenda-view').innerHTML = html;
+}
+
+async function deleteReminderMobile(id) {
+  openConfirmModal('Excluir lembrete', 'Remover este lembrete?', async () => {
+    const { error } = await sb.from('reminders').delete().eq('id', id);
+    if (error) { showToast('Erro ao excluir','err'); return; }
+    showToast('Lembrete removido','ok');
+    renderMobileAgenda();
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2126,7 +2133,8 @@ function renderNotesList() {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
-      <div style="flex:1;">
+      <span class="note-item-icon">📝</span>
+      <div style="flex:1;min-width:0;">
         <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
@@ -2186,7 +2194,8 @@ async function renderCalNotes() {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="note-item">
-      <div style="flex:1;">
+      <span class="note-item-icon">📝</span>
+      <div style="flex:1;min-width:0;">
         <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
@@ -2540,6 +2549,7 @@ async function completeTask(id) {
   if (error) { showToast('Erro ao concluir tarefa','err'); return; }
   T.scheduledTasks = T.scheduledTasks.map(t=>t.id===id?{...t,is_done:true}:t);
   renderRightSidebar();
+  if (document.getElementById('home-grid')?.classList.contains('mv-agenda')) renderMobileAgenda();
   showToast('Tarefa concluída ✓','ok');
 }
 
@@ -2549,6 +2559,7 @@ async function deleteTask(id) {
     if (error) { showToast('Erro ao excluir','err'); return; }
     T.scheduledTasks = T.scheduledTasks.filter(t=>t.id!==id);
     renderRightSidebar();
+    if (document.getElementById('home-grid')?.classList.contains('mv-agenda')) renderMobileAgenda();
     showToast('Tarefa excluída','ok');
   });
 }
@@ -2558,6 +2569,7 @@ async function completeAppt(id) {
   if (error) { showToast('Erro','err'); return; }
   T.appointments = T.appointments.map(a=>a.id===id?{...a,is_done:true}:a);
   renderRightSidebar();
+  if (document.getElementById('home-grid')?.classList.contains('mv-agenda')) renderMobileAgenda();
   showToast('Compromisso concluído ✓','ok');
 }
 
@@ -2567,6 +2579,7 @@ async function deleteAppt(id) {
     if (error) { showToast('Erro ao excluir','err'); return; }
     T.appointments = T.appointments.filter(a=>a.id!==id);
     renderRightSidebar();
+    if (document.getElementById('home-grid')?.classList.contains('mv-agenda')) renderMobileAgenda();
     showToast('Compromisso excluído','ok');
   });
 }
@@ -2638,6 +2651,7 @@ async function saveTask() {
   if (error) { showToast('Erro ao criar: '+error.message,'err'); btn.disabled=false; btn.textContent='Criar Tarefa'; return; }
   T.scheduledTasks.unshift(data);
   renderRightSidebar();
+  if (document.getElementById('home-grid')?.classList.contains('mv-agenda')) renderMobileAgenda();
   closeModal();
   showToast('Tarefa criada!','ok');
 }
@@ -3360,9 +3374,13 @@ function calGoToday() {
 
 // ── Modal de evento ──────────────────────────────────
 function openCalModal(day) {
-  const dd = String(day).padStart(2,'0');
-  const mm = String(CAL.month+1).padStart(2,'0');
-  document.getElementById('cme-date').value = `${dd}/${mm}/${CAL.year}`;
+  const now = new Date();
+  const d = day != null ? day : now.getDate();
+  const m = day != null ? CAL.month : now.getMonth();
+  const y = day != null ? CAL.year : now.getFullYear();
+  const dd = String(d).padStart(2,'0');
+  const mm = String(m+1).padStart(2,'0');
+  document.getElementById('cme-date').value = `${dd}/${mm}/${y}`;
   document.getElementById('cme-title').value = '';
   document.getElementById('cme-time').value = '';
   document.getElementById('cme-alert').value = '';
@@ -3433,6 +3451,10 @@ async function saveCalEvent() {
   closeCalModal();
   btn.textContent='Salvar'; btn.disabled=false;
   showToast(CAL.modalTab === 'compromisso' ? 'Compromisso criado!':'Tarefa criada!','ok');
+  // Sync with T so mobile view is up-to-date
+  if (CAL.modalTab === 'compromisso') { if (!T.appointments) T.appointments=[]; T.appointments.push(...CAL.appointments.slice(-1)); }
+  else { if (!T.scheduledTasks) T.scheduledTasks=[]; T.scheduledTasks.push(...CAL.scheduledTasks.slice(-1)); }
+  if (document.getElementById('mobile-agenda-view') && document.getElementById('home-grid').classList.contains('mv-agenda')) renderMobileAgenda();
   renderCalGrid();
   renderCalSidebar();
 }
@@ -3553,6 +3575,7 @@ async function saveReminder() {
   }
   closeReminderModal();
   renderCalAlerts();
+  if (document.getElementById('home-grid') && document.getElementById('home-grid').classList.contains('mv-agenda')) renderMobileAgenda();
 }
 
 async function toggleReminder(id, isActive) {
