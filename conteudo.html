@@ -1,828 +1,1181 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema ELO · Conteúdo</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --coral:#C4725A; --coral-light:#D4866E;
-      --purple:#4A2976; --lavender:#BFA8D9;
-      --deep:#2E1B4E; --deep2:#1D0D31;
-      --off:#F3F0F4; --bg:#F4F1F8; --bg2:#EDE8F5;
-      --surface:#FFFFFF; --surface2:#F0EBF8;
-      --text:#2E1B4E; --text-dim:rgba(46,27,78,0.65);
-      --green:#2FB989; --orange:#E07A3A; --blue:#3B82F6; --pink:#C4487A;
-      --shadow:0 18px 45px rgba(46,24,71,0.10);
-      --shadow-sm:0 4px 16px rgba(46,24,71,0.08);
-      --border:1px solid rgba(74,41,118,0.10);
-      --radius:22px;
-    }
-    * { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELO — Conteúdo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --coral: #C4725A;
+  --coral-light: #D4866E;
+  --purple: #4A2976;
+  --lavender: #BFA8D9;
+  --deep: #2E1B4E;
+  --deep2: #1D0D31;
+  --off: #F3F0F4;
+  --bg: #F4F1F8;
+  --bg2: #EDE8F5;
+  --surface: #FFFFFF;
+  --surface2: #F0EBF8;
+  --text: #2E1B4E;
+  --text-dim: rgba(46,27,78,0.55);
+  --green: #2FB989;
+  --orange: #E07A3A;
+  --blue: #3B82F6;
+  --pink: #C4487A;
+  --shadow: 0 18px 45px rgba(46,24,71,0.10);
+  --shadow-sm: 0 4px 16px rgba(46,24,71,0.08);
+  --border: 1px solid rgba(74,41,118,0.10);
+  --radius: 22px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Inter',-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
 
-    /* ── Topbar ── */
-    .elo-topbar { height:72px; background:linear-gradient(90deg,var(--deep) 0%,var(--deep2) 100%); display:flex; align-items:center; padding:0 32px; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,.18); flex-shrink:0; }
-    .topbar-brand { display:flex; align-items:center; flex-shrink:0; }
-    .elo-nav { flex:1; display:flex; justify-content:center; }
-    .elo-nav-inner { display:flex; align-items:center; gap:2px; background:rgba(255,255,255,.07); border-radius:14px; padding:4px; }
-    .elo-top-tab { padding:8px 20px; border-radius:10px; background:transparent; border:none; color:rgba(255,255,255,.6); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:all .18s; white-space:nowrap; }
-    .elo-top-tab:hover { color:white; background:rgba(255,255,255,.10); }
-    .elo-top-tab.active { color:white; background:rgba(255,255,255,.18); font-weight:800; }
-    .topbar-right { display:flex; align-items:center; gap:16px; flex-shrink:0; }
-    .topbar-clock { text-align:right; line-height:1.2; }
-    .topbar-clock .time { font-size:15px; font-weight:700; color:white; }
-    .topbar-clock .date { font-size:11px; color:rgba(255,255,255,.5); text-transform:capitalize; }
-    .topbar-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--lavender),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:white; flex-shrink:0; cursor:pointer; position:relative; user-select:none; }
-    .avatar-menu { display:none; position:absolute; top:calc(100% + 8px); right:0; background:white; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,.18); padding:6px; min-width:160px; z-index:200; }
-    .avatar-menu.open { display:block; }
-    .avatar-menu-item { display:block; width:100%; padding:9px 14px; border:none; background:none; font-family:inherit; font-size:13px; font-weight:600; color:var(--text); text-align:left; cursor:pointer; border-radius:8px; }
-    .avatar-menu-item:hover { background:var(--bg); }
-    .avatar-menu-item.danger { color:#DC2626; }
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--deep2);
+  height:54px;
+  display:flex;
+  align-items:center;
+  padding:0 28px;
+  gap:0;
+  flex-shrink:0;
+  z-index:100;
+}
+.topbar-logo{display:flex;align-items:center;gap:8px;margin-right:32px;text-decoration:none;}
+.logo-icon{width:32px;height:32px;background:var(--coral);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;letter-spacing:-1px;}
+.logo-text{color:#fff;font-weight:700;font-size:13px;line-height:1.1;}
+.logo-text span{display:block;font-size:9px;font-weight:400;color:var(--lavender);letter-spacing:1px;text-transform:uppercase;}
+.topbar-nav{display:flex;gap:2px;flex:1;justify-content:center;}
+.topbar-nav a{color:rgba(255,255,255,.5);font-size:13px;font-weight:500;padding:6px 15px;border-radius:9px;text-decoration:none;transition:all .15s;}
+.topbar-nav a:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
+.topbar-nav a.active{background:var(--purple);color:#fff;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-clock{color:#fff;font-size:13px;font-weight:700;line-height:1.1;text-align:right;}
+.topbar-date{color:var(--lavender);font-size:10px;}
 
-    /* ── Barra de busca unificada ── */
-    .cn-search-bar { background:var(--surface); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:12px 20px; margin:0 32px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex-shrink:0; }
-    .cn-search-input-wrap { flex:1; min-width:280px; position:relative; display:flex; align-items:center; }
-    .cn-search-icon { position:absolute; left:12px; font-size:14px; pointer-events:none; opacity:.5; }
-    .cn-search-main { width:100%; padding:10px 14px 10px 36px; border:var(--border); border-radius:10px; font-family:inherit; font-size:14px; color:var(--text); background:var(--surface2); outline:none; transition:border-color .2s; }
-    .cn-search-main:focus { border-color:rgba(196,114,90,.5); }
-    .cn-filters { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .cn-filter-select { padding:8px 12px; font-size:12px; min-width:160px; width:auto; }
-    .cn-filter-clear { background:none; border:var(--border); border-radius:8px; padding:7px 12px; font-size:11px; font-weight:600; color:var(--text-dim); cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
-    .cn-filter-clear:hover { background:var(--bg2); color:var(--coral); }
+/* ── PAGE ── */
+.page{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:16px 24px 16px;
+  gap:10px;
+  overflow:hidden;
+  min-height:0;
+}
 
-    /* ── Layout principal ── */
-    .cn-page { display:flex; gap:32px; flex:1; overflow:hidden; padding:0 32px 16px; }
+/* ── KPI BAR ── */
+.kpi-bar{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  flex-shrink:0;
+}
+.kpi-card{
+  background:var(--surface);
+  border:var(--border);
+  border-radius:14px;
+  padding:12px 16px;
+  box-shadow:var(--shadow-sm);
+}
+.kpi-label{font-size:9px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+.kpi-val{font-size:26px;font-weight:800;color:var(--text);line-height:1.1;}
+.kpi-val.orange{color:var(--orange);}
+.kpi-val.green{color:var(--green);}
+.kpi-val.lavender{color:var(--lavender);}
+.kpi-hint{font-size:10px;color:var(--text-dim);margin-top:2px;}
 
-    /* ── Bloco de notas ── */
-    .cn-block { flex:1.4; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
-    .cn-header { padding:16px 20px; border-bottom:var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-    .cn-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
-    .cn-sub { font-size:13px; font-weight:600; color:var(--deep); margin-top:2px; }
-    .cn-editor-wrap { flex:1; padding:16px 20px; min-height:0; display:flex; flex-direction:column; }
-    .cn-editor { flex:1; background:var(--surface2); border:var(--border); border-radius:14px; padding:16px; font-size:14px; line-height:1.8; color:var(--text); outline:none; overflow-y:auto; font-family:inherit; }
-    .cn-editor:empty::before { content:attr(data-placeholder); color:var(--lavender); pointer-events:none; }
-    .cn-footer { padding:10px 20px; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--text-dim); flex-shrink:0; border-top:var(--border); }
+/* ── SEARCH BAR ── */
+.search-bar{
+  background:var(--surface);
+  border:var(--border);
+  border-radius:14px;
+  box-shadow:var(--shadow-sm);
+  padding:12px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex-shrink:0;
+}
+.search-input-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--bg);
+  border:var(--border);
+  border-radius:10px;
+  padding:0 14px;
+}
+.search-input-wrap svg{color:var(--text-dim);flex-shrink:0;}
+.search-input{
+  flex:1;
+  border:none;
+  background:transparent;
+  font-family:inherit;
+  font-size:13px;
+  color:var(--text);
+  padding:10px 0;
+  outline:none;
+}
+.search-input::placeholder{color:var(--lavender);}
+.search-filters{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.search-filters select{
+  font-family:inherit;
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+  background:var(--bg2);
+  border:var(--border);
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+  outline:none;
+  flex:1;
+}
+.search-filters select:focus{border-color:rgba(74,41,118,.35);}
+.btn-limpar{
+  background:transparent;
+  border:var(--border);
+  color:var(--text-dim);
+  font-family:inherit;
+  font-size:12px;
+  font-weight:600;
+  padding:6px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+  transition:all .15s;
+}
+.btn-limpar:hover{background:var(--surface2);color:var(--text);}
 
-    /* ── Banco de inspirações ── */
-    .banco-panel { flex:1; background:var(--surface); border-radius:var(--radius); border:var(--border); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; overflow:hidden; }
-    .banco-head { background:var(--deep); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
-    .banco-head-title { color:#fff; font-weight:700; font-size:15px; }
-    .banco-head-sub { color:var(--lavender); font-size:11px; margin-top:2px; }
-    .banco-list { flex:1; overflow-y:auto; padding:8px; }
-    .banco-list::-webkit-scrollbar { width:4px; }
-    .banco-list::-webkit-scrollbar-thumb { background:var(--lavender); border-radius:2px; }
-    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; transition:box-shadow .15s; }
-    .banco-card:hover { box-shadow:var(--shadow-sm); }
-    .banco-card-tags { display:flex; gap:6px; margin-bottom:7px; flex-wrap:wrap; }
-    .banco-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
-    .banco-tag.esp { background:var(--bg2); color:var(--purple); }
-    .banco-tag.fmt { background:rgba(196,114,90,.1); color:var(--coral); }
-    .banco-tag.review { background:rgba(224,122,58,.15); color:var(--orange); }
-    .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); margin-bottom:5px; line-height:1.35; cursor:pointer; }
-    .banco-card-title:hover { color:var(--purple); }
-    .banco-card-caption { font-size:12px; color:var(--text-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .banco-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
-    .banco-card-tags-list { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0; }
-    .banco-card-tag { background:var(--bg2); color:var(--purple); font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; letter-spacing:.3px; }
-    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
-    .banco-btn-usar:hover { background:var(--coral-light); }
-    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:12px; transition:background .15s; }
-    .banco-btn-icon:hover { background:var(--bg2); }
-    .banco-btn-add { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; font-weight:600; padding:6px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:all .15s; }
-    .banco-btn-add:hover { background:rgba(255,255,255,.25); }
-    .banco-empty { text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
-    .banco-load-more { width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); margin-top:4px; transition:background .15s; }
-    .banco-load-more:hover { background:var(--bg2); }
+/* ── CONTENT AREA ── */
+.content-area{
+  flex:1;
+  display:flex;
+  gap:12px;
+  min-height:0;
+  overflow:hidden;
+}
 
-    /* ── Seletor customizado de cliente ── */
-    .cn-select-wrap { position:relative; }
-    .cn-select-trigger { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--surface); border:var(--border); border-radius:10px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text); min-width:200px; user-select:none; transition:border-color .15s; }
-    .cn-select-trigger:hover { border-color:rgba(74,41,118,.25); }
-    .cn-select-trigger.open { border-color:var(--purple); }
-    .cn-dot { width:8px; height:8px; border-radius:50%; background:var(--lavender); flex-shrink:0; }
-    .cn-dropdown { position:absolute; top:calc(100% + 6px); left:0; right:0; min-width:240px; background:var(--surface); border:var(--border); border-radius:14px; box-shadow:0 12px 40px rgba(46,24,71,.18); z-index:500; display:none; }
-    .cn-dropdown.open { display:block; }
-    .cn-dropdown-search { padding:10px; border-bottom:var(--border); }
-    .cn-dropdown-list { max-height:220px; overflow-y:auto; }
-    .cn-dropdown-item { display:flex; align-items:center; gap:9px; padding:8px 12px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text); transition:background .1s; }
-    .cn-dropdown-item:hover { background:var(--surface2); }
-    .cn-dropdown-item.selected { background:var(--bg2); }
+/* ── NOTEPAD ── */
+.notepad{
+  flex:0 0 380px;
+  background:var(--surface);
+  border-radius:16px;
+  border:var(--border);
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+.notepad-client-row{
+  padding:12px 16px 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:var(--border);
+  flex-shrink:0;
+}
+.client-label-txt{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  white-space:nowrap;
+}
 
-    /* ── Modais ── */
-    .elo-overlay { position:fixed; inset:0; background:rgba(29,13,49,.55); z-index:2000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-    .elo-modal { background:var(--surface); border-radius:20px; padding:26px; position:relative; animation:popIn .2s cubic-bezier(.4,0,.2,1); box-shadow:0 32px 80px rgba(46,24,71,.28); max-height:90vh; overflow-y:auto; }
-    @keyframes popIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
-    .elo-modal-header { margin-bottom:20px; }
-    .elo-modal-header h3 { font-size:18px; font-weight:700; color:var(--deep); }
-    .elo-modal-body { margin-bottom:20px; }
-    .elo-modal-footer { display:flex; justify-content:flex-end; gap:10px; padding-top:16px; border-top:var(--border); }
-    .elo-modal-close { position:absolute; top:14px; right:14px; background:var(--bg2); border:none; width:28px; height:28px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-dim); }
+/* Custom select */
+.custom-select{position:relative;flex:1;}
+.select-trigger{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border:var(--border);border-radius:9px;
+  padding:7px 10px;cursor:pointer;font-family:inherit;font-size:13px;
+  font-weight:600;color:var(--text);user-select:none;transition:border-color .15s;
+}
+.select-trigger:hover{border-color:rgba(74,41,118,.3);}
+.select-trigger.open{border-color:var(--purple);}
+.trigger-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--lavender);}
+.trigger-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.trigger-arrow{font-size:10px;color:var(--text-dim);transition:transform .15s;}
+.trigger-arrow.up{transform:rotate(180deg);}
+.select-dropdown{
+  display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--surface);border:var(--border);border-radius:12px;
+  box-shadow:0 8px 24px rgba(46,24,71,.15);z-index:200;overflow:hidden;
+}
+.select-dropdown.open{display:block;}
+.dropdown-search-wrap{padding:8px 10px;border-bottom:var(--border);}
+.dropdown-search{
+  width:100%;border:var(--border);border-radius:8px;padding:6px 10px;
+  font-family:inherit;font-size:12px;background:var(--bg2);color:var(--text);outline:none;
+}
+.dropdown-list{max-height:180px;overflow-y:auto;}
+.dropdown-item{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  font-size:13px;font-weight:500;color:var(--text);cursor:pointer;transition:background .1s;
+}
+.dropdown-item:hover{background:var(--surface2);}
+.dropdown-item.selected{background:var(--bg2);font-weight:700;}
+.item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
-    /* ── Botões ── */
-    .elo-btn-primary { background:var(--coral); border:none; color:#fff; font-size:13px; font-weight:700; padding:9px 20px; border-radius:10px; cursor:pointer; font-family:inherit; transition:background .15s; }
-    .elo-btn-primary:hover { background:var(--coral-light); }
-    .elo-btn-primary:disabled { background:var(--lavender); cursor:not-allowed; }
-    .elo-btn-ghost { background:transparent; border:var(--border); color:var(--text); font-size:13px; font-weight:600; padding:9px 18px; border-radius:10px; cursor:pointer; font-family:inherit; transition:all .15s; }
-    .elo-btn-ghost:hover { background:var(--bg2); }
-    .elo-btn-danger { background:#DC2626; border:none; color:#fff; font-size:13px; font-weight:700; padding:9px 18px; border-radius:10px; cursor:pointer; font-family:inherit; transition:background .15s; }
-    .elo-btn-danger:hover { background:#B91C1C; }
+/* Toolbar formatação */
+.notepad-toolbar{
+  padding:8px 14px 6px;
+  display:flex;align-items:center;gap:4px;
+  border-bottom:var(--border);flex-shrink:0;
+  flex-wrap:wrap;
+}
+.toolbar-btn{
+  background:transparent;border:none;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--text-dim);padding:4px 8px;border-radius:6px;transition:all .12s;
+}
+.toolbar-btn:hover{background:var(--surface2);color:var(--text);}
+.toolbar-sep{width:1px;height:18px;background:rgba(74,41,118,.12);margin:0 4px;flex-shrink:0;}
+.toolbar-sym{font-size:11px;font-weight:600;padding:4px 6px;}
 
-    /* ── Inputs ── */
-    .elo-label { display:block; font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-    .elo-input, .elo-select { width:100%; padding:10px 14px; border:var(--border); border-radius:10px; font-family:inherit; font-size:13px; color:var(--text); background:var(--surface); outline:none; transition:border-color .2s; }
-    .elo-input:focus, .elo-select:focus { border-color:rgba(196,114,90,.5); }
-    textarea.elo-input { resize:vertical; }
+/* Notepad header */
+.notepad-header{
+  padding:8px 16px 4px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.notepad-header-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);}
+.notepad-header-hint{font-size:11px;color:var(--lavender);}
 
-    /* ── Toast ── */
-    .cn-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px); background:var(--deep); color:#fff; padding:10px 20px; border-radius:10px; font-size:13px; font-weight:600; z-index:9999; transition:transform .3s ease; pointer-events:none; box-shadow:var(--shadow); }
-    .cn-toast.show { transform:translateX(-50%) translateY(0); }
-    .cn-toast.cn-toast-err { background:#DC2626; }
-    .cn-toast.cn-toast-warn { background:var(--orange); }
+/* Editor */
+.notepad-editor-wrap{flex:1;padding:0 16px;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.notepad-editor{
+  flex:1;background:var(--bg);border:var(--border);border-radius:10px;
+  padding:12px 14px;font-size:13px;line-height:1.75;color:var(--text);
+  outline:none;overflow-y:auto;font-family:inherit;
+}
+.notepad-editor:empty::before{content:attr(data-placeholder);color:var(--lavender);pointer-events:none;}
+.notepad-editor::-webkit-scrollbar{width:3px;}
+.notepad-editor::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:2px;}
 
-    /* ── Footer ── */
-    .cn-page-footer { height:40px; background:var(--deep); display:flex; align-items:center; justify-content:center; gap:16px; flex-shrink:0; }
-    .cn-page-footer span { font-size:11px; color:rgba(255,255,255,.4); font-weight:600; letter-spacing:1px; }
-  </style>
+/* Rodapé notas */
+.notepad-footer{
+  padding:8px 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.notepad-footer-hint{font-size:11px;color:var(--text-dim);}
+.btn-salvar{
+  background:var(--coral);border:none;color:#fff;font-size:12px;font-weight:700;
+  padding:7px 18px;border-radius:9px;cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.btn-salvar:hover{background:var(--coral-light);}
+.btn-salvar:disabled{background:var(--lavender);cursor:not-allowed;}
+
+/* ── BANCO PANEL ── */
+.banco-panel{
+  flex:1;
+  background:var(--surface);
+  border-radius:16px;
+  border:var(--border);
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+}
+.banco-header{
+  background:var(--deep);
+  padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  border-radius:16px 16px 0 0;flex-shrink:0;
+}
+.banco-header-info{flex:1;}
+.banco-header-title{color:#fff;font-weight:700;font-size:14px;}
+.banco-header-sub{color:var(--lavender);font-size:11px;margin-top:1px;}
+.banco-counter{
+  background:var(--purple);color:#fff;border-radius:8px;
+  padding:2px 10px;font-size:12px;font-weight:700;
+}
+
+/* Lista de posts — 1 coluna */
+.banco-list{
+  flex:1;
+  overflow-y:auto;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.banco-list::-webkit-scrollbar{width:4px;}
+.banco-list::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:2px;}
+
+/* Post card — 1 coluna, mais legível */
+.post-card{
+  background:var(--surface);
+  border:var(--border);
+  border-radius:12px;
+  padding:12px 14px;
+  box-shadow:0 1px 4px rgba(46,24,71,.05);
+  transition:box-shadow .15s;
+}
+.post-card:hover{box-shadow:0 4px 12px rgba(46,24,71,.10);}
+
+.post-card-top{
+  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+}
+.post-card-tags{display:flex;gap:6px;flex:1;flex-wrap:wrap;}
+.tag{
+  font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  border-radius:6px;padding:2px 8px;
+}
+.tag.esp{background:var(--bg2);color:var(--purple);}
+.tag.fmt{background:rgba(196,114,90,.12);color:var(--coral);}
+.tag.status-ideia{background:rgba(224,122,58,.12);color:var(--orange);}
+.tag.status-aprovado{background:rgba(47,185,137,.12);color:var(--green);}
+.tag.status-usado{background:rgba(191,168,217,.18);color:var(--purple);}
+
+.post-card-title{
+  font-size:13px;font-weight:700;color:var(--text);
+  margin-bottom:5px;line-height:1.4;
+}
+.post-card-preview{
+  font-size:12px;color:var(--text-dim);line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  margin-bottom:8px;
+}
+.post-card-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding-top:8px;border-top:var(--border);
+}
+.post-card-esp-hint{font-size:11px;color:var(--text-dim);font-weight:500;}
+.post-card-actions{display:flex;gap:6px;align-items:center;}
+.btn-usar{
+  background:var(--coral);color:#fff;border:none;font-family:inherit;
+  font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;transition:background .15s;
+}
+.btn-usar:hover{background:var(--coral-light);}
+.btn-icon{
+  background:transparent;border:var(--border);color:var(--text-dim);
+  font-size:13px;padding:4px 8px;border-radius:7px;cursor:pointer;transition:all .12s;
+  font-family:inherit;
+}
+.btn-icon:hover{background:var(--surface2);color:var(--text);}
+
+/* Loading state */
+.banco-loading{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px;color:var(--text-dim);gap:12px;font-size:13px;font-weight:600;
+}
+.spinner-sm{
+  width:28px;height:28px;border-radius:50%;
+  border:3px solid var(--lavender);border-top-color:var(--coral);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.banco-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px;color:var(--lavender);font-size:13px;font-weight:600;
+  text-align:center;gap:8px;
+}
+
+/* Load more */
+.banco-more{
+  padding:10px;flex-shrink:0;display:flex;justify-content:center;
+}
+.btn-loadmore{
+  background:var(--surface2);border:var(--border);color:var(--purple);
+  font-family:inherit;font-size:12px;font-weight:700;padding:8px 24px;
+  border-radius:10px;cursor:pointer;transition:all .15s;
+}
+.btn-loadmore:hover{background:var(--bg2);}
+.btn-loadmore:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  align-items:center;justify-content:center;z-index:500;padding:24px;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--surface);border-radius:20px;width:580px;max-width:100%;
+  max-height:85vh;overflow-y:auto;padding:28px;
+  box-shadow:0 24px 64px rgba(0,0,0,.3);animation:fadeInUp .2s ease;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.modal-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;}
+.modal-tags{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+.modal-close{
+  background:transparent;border:none;font-size:18px;cursor:pointer;
+  color:var(--text-dim);padding:0 4px;line-height:1;flex-shrink:0;
+}
+.modal-title{font-size:17px;font-weight:800;color:var(--deep);margin-bottom:10px;line-height:1.3;}
+.modal-legenda{
+  font-size:13px;line-height:1.75;color:var(--text);
+  background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;
+  white-space:pre-wrap;max-height:220px;overflow-y:auto;
+}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.modal-item{background:var(--bg2);border-radius:9px;padding:10px 12px;}
+.modal-item-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+.modal-item-val{font-size:13px;font-weight:600;color:var(--text);}
+.modal-item-val a{color:var(--blue);text-decoration:none;font-weight:600;}
+.modal-item-val a:hover{text-decoration:underline;}
+.modal-item-val.green{color:var(--green);}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;}
+.btn-usar-modal{
+  background:var(--coral);color:#fff;border:none;font-family:inherit;
+  font-size:13px;font-weight:700;padding:9px 20px;border-radius:10px;cursor:pointer;transition:background .15s;
+}
+.btn-usar-modal:hover{background:var(--coral-light);}
+.btn-cancel-modal{
+  background:transparent;border:var(--border);color:var(--text-dim);
+  font-family:inherit;font-size:13px;font-weight:600;padding:9px 16px;
+  border-radius:10px;cursor:pointer;transition:all .15s;
+}
+.btn-cancel-modal:hover{background:var(--surface2);}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--deep);color:#fff;
+  font-size:13px;font-weight:600;
+  padding:10px 18px;border-radius:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  z-index:1000;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  transform:translateY(8px);
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{background:var(--green);}
+.toast.err{background:var(--coral);}
+.toast.warn{background:var(--orange);}
+
+/* ── EDIT MODAL ── */
+.edit-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  align-items:center;justify-content:center;z-index:600;padding:24px;
+}
+.edit-modal-overlay.open{display:flex;}
+.edit-modal-box{
+  background:var(--surface);border-radius:18px;width:520px;max-width:100%;
+  padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.28);
+}
+.edit-modal-title{font-size:15px;font-weight:800;color:var(--deep);margin-bottom:16px;}
+.edit-field{margin-bottom:14px;}
+.edit-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px;}
+.edit-input,.edit-select,.edit-textarea{
+  width:100%;font-family:inherit;font-size:13px;color:var(--text);
+  background:var(--bg2);border:var(--border);border-radius:9px;padding:8px 12px;outline:none;
+  transition:border-color .15s;
+}
+.edit-input:focus,.edit-select:focus,.edit-textarea:focus{border-color:rgba(74,41,118,.4);}
+.edit-textarea{height:110px;resize:vertical;line-height:1.6;}
+.edit-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+</style>
 </head>
 <body>
 
-  <!-- TOPBAR -->
-  <header class="elo-topbar">
-    <div class="topbar-brand">
-      <img src="logo-elo.png" alt="ELO" height="34" onerror="this.style.display='none'">
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="index.html">
+    <div class="logo-icon">ELO</div>
+    <div class="logo-text">ELO Sistema<span>Comunicação</span></div>
+  </a>
+  <nav class="topbar-nav">
+    <a href="index.html">Timer</a>
+    <a href="index.html#resultado">Resultado</a>
+    <a href="index.html#clientes">Clientes</a>
+    <a href="index.html#financeiro">Financeiro</a>
+    <a href="conteudo.html" class="active">Conteúdo</a>
+  </nav>
+  <div class="topbar-right">
+    <div>
+      <div class="topbar-clock" id="clock">--:--</div>
+      <div class="topbar-date" id="datestr"></div>
     </div>
-    <nav class="elo-nav">
-      <div class="elo-nav-inner">
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Home</button>
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Resultado</button>
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Calendário</button>
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Clientes</button>
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Financeiro</button>
-        <button class="elo-top-tab active">Conteúdo</button>
-        <button class="elo-top-tab" onclick="window.location.href='index.html'">Config.</button>
-      </div>
-    </nav>
-    <div class="topbar-right">
-      <div class="topbar-clock">
-        <div class="time" id="clock-time">--:--</div>
-        <div class="date" id="clock-date">---</div>
-      </div>
-      <div class="topbar-avatar" id="avatarBtn" onclick="toggleAvatarMenu()">E
-        <div class="avatar-menu" id="avatarMenu">
-          <button class="avatar-menu-item danger" onclick="doLogout()">Sair</button>
-        </div>
-      </div>
-    </div>
-  </header>
+  </div>
+</div>
 
-  <!-- BARRA DE BUSCA UNIFICADA -->
-  <div class="cn-search-bar">
-    <div class="cn-search-input-wrap">
-      <span class="cn-search-icon">🔍</span>
-      <input type="text" id="bancoSearchInput" class="cn-search-main"
-        placeholder="Buscar por tema, palavra-chave, legenda ou tag..."
-        oninput="bancoFiltrar(this.value)">
+<!-- PAGE -->
+<div class="page">
+
+  <!-- KPI BAR -->
+  <div class="kpi-bar" id="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-label">Total de Posts</div>
+      <div class="kpi-val" id="kpi-total">—</div>
+      <div class="kpi-hint">no banco de inspirações</div>
     </div>
-    <div class="cn-filters">
-      <select id="filterSpecialty" class="elo-select cn-filter-select" onchange="bancoAplicarFiltro()">
-        <option value="">Todas as especialidades</option>
-      </select>
-      <select id="filterFormat" class="elo-select cn-filter-select" onchange="bancoAplicarFiltro()">
-        <option value="">Todos os formatos</option>
-        <option value="Carrossel">Carrossel</option>
-        <option value="Reels">Reels</option>
-        <option value="Card único">Card único</option>
-      </select>
-      <select id="filterReview" class="elo-select cn-filter-select" onchange="bancoAplicarFiltro()">
-        <option value="">Todos os posts</option>
-        <option value="false">Verificados</option>
-        <option value="true">Para revisar</option>
-      </select>
-      <button class="cn-filter-clear" onclick="bancoClearFilters()" title="Limpar filtros">✕ Limpar</button>
+    <div class="kpi-card">
+      <div class="kpi-label">Disponíveis</div>
+      <div class="kpi-val orange" id="kpi-ideia">—</div>
+      <div class="kpi-hint">status Ideia</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Aprovados</div>
+      <div class="kpi-val green" id="kpi-aprovado">—</div>
+      <div class="kpi-hint">prontos para usar</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Usados</div>
+      <div class="kpi-val lavender" id="kpi-usado">—</div>
+      <div class="kpi-hint">já publicados</div>
     </div>
   </div>
 
-  <!-- CONTEÚDO PRINCIPAL -->
-  <main class="cn-page">
+  <!-- SEARCH BAR -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" id="search-input" type="text" placeholder="Buscar por tema, palavra-chave ou legenda..." oninput="onSearchInput(this.value)">
+    </div>
+    <div class="search-filters">
+      <select id="filter-esp" onchange="applyFilters()">
+        <option value="">Especialidades</option>
+      </select>
+      <select id="filter-fmt" onchange="applyFilters()">
+        <option value="">Formatos</option>
+        <option value="Carrossel">Carrossel</option>
+        <option value="Reels">Reels</option>
+        <option value="Card único">Card único</option>
+        <option value="Stories">Stories</option>
+        <option value="Texto">Texto</option>
+      </select>
+      <select id="filter-status" onchange="applyFilters()">
+        <option value="">Status</option>
+        <option value="Ideia">Disponíveis (Ideia)</option>
+        <option value="Aprovado">Aprovados</option>
+        <option value="Usado">Usados</option>
+      </select>
+      <button class="btn-limpar" onclick="limparFiltros()">Limpar</button>
+    </div>
+  </div>
 
-    <!-- BLOCO DE NOTAS -->
-    <div class="cn-block">
-      <div class="cn-header">
-        <div>
-          <div class="cn-label">Anotações de Conteúdo</div>
-          <div class="cn-sub" id="cn-client-hint">Selecione um cliente para começar</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="cn-select-wrap" id="cnSelectWrap">
-            <div class="cn-select-trigger" id="cnTrigger" onclick="cnToggleDropdown()">
-              <span class="cn-dot" id="cnDot"></span>
-              <span id="cnTriggerText">Selecionar cliente</span>
-              <span id="cnArrow" style="font-size:10px;color:var(--text-dim);margin-left:auto;">▼</span>
-            </div>
-            <div class="cn-dropdown" id="cnDropdown">
-              <div class="cn-dropdown-search">
-                <input type="text" placeholder="Buscar cliente..." id="cnSearch" oninput="cnFilter(this.value)" class="elo-input" style="padding:7px 12px;font-size:12px;">
-              </div>
-              <div class="cn-dropdown-list" id="cnList"></div>
-            </div>
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+    <!-- NOTEPAD -->
+    <div class="notepad">
+      <!-- Linha cliente -->
+      <div class="notepad-client-row">
+        <span class="client-label-txt">Cliente</span>
+        <div class="custom-select" id="customSelect">
+          <div class="select-trigger" id="selectTrigger" onclick="toggleDropdown()">
+            <span class="trigger-dot" id="triggerDot"></span>
+            <span class="trigger-text" id="triggerText">Selecionar cliente...</span>
+            <span class="trigger-arrow" id="triggerArrow">▼</span>
           </div>
-          <button class="elo-btn-primary" id="cnBtnSalvar" onclick="cnSalvar()" disabled>Salvar</button>
+          <div class="select-dropdown" id="selectDropdown">
+            <div class="dropdown-search-wrap">
+              <input class="dropdown-search" id="dropdownSearch" type="text" placeholder="Buscar..." oninput="filterDropdown(this.value)">
+            </div>
+            <div class="dropdown-list" id="dropdownList"></div>
+          </div>
         </div>
       </div>
 
-      <div class="cn-editor-wrap">
-        <div
-          id="cnEditor"
-          class="cn-editor"
-          contenteditable="false"
-          data-placeholder="Selecione um cliente acima para começar a anotar ideias de conteúdo..."
-          onkeydown="cnHandleKey(event)"
-        ></div>
+      <!-- Toolbar formatação -->
+      <div class="notepad-toolbar">
+        <button class="toolbar-btn" title="Negrito" onclick="fmt('bold')"><b>B</b></button>
+        <button class="toolbar-btn" title="Itálico" onclick="fmt('italic')"><i>I</i></button>
+        <button class="toolbar-btn" title="Sublinhado" onclick="fmt('underline')"><u>U</u></button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('•')">•</button>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('→')">→</button>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('★')">★</button>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('✓')">✓</button>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('💡')">💡</button>
+        <button class="toolbar-btn toolbar-sym" onclick="insertSym('📌')">📌</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" title="Limpar formatação" onclick="fmt('removeFormat')" style="font-size:11px;">Limpar</button>
       </div>
 
-      <div class="cn-footer">
-        <span>Ctrl+S para salvar · As anotações ficam salvas por cliente</span>
-        <span id="cnSavedBadge" style="display:none;color:var(--green);font-weight:700;">✓ Salvo</span>
+      <!-- Header notas -->
+      <div class="notepad-header">
+        <span class="notepad-header-label">Bloco de notas</span>
+        <span class="notepad-header-hint" id="clientHint">nenhum cliente selecionado</span>
+      </div>
+
+      <!-- Editor -->
+      <div class="notepad-editor-wrap">
+        <div class="notepad-editor" id="editor" contenteditable="false"
+          data-placeholder="Selecione um cliente para começar a escrever..."
+          onkeydown="handleKey(event)">
+        </div>
+      </div>
+
+      <!-- Rodapé -->
+      <div class="notepad-footer">
+        <span class="notepad-footer-hint">Ctrl+S para salvar</span>
+        <button class="btn-salvar" id="btnSalvar" disabled onclick="salvar()">Salvar</button>
       </div>
     </div>
 
-    <!-- BANCO DE INSPIRAÇÕES -->
+    <!-- BANCO PANEL -->
     <div class="banco-panel">
-      <div class="banco-head">
-        <div>
-          <div class="banco-head-title">Banco de Inspirações</div>
-          <div class="banco-head-sub" id="bancoSub">carregando...</div>
+      <div class="banco-header">
+        <div class="banco-header-info">
+          <div class="banco-header-title">📚 Banco de Inspirações</div>
+          <div class="banco-header-sub" id="banco-sub">Carregando posts...</div>
         </div>
-        <button class="banco-btn-add" onclick="bancoOpenModal(null)">+ Nova ideia</button>
+        <span class="banco-counter" id="banco-counter">...</span>
       </div>
 
-      <div class="banco-list" id="bancoList"></div>
+      <div class="banco-list" id="banco-list">
+        <div class="banco-loading">
+          <div class="spinner-sm"></div>
+          Carregando banco de inspirações...
+        </div>
+      </div>
+
+      <div class="banco-more" id="banco-more" style="display:none;">
+        <button class="btn-loadmore" id="btn-loadmore" onclick="loadMore()">Carregar mais 40 posts</button>
+      </div>
     </div>
 
-  </main>
+  </div>
+</div>
 
-  <!-- FOOTER -->
-  <footer class="cn-page-footer">
-    <span>Sistema ELO</span>
-    <span style="color:rgba(255,255,255,.2);">·</span>
-    <span>Versão 3.0</span>
-    <span style="color:rgba(255,255,255,.2);">·</span>
-    <span>ELO Comunicação · Umuarama-PR</span>
-    <span style="color:rgba(255,255,255,.2);">·</span>
-    <span>Conteúdo</span>
-  </footer>
+<!-- MODAL VISUALIZAR -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalClick(event)">
+  <div class="modal-box">
+    <div class="modal-top">
+      <div class="modal-tags" id="m-tags"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-title" id="m-title"></div>
+    <div class="modal-legenda" id="m-legenda"></div>
+    <div class="modal-grid" id="m-grid"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="closeModal()">Fechar</button>
+      <button class="btn-usar-modal" id="btn-usar-modal" onclick="usarBase()">↓ Usar como base no editor</button>
+    </div>
+  </div>
+</div>
 
-  <script>
-    const sb = supabase.createClient(
-      'https://vatkfkdnflbdfomglvme.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhdGtma2RuZmxiZGZvbWdsdm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDIzMDUsImV4cCI6MjA5NzcxODMwNX0.DhcxD1Z9HERL4128bKrIIZ8KajcYK5hny8zLxBwHmGM'
-    );
+<!-- MODAL EDITAR -->
+<div class="edit-modal-overlay" id="edit-overlay" onclick="closeEditClick(event)">
+  <div class="edit-modal-box">
+    <div class="edit-modal-title">Editar Post</div>
+    <div class="edit-field">
+      <label>Título</label>
+      <input class="edit-input" id="edit-title" type="text">
+    </div>
+    <div class="edit-field">
+      <label>Legenda</label>
+      <textarea class="edit-textarea" id="edit-caption"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="edit-field">
+        <label>Status</label>
+        <select class="edit-select" id="edit-status">
+          <option value="Ideia">Ideia</option>
+          <option value="Aprovado">Aprovado</option>
+          <option value="Usado">Usado</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Formato</label>
+        <input class="edit-input" id="edit-format" type="text">
+      </div>
+    </div>
+    <div class="edit-footer">
+      <button class="btn-cancel-modal" onclick="closeEdit()">Cancelar</button>
+      <button class="btn-usar-modal" onclick="saveEdit()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-    async function initPage() {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = 'index.html'; return; }
-      startClock();
-      await Promise.all([cnInit(), bancoInit()]);
-    }
+<script>
+// ── Supabase ──
+const sb = supabase.createClient(
+  'https://vatkfkdnflbdfomglvme.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhdGtma2RuZmxiZGZvbWdsdm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDIzMDUsImV4cCI6MjA5NzcxODMwNX0.DhcxD1Z9HERL4128bKrIIZ8KajcYK5hny8zLxBwHmGM'
+);
 
-    async function doLogout() {
-      await sb.auth.signOut();
-      window.location.href = 'index.html';
-    }
+// ── Clock ──
+(function tick(){
+  const n = new Date();
+  const clock = document.getElementById('clock');
+  const dateEl = document.getElementById('datestr');
+  if(clock) clock.textContent = n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(dateEl) dateEl.textContent = n.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
+  setTimeout(tick,1000);
+})();
 
-    function toggleAvatarMenu() {
-      document.getElementById('avatarMenu').classList.toggle('open');
-    }
-    document.addEventListener('click', e => {
-      if (!e.target.closest('#avatarBtn')) {
-        document.getElementById('avatarMenu').classList.remove('open');
-      }
-    });
+// ── Toast ──
+function showToast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.className='toast'; }, 2800);
+}
 
-    // ── Relógio ───────────────────────────────────────────────────────────────
+// ── Estado global ──
+let clients = [];
+let selectedClient = null;
+let dropdownOpen = false;
+let dropdownFilter = '';
+let notesCache = {};
 
-    function startClock() {
-      function tick() {
-        const n = new Date();
-        document.getElementById('clock-time').textContent =
-          n.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-        document.getElementById('clock-date').textContent =
-          n.toLocaleDateString('pt-BR', { weekday:'short', day:'numeric', month:'short' });
-        setTimeout(tick, 1000);
-      }
-      tick();
-    }
+// Estado banco
+let allPosts = [];
+let filteredPosts = [];
+let currentPage = 0;
+const PAGE_SIZE = 40;
+let totalCount = 0;
+let kpiCounts = { total:0, ideia:0, aprovado:0, usado:0 };
+let searchTimeout = null;
+let currentModalPost = null;
+let editingPostId = null;
 
-    // ── Utilitários ───────────────────────────────────────────────────────────
+// Filtros ativos
+let filterEsp = '';
+let filterFmt = '';
+let filterStatus = '';
+let filterText = '';
 
-    function showToast(msg, type='ok') {
-      const t = document.createElement('div');
-      t.className = `cn-toast cn-toast-${type}`;
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.classList.add('show'), 10);
-      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
-    }
+// ── Init ──
+async function init(){
+  await loadClients();
+  await loadKPIs();
+  await loadSpecialties();
+  await loadPosts();
+}
 
-    function openConfirmModal(title, body, cb) {
-      const html = `
-        <div class="elo-overlay" id="confirmModal">
-          <div class="elo-modal" style="width:420px;max-width:94vw;">
-            <div class="elo-modal-header"><h3>${title}</h3></div>
-            <div class="elo-modal-body"><p style="font-size:14px;color:var(--text-dim);">${body}</p></div>
-            <div class="elo-modal-footer">
-              <button class="elo-btn-ghost" onclick="document.getElementById('confirmModal').remove()">Cancelar</button>
-              <button class="elo-btn-danger" id="confirmDeleteBtn">Excluir</button>
-            </div>
-          </div>
-        </div>`;
-      document.body.insertAdjacentHTML('beforeend', html);
-      document.getElementById('confirmDeleteBtn').onclick = () => {
-        document.getElementById('confirmModal').remove();
-        cb();
-      };
-    }
+// ── Clientes ──
+async function loadClients(){
+  const { data, error } = await sb.from('clients')
+    .select('id,name,color,is_active')
+    .eq('is_active', true)
+    .order('name');
+  if(error){ showToast('Erro ao carregar clientes','err'); return; }
+  clients = data || [];
+  renderDropdown();
+}
 
-    // ── BLOCO DE NOTAS ────────────────────────────────────────────────────────
+function renderDropdown(){
+  const list = document.getElementById('dropdownList');
+  const filtered = clients.filter(c =>
+    c.name.toLowerCase().includes(dropdownFilter.toLowerCase())
+  );
+  if(!filtered.length){
+    list.innerHTML = '<div class="dropdown-item" style="color:var(--lavender);cursor:default;">Nenhum cliente</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(c => {
+    const sel = selectedClient && selectedClient.id === c.id ? ' selected' : '';
+    const color = c.color || '#BFA8D9';
+    return `<div class="dropdown-item${sel}" data-id="${c.id}">
+      <span class="item-dot" style="background:${color}"></span>
+      ${escHtml(c.name)}
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.dropdown-item[data-id]').forEach(el => {
+    el.addEventListener('click', () => selectClient(el.dataset.id));
+  });
+}
 
-    const cnState = {
-      clients: [],
-      selectedClient: null,
-      dropdownOpen: false,
-      filterText: '',
-    };
+function toggleDropdown(){
+  dropdownOpen = !dropdownOpen;
+  document.getElementById('selectDropdown').classList.toggle('open', dropdownOpen);
+  document.getElementById('selectTrigger').classList.toggle('open', dropdownOpen);
+  document.getElementById('triggerArrow').classList.toggle('up', dropdownOpen);
+  if(dropdownOpen){
+    setTimeout(()=>document.getElementById('dropdownSearch')?.focus(), 50);
+    renderDropdown();
+  }
+}
 
-    async function cnInit() {
-      const { data, error } = await sb.from('clients')
-        .select('id, name, color')
-        .eq('is_active', true)
-        .order('name');
-      if (error) { showToast('Erro ao carregar clientes: ' + error.message, 'err'); return; }
-      cnState.clients = data || [];
-      cnRenderList();
-    }
+function filterDropdown(v){
+  dropdownFilter = v;
+  renderDropdown();
+}
 
-    function cnToggleDropdown() {
-      cnState.dropdownOpen = !cnState.dropdownOpen;
-      const dd = document.getElementById('cnDropdown');
-      const trigger = document.getElementById('cnTrigger');
-      dd.classList.toggle('open', cnState.dropdownOpen);
-      trigger.classList.toggle('open', cnState.dropdownOpen);
-      if (cnState.dropdownOpen) {
-        setTimeout(() => document.getElementById('cnSearch').focus(), 50);
-      } else {
-        document.getElementById('cnSearch').value = '';
-        cnState.filterText = '';
-        cnRenderList();
-      }
-    }
+async function selectClient(id){
+  const c = clients.find(x => String(x.id) === String(id));
+  if(!c) return;
+  selectedClient = c;
+  const color = c.color || '#BFA8D9';
+  document.getElementById('triggerText').textContent = c.name;
+  document.getElementById('triggerDot').style.background = color;
+  document.getElementById('btnSalvar').disabled = false;
+  document.getElementById('clientHint').textContent = c.name;
+  const ed = document.getElementById('editor');
+  ed.contentEditable = 'true';
+  toggleDropdown();
+  dropdownFilter = '';
+  document.getElementById('dropdownSearch').value = '';
 
-    function cnFilter(v) {
-      cnState.filterText = v.toLowerCase();
-      cnRenderList();
-    }
+  // Carrega nota do banco
+  if(notesCache[id] !== undefined){
+    ed.innerHTML = notesCache[id];
+  } else {
+    ed.innerHTML = '<span style="color:var(--lavender);font-size:12px;">Carregando...</span>';
+    const { data } = await sb.from('content_notes')
+      .select('content').eq('client_id', id).maybeSingle();
+    notesCache[id] = data?.content || '';
+    ed.innerHTML = notesCache[id];
+  }
+}
 
-    function cnRenderList() {
-      const q = cnState.filterText;
-      const filtered = q
-        ? cnState.clients.filter(c => c.name.toLowerCase().includes(q))
-        : cnState.clients;
-      const el = document.getElementById('cnList');
-      if (!filtered.length) {
-        el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-dim);text-align:center;">Nenhum cliente encontrado</div>';
-        return;
-      }
-      el.innerHTML = filtered.map(c => `
-        <div class="cn-dropdown-item${cnState.selectedClient?.id === c.id ? ' selected' : ''}"
-          data-id="${c.id}" onclick="cnSelectClient(${c.id})">
-          <span style="width:8px;height:8px;border-radius:50%;background:${c.color || 'var(--lavender)'};flex-shrink:0;display:inline-block;"></span>
-          ${c.name}
-        </div>
-      `).join('');
-    }
+document.addEventListener('click', function(e){
+  const cs = document.getElementById('customSelect');
+  if(cs && !cs.contains(e.target) && dropdownOpen) toggleDropdown();
+});
 
-    async function cnSelectClient(id) {
-      const c = cnState.clients.find(x => x.id === id);
-      if (!c) return;
-      cnState.selectedClient = c;
-      document.getElementById('cnDot').style.background = c.color || 'var(--lavender)';
-      document.getElementById('cnTriggerText').textContent = c.name;
-      document.getElementById('cnBtnSalvar').disabled = false;
-      const editor = document.getElementById('cnEditor');
-      editor.contentEditable = 'true';
-      document.getElementById('cn-client-hint').textContent = c.name;
-      editor.innerHTML = '<div style="color:var(--lavender);font-size:13px;">Carregando...</div>';
-      const { data } = await sb.from('content_notes')
-        .select('content')
-        .eq('client_id', id)
-        .maybeSingle();
-      editor.innerHTML = data?.content || '';
-      if (!data?.content) editor.focus();
-      cnToggleDropdown();
-    }
+// ── Editor ──
+function fmt(cmd){ document.execCommand(cmd, false, null); }
 
-    function cnHandleKey(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        cnSalvar();
-      }
-    }
+function insertSym(s){
+  const ed = document.getElementById('editor');
+  ed.focus();
+  document.execCommand('insertText', false, s);
+}
 
-    async function cnSalvar() {
-      if (!cnState.selectedClient) return;
-      const content = document.getElementById('cnEditor').innerHTML;
-      const { error } = await sb.from('content_notes')
-        .upsert(
-          { client_id: cnState.selectedClient.id, content, updated_at: new Date().toISOString() },
-          { onConflict: 'client_id' }
-        );
-      if (error) { showToast('Erro ao salvar: ' + error.message, 'err'); return; }
-      const badge = document.getElementById('cnSavedBadge');
-      badge.style.display = 'inline';
-      setTimeout(() => { badge.style.display = 'none'; }, 2500);
-      showToast('Anotações salvas ✓', 'ok');
-    }
+function handleKey(e){
+  if(e.ctrlKey && e.key === 's'){ e.preventDefault(); salvar(); }
+}
 
-    // Fecha dropdown ao clicar fora
-    document.addEventListener('click', e => {
-      if (cnState.dropdownOpen && !e.target.closest('#cnSelectWrap')) {
-        cnToggleDropdown();
-      }
-    });
+async function salvar(){
+  if(!selectedClient){ showToast('Selecione um cliente primeiro','warn'); return; }
+  const content = document.getElementById('editor').innerHTML;
+  notesCache[selectedClient.id] = content;
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { error } = await sb.from('content_notes').upsert(
+    { client_id: selectedClient.id, content, updated_at: new Date().toISOString() },
+    { onConflict: 'client_id' }
+  );
+  btn.disabled = false; btn.textContent = 'Salvar';
+  if(error){ showToast('Erro ao salvar: '+error.message,'err'); return; }
+  showToast('Anotações salvas ✓','ok');
+}
 
-    // ── BANCO DE INSPIRAÇÕES ──────────────────────────────────────────────────
+// ── KPIs ──
+async function loadKPIs(){
+  // Conta por status de forma eficiente
+  const statuses = ['Ideia','Aprovado','Usado'];
+  const results = await Promise.all([
+    sb.from('inspiration_posts').select('*', {count:'exact',head:true}),
+    ...statuses.map(s => sb.from('inspiration_posts').select('*',{count:'exact',head:true}).eq('status',s))
+  ]);
+  kpiCounts.total = results[0].count || 0;
+  kpiCounts.ideia = results[1].count || 0;
+  kpiCounts.aprovado = results[2].count || 0;
+  kpiCounts.usado = results[3].count || 0;
+  renderKPIs();
+}
 
-    const BANCO = {
-      posts: [],
-      filtered: [],
-      specialty: 'todas',
-      search: '',
-      page: 0,
-      PAGE_SIZE: 50,
-    };
+function renderKPIs(){
+  document.getElementById('kpi-total').textContent = kpiCounts.total.toLocaleString('pt-BR');
+  document.getElementById('kpi-ideia').textContent = kpiCounts.ideia.toLocaleString('pt-BR');
+  document.getElementById('kpi-aprovado').textContent = kpiCounts.aprovado.toLocaleString('pt-BR');
+  document.getElementById('kpi-usado').textContent = kpiCounts.usado.toLocaleString('pt-BR');
+}
 
-    const SPECIALTY_LABELS = {
-      'neuropsicologia': 'Neuropsicologia',
-      'endocrinologia': 'Endocrinologia',
-      'elo': 'Elo Conteúdo',
-      'pediatria': 'Pediatria',
-      'cardiologia': 'Cardiologia',
-      'negocios': 'Negócios',
-      'ginecologia': 'Ginecologia',
-      'pedagogia': 'Pedagogia',
-      'exames': 'Exames de Imagem',
-      'nutricao': 'Nutrição',
-      'motivacional': 'Motivacional',
-      'gastroenterologia': 'Gastroenterologia',
-      'sazonal': 'Datas Comemorativas',
-      'geriatria': 'Geriatria',
-      'evoa': 'Instituto Evoá',
-      'oftalmologia': 'Oftalmologia',
-      'saude_mental': 'Saúde Mental',
-      'radiologia': 'Radiologia',
-      'referencias': 'Referências',
-      'ref_visual': 'Referência Visual',
-      'festa': 'Festa Infantil',
-      'pessoal': 'Pessoal',
-      'outros': 'Outros',
-    };
+// ── Especialidades (filtro dinâmico) ──
+async function loadSpecialties(){
+  const { data } = await sb.from('inspiration_posts').select('specialty').limit(2000);
+  if(!data) return;
+  const set = new Set(data.map(d => d.specialty).filter(Boolean).sort());
+  const sel = document.getElementById('filter-esp');
+  set.forEach(esp => {
+    const o = document.createElement('option');
+    o.value = esp; o.textContent = esp;
+    sel.appendChild(o);
+  });
+}
 
-    async function bancoInit() {
-      let allPosts = [];
-      let from = 0;
-      const PAGE = 1000;
+// ── Posts ──
+async function loadPosts(reset=true){
+  if(reset){
+    currentPage = 0;
+    allPosts = [];
+  }
+  const listEl = document.getElementById('banco-list');
+  if(reset) listEl.innerHTML = '<div class="banco-loading"><div class="spinner-sm"></div>Carregando...</div>';
 
-      while (true) {
-        const { data, error } = await sb
-          .from('inspiration_posts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .range(from, from + PAGE - 1);
+  const btn = document.getElementById('btn-loadmore');
+  if(btn) btn.disabled = true;
 
-        if (error) { showToast('Erro ao carregar banco: ' + error.message, 'err'); break; }
-        if (!data || data.length === 0) break;
+  const from = currentPage * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-        allPosts = allPosts.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
-      }
+  let query = sb.from('inspiration_posts')
+    .select('*', { count:'exact' })
+    .range(from, to)
+    .order('created_at', { ascending: false });
 
-      BANCO.posts = allPosts;
-      bancoBuildSpecialtySelect();
-      bancoAplicarFiltro();
-    }
+  if(filterEsp) query = query.eq('specialty', filterEsp);
+  if(filterFmt) query = query.ilike('format', `%${filterFmt}%`);
+  if(filterStatus) query = query.eq('status', filterStatus);
+  if(filterText) query = query.or(`title.ilike.%${filterText}%,caption.ilike.%${filterText}%`);
 
-    function bancoBuildSpecialtySelect() {
-      const counts = {};
-      BANCO.posts.forEach(p => {
-        const k = p.specialty || p.specialty_key || 'outros';
-        if (!counts[k]) counts[k] = 0;
-        counts[k]++;
-      });
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-      const sel = document.getElementById('filterSpecialty');
-      sel.innerHTML = '<option value="">Todas as especialidades</option>' +
-        sorted.map(([esp, n]) => `<option value="${esp}">${esp} (${n})</option>`).join('');
-    }
+  const { data, count, error } = await query;
 
-    function bancoFiltrar(v) {
-      BANCO.search = v;
-      BANCO.page = 0;
-      bancoAplicarFiltro();
-    }
+  if(error){
+    listEl.innerHTML = '<div class="banco-empty">Erro ao carregar posts.<br>Tente novamente.</div>';
+    showToast('Erro ao carregar posts: '+error.message,'err');
+    return;
+  }
 
-    function bancoAplicarFiltro() {
-      const q      = (BANCO.search || '').toLowerCase();
-      const esp    = document.getElementById('filterSpecialty')?.value || '';
-      const fmt    = document.getElementById('filterFormat')?.value || '';
-      const review = document.getElementById('filterReview')?.value || '';
+  totalCount = count || 0;
+  if(reset) allPosts = data || [];
+  else allPosts = [...allPosts, ...(data||[])];
 
-      BANCO.filtered = BANCO.posts.filter(p => {
-        const pEsp = p.specialty || p.specialty_key || '';
-        const okEsp    = !esp    || pEsp === esp;
-        const okFmt    = !fmt    || p.format === fmt;
-        const okReview = !review || String(p.needs_review) === review;
-        const okSearch = !q ||
-          (p.title      || '').toLowerCase().includes(q) ||
-          (p.caption    || '').toLowerCase().includes(q) ||
-          (p.tags       || '').toLowerCase().includes(q) ||
-          (p.specialty  || '').toLowerCase().includes(q) ||
-          (p.collection || '').toLowerCase().includes(q);
-        return okEsp && okFmt && okReview && okSearch;
-      });
+  renderPosts(reset);
+  updateBancoMeta();
 
-      document.getElementById('bancoSub').textContent =
-        `${BANCO.filtered.length} de ${BANCO.posts.length} posts`;
+  const hasMore = allPosts.length < totalCount;
+  const moreEl = document.getElementById('banco-more');
+  moreEl.style.display = hasMore ? 'flex' : 'none';
+  if(btn){ btn.disabled = false; btn.textContent = 'Carregar mais 40 posts'; }
+}
 
-      BANCO.page = 0;
-      bancoRenderList();
-    }
+function renderPosts(reset=true){
+  const listEl = document.getElementById('banco-list');
 
-    function bancoClearFilters() {
-      document.getElementById('bancoSearchInput').value = '';
-      document.getElementById('filterSpecialty').value = '';
-      document.getElementById('filterFormat').value = '';
-      document.getElementById('filterReview').value = '';
-      BANCO.search = '';
-      bancoAplicarFiltro();
-    }
+  if(!allPosts.length){
+    listEl.innerHTML = '<div class="banco-empty">Nenhum post encontrado<br><span style="font-size:12px;font-weight:400;">Tente limpar os filtros</span></div>';
+    return;
+  }
 
-    function bancoRenderList() {
-      const el = document.getElementById('bancoList');
-      const slice = BANCO.filtered.slice(0, (BANCO.page + 1) * BANCO.PAGE_SIZE);
-      if (!slice.length) {
-        el.innerHTML = '<div class="banco-empty">Nenhum post encontrado</div>';
-        return;
-      }
-      el.innerHTML = slice.map(p => {
-        const tagsArr = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-        const statusColor = s => s === 'Aprovado' ? 'var(--green)' : s === 'Usado' ? 'var(--text-dim)' : 'var(--orange)';
-        return `
-        <div class="banco-card" style="cursor:pointer;" onclick="bancoOpenView(${p.id})">
-          <div class="banco-card-header">
-            <div class="banco-card-tags">
-              <span class="banco-tag esp">${p.specialty || ''}</span>
-              <span class="banco-tag fmt">${p.format || ''}</span>
-              ${p.needs_review ? '<span class="banco-tag review">Revisar</span>' : ''}
-            </div>
-            <span style="color:${statusColor(p.status)};font-size:10px;font-weight:700;">${p.status || ''}</span>
-          </div>
-          <div class="banco-card-title">${p.title || '(sem título)'}</div>
-          ${tagsArr.length ? `<div class="banco-card-tags-list">${tagsArr.map(t => `<span class="banco-card-tag">${t}</span>`).join('')}</div>` : ''}
-          <div class="banco-card-caption">${(p.caption || '').replace(/\n/g, ' ').slice(0, 130)}${(p.caption || '').length > 130 ? '...' : ''}</div>
-          <div class="banco-card-foot">
-            <button class="banco-btn-usar" data-id="${p.id}"
-              onclick="event.stopPropagation();bancoUsarBase(${p.id})">↓ Usar como base</button>
-            <div style="display:flex;gap:6px;">
-              <button class="banco-btn-icon edit" data-id="${p.id}"
-                onclick="event.stopPropagation();bancoOpenModal(${p.id})" title="Editar">editar</button>
-              <button class="banco-btn-icon del" data-id="${p.id}"
-                onclick="event.stopPropagation();bancoConfirmDelete(${p.id})" title="Excluir">excluir</button>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
+  const startIdx = reset ? 0 : listEl.children.length;
+  const newPosts = reset ? allPosts : allPosts.slice(startIdx);
 
-      if (BANCO.filtered.length > slice.length) {
-        el.insertAdjacentHTML('beforeend', `
-          <button class="banco-load-more" onclick="bancoLoadMore()">
-            Carregar mais (${BANCO.filtered.length - slice.length} restantes)
-          </button>
-        `);
-      }
-    }
+  if(reset) listEl.innerHTML = '';
 
-    function bancoLoadMore() {
-      BANCO.page++;
-      bancoRenderList();
-    }
+  newPosts.forEach(p => {
+    const card = buildCard(p);
+    listEl.appendChild(card);
+  });
+}
 
-    function bancoOpenModal(id) {
-      const p = id ? BANCO.posts.find(x => x.id === id) : null;
-      const isEdit = !!p;
-      const escTitle = (p?.title || '').replace(/"/g, '&quot;');
+function buildCard(p){
+  const div = document.createElement('div');
+  div.className = 'post-card';
 
-      const html = `
-        <div class="elo-overlay" id="bancoModal" onclick="if(event.target===this)bancoCloseModal()">
-          <div class="elo-modal" style="width:600px;max-width:94vw;">
-            <div class="elo-modal-header">
-              <h3>${isEdit ? 'Editar ideia' : 'Nova ideia'}</h3>
-              <button class="elo-modal-close" onclick="bancoCloseModal()">×</button>
-            </div>
-            <div class="elo-modal-body" style="display:flex;flex-direction:column;gap:14px;">
-              <div>
-                <label class="elo-label">Título</label>
-                <input id="bm-title" class="elo-input" type="text" value="${escTitle}" placeholder="Título do post de referência">
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div>
-                  <label class="elo-label">Especialidade</label>
-                  <select id="bm-specialty" class="elo-select">
-                    ${Object.entries(SPECIALTY_LABELS).map(([k,v]) =>
-                      `<option value="${k}"${p?.specialty_key === k ? ' selected' : ''}>${v}</option>`
-                    ).join('')}
-                  </select>
-                </div>
-                <div>
-                  <label class="elo-label">Formato</label>
-                  <select id="bm-format" class="elo-select">
-                    ${['Carrossel','Reels','Card único'].map(f =>
-                      `<option${p?.format === f ? ' selected' : ''}>${f}</option>`
-                    ).join('')}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label class="elo-label">Legenda / Rascunho</label>
-                <textarea id="bm-caption" class="elo-input" rows="5" style="resize:vertical;">${p?.caption || ''}</textarea>
-              </div>
-              <div>
-                <label class="elo-label">Link do post original</label>
-                <input id="bm-link" class="elo-input" type="url" value="${p?.reference_link || ''}" placeholder="https://www.instagram.com/p/...">
-              </div>
-              <div>
-                <label class="elo-label">Status</label>
-                <select id="bm-status" class="elo-select">
-                  ${['Ideia','Aprovado','Usado'].map(s =>
-                    `<option${p?.status === s ? ' selected' : ''}>${s}</option>`
-                  ).join('')}
-                </select>
-              </div>
-            </div>
-            <div class="elo-modal-footer">
-              <button class="elo-btn-ghost" onclick="bancoCloseModal()">Cancelar</button>
-              <button class="elo-btn-primary" onclick="bancoSalvarModal(${id || 'null'})">
-                ${isEdit ? 'Salvar alterações' : 'Adicionar ao banco'}
-              </button>
-            </div>
-          </div>
-        </div>`;
-      document.body.insertAdjacentHTML('beforeend', html);
-    }
+  const statusClass = p.status === 'Aprovado' ? 'status-aprovado'
+    : p.status === 'Usado' ? 'status-usado' : 'status-ideia';
+  const statusLabel = p.status || 'Ideia';
+  const esp = p.specialty || p.collection || '';
+  const fmt = p.format || '';
+  const title = escHtml(p.title || '(sem título)');
+  const caption = escHtml((p.caption || '').slice(0, 220));
 
-    function bancoCloseModal() {
-      document.getElementById('bancoModal')?.remove();
-    }
+  div.innerHTML = `
+    <div class="post-card-top">
+      <div class="post-card-tags">
+        ${esp ? `<span class="tag esp">${escHtml(esp)}</span>` : ''}
+        ${fmt ? `<span class="tag fmt">${escHtml(fmt)}</span>` : ''}
+      </div>
+      <span class="tag ${statusClass}">${statusLabel}</span>
+    </div>
+    <div class="post-card-title">${title}</div>
+    <div class="post-card-preview">${caption}</div>
+    <div class="post-card-foot">
+      <span class="post-card-esp-hint">${escHtml(p.collection || '')}</span>
+      <div class="post-card-actions">
+        <button class="btn-usar" data-id="${p.id}">↓ Usar como base</button>
+        <button class="btn-icon" data-view="${p.id}" title="Ver completo">👁</button>
+        <button class="btn-icon" data-edit="${p.id}" title="Editar">✏️</button>
+        <button class="btn-icon" data-del="${p.id}" title="Excluir" style="color:var(--coral);">🗑</button>
+      </div>
+    </div>
+  `;
 
-    async function bancoSalvarModal(id) {
-      const title   = document.getElementById('bm-title').value.trim();
-      const spKey   = document.getElementById('bm-specialty').value;
-      const sp      = SPECIALTY_LABELS[spKey] || spKey;
-      const format  = document.getElementById('bm-format').value;
-      const caption = document.getElementById('bm-caption').value.trim();
-      const link    = document.getElementById('bm-link').value.trim();
-      const status  = document.getElementById('bm-status').value;
+  div.querySelector('[data-id]').addEventListener('click', () => usarBase(p));
+  div.querySelector('[data-view]').addEventListener('click', () => openModal(p));
+  div.querySelector('[data-edit]').addEventListener('click', () => openEdit(p));
+  div.querySelector('[data-del]').addEventListener('click', () => deletePost(p));
 
-      if (!title && !caption) { showToast('Preencha ao menos o título ou a legenda', 'warn'); return; }
+  return div;
+}
 
-      const payload = { specialty: sp, specialty_key: spKey, format, title, caption,
-                        reference_link: link || null, status, needs_review: false };
+function updateBancoMeta(){
+  document.getElementById('banco-sub').textContent =
+    `${allPosts.length} de ${totalCount.toLocaleString('pt-BR')} posts`;
+  document.getElementById('banco-counter').textContent =
+    totalCount.toLocaleString('pt-BR');
+}
 
-      let error;
-      if (id) {
-        ({ error } = await sb.from('inspiration_posts').update(payload).eq('id', id));
-        if (!error) {
-          const idx = BANCO.posts.findIndex(x => x.id === id);
-          if (idx > -1) BANCO.posts[idx] = { ...BANCO.posts[idx], ...payload };
-        }
-      } else {
-        const { data, error: e } = await sb.from('inspiration_posts').insert(payload).select().single();
-        error = e;
-        if (!error && data) BANCO.posts.unshift(data);
-      }
+function loadMore(){
+  currentPage++;
+  loadPosts(false);
+}
 
-      if (error) { showToast('Erro: ' + error.message, 'err'); return; }
-      bancoCloseModal();
-      bancoBuildSpecialtySelect();
-      bancoAplicarFiltro();
-      showToast(id ? 'Ideia atualizada ✓' : 'Ideia adicionada ✓', 'ok');
-    }
+// ── Filtros ──
+let searchTimer = null;
+function onSearchInput(v){
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    filterText = v.trim();
+    applyFilters();
+  }, 350);
+}
 
-    function bancoConfirmDelete(id) {
-      const p = BANCO.posts.find(x => x.id === id);
-      openConfirmModal(
-        'Excluir ideia',
-        `Excluir "${p?.title || 'este post'}" do banco de inspirações?`,
-        async () => {
-          const { error } = await sb.from('inspiration_posts').delete().eq('id', id);
-          if (error) { showToast('Erro: ' + error.message, 'err'); return; }
-          BANCO.posts = BANCO.posts.filter(x => x.id !== id);
-          bancoBuildSpecialtySelect();
-          bancoAplicarFiltro();
-          showToast('Ideia excluída', 'ok');
-        }
-      );
-    }
+function applyFilters(){
+  filterEsp = document.getElementById('filter-esp').value;
+  filterFmt = document.getElementById('filter-fmt').value;
+  filterStatus = document.getElementById('filter-status').value;
+  loadPosts(true);
+}
 
-    function bancoOpenView(id) {
-      const p = BANCO.posts.find(x => x.id === id);
-      if (!p) return;
-      const html = `
-        <div class="elo-overlay" id="bancoViewModal" onclick="if(event.target===this)document.getElementById('bancoViewModal').remove()">
-          <div class="elo-modal" style="width:580px;max-width:94vw;">
-            <button class="elo-modal-close" onclick="document.getElementById('bancoViewModal').remove()">×</button>
-            <div style="display:flex;gap:8px;margin-bottom:12px;">
-              <span class="banco-tag esp">${p.specialty || ''}</span>
-              <span class="banco-tag fmt">${p.format || ''}</span>
-            </div>
-            <div style="font-size:18px;font-weight:700;color:var(--deep);margin-bottom:16px;line-height:1.3;">${p.title || '(sem título)'}</div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Legenda / Rascunho</div>
-            <div style="background:var(--surface2);border:var(--border);border-radius:12px;padding:14px;font-size:14px;line-height:1.75;color:var(--text);margin-bottom:16px;white-space:pre-line;max-height:300px;overflow-y:auto;">${p.caption || '(sem legenda)'}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Formato</div>
-                <div style="font-size:14px;font-weight:600;">${p.format || '—'}</div>
-              </div>
-              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Especialidade</div>
-                <div style="font-size:14px;font-weight:600;">${p.specialty || '—'}</div>
-              </div>
-              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Status</div>
-                <div style="font-size:14px;font-weight:600;color:var(--green);">${p.status || '—'}</div>
-              </div>
-              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Coleção</div>
-                <div style="font-size:14px;font-weight:600;">${p.collection || '—'}</div>
-              </div>
-              ${p.reference_link ? `
-              <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;grid-column:1/-1;">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Link Original</div>
-                <a href="${p.reference_link}" target="_blank" rel="noopener" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
-              </div>` : ''}
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:var(--border);">
-              <button class="elo-btn-ghost" onclick="document.getElementById('bancoViewModal').remove();bancoOpenModal(${p.id})">✏️ Editar</button>
-              <button class="elo-btn-primary" onclick="document.getElementById('bancoViewModal').remove();bancoUsarBase(${p.id})">↓ Usar como base</button>
-            </div>
-          </div>
-        </div>`;
-      document.body.insertAdjacentHTML('beforeend', html);
-    }
+function limparFiltros(){
+  filterEsp = ''; filterFmt = ''; filterStatus = ''; filterText = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-esp').value = '';
+  document.getElementById('filter-fmt').value = '';
+  document.getElementById('filter-status').value = '';
+  loadPosts(true);
+}
 
-    function bancoUsarBase(id) {
-      const p = BANCO.posts.find(x => x.id === id);
-      if (!p) return;
-      const editor = document.getElementById('cnEditor');
-      if (editor.contentEditable !== 'true') {
-        showToast('Selecione um cliente no bloco de notas primeiro', 'warn');
-        return;
-      }
+// ── Modal visualizar ──
+function openModal(p){
+  currentModalPost = p;
+  const statusClass = p.status === 'Aprovado' ? 'status-aprovado'
+    : p.status === 'Usado' ? 'status-usado' : 'status-ideia';
 
-      const wrapper = document.createElement('p');
+  document.getElementById('m-tags').innerHTML = `
+    ${p.specialty ? `<span class="tag esp">${escHtml(p.specialty)}</span>` : ''}
+    ${p.format ? `<span class="tag fmt">${escHtml(p.format)}</span>` : ''}
+    <span class="tag ${statusClass}">${p.status||'Ideia'}</span>
+  `;
+  document.getElementById('m-title').textContent = p.title || '';
+  document.getElementById('m-legenda').textContent = p.caption || '';
 
-      const bullet = document.createElement('strong');
-      bullet.textContent = `• ${p.title || p.specialty}`;
-      wrapper.appendChild(bullet);
+  const refLink = p.reference_link
+    ? `<a href="${escHtml(p.reference_link)}" target="_blank">↗ Ver post original</a>`
+    : '—';
 
-      wrapper.appendChild(document.createTextNode(` — ${p.format || ''}`));
+  document.getElementById('m-grid').innerHTML = `
+    <div class="modal-item">
+      <div class="modal-item-label">Formato</div>
+      <div class="modal-item-val">${escHtml(p.format||'—')}</div>
+    </div>
+    <div class="modal-item">
+      <div class="modal-item-label">Especialidade</div>
+      <div class="modal-item-val">${escHtml(p.specialty||'—')}</div>
+    </div>
+    <div class="modal-item">
+      <div class="modal-item-label">Coleção</div>
+      <div class="modal-item-val">${escHtml(p.collection||'—')}</div>
+    </div>
+    <div class="modal-item">
+      <div class="modal-item-label">Status</div>
+      <div class="modal-item-val">${escHtml(p.status||'—')}</div>
+    </div>
+    <div class="modal-item" style="grid-column:1/-1">
+      <div class="modal-item-label">Link de Referência</div>
+      <div class="modal-item-val">${refLink}</div>
+    </div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
 
-      if (p.reference_link) {
-        wrapper.appendChild(document.createTextNode(' '));
-        const link = document.createElement('a');
-        link.href = p.reference_link;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = '↗ ver post';
-        link.style.cssText = 'color:var(--purple);font-size:12px;text-decoration:underline;';
-        wrapper.appendChild(link);
-      }
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalClick(e){ if(e.target === document.getElementById('modal-overlay')) closeModal(); }
 
-      editor.appendChild(wrapper);
-      editor.scrollTop = editor.scrollHeight;
-      showToast('Tema adicionado ao bloco de notas', 'ok');
-    }
+function usarBase(p){
+  const post = p || currentModalPost;
+  if(!post) return;
+  if(!selectedClient){ showToast('Selecione um cliente no editor primeiro','warn'); return; }
+  const ed = document.getElementById('editor');
+  const link = post.reference_link
+    ? `<a href="${escHtml(post.reference_link)}" target="_blank">↗ ver post</a>`
+    : '';
+  const linkStr = link ? ` (${link})` : '';
+  const html = `<p>• <strong>${escHtml(post.title||'')}</strong> — ${escHtml(post.format||'')}${linkStr}</p>`;
+  ed.focus();
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(ed);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('insertHTML', false, html);
+  closeModal();
+  showToast('Tema adicionado ao editor ✓','ok');
+}
 
-    // ── Start ─────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', initPage);
-  </script>
+// ── Modal editar ──
+function openEdit(p){
+  editingPostId = p.id;
+  document.getElementById('edit-title').value = p.title || '';
+  document.getElementById('edit-caption').value = p.caption || '';
+  document.getElementById('edit-status').value = p.status || 'Ideia';
+  document.getElementById('edit-format').value = p.format || '';
+  document.getElementById('edit-overlay').classList.add('open');
+}
+
+function closeEdit(){ document.getElementById('edit-overlay').classList.remove('open'); editingPostId = null; }
+function closeEditClick(e){ if(e.target === document.getElementById('edit-overlay')) closeEdit(); }
+
+async function saveEdit(){
+  if(!editingPostId) return;
+  const updates = {
+    title: document.getElementById('edit-title').value.trim(),
+    caption: document.getElementById('edit-caption').value.trim(),
+    status: document.getElementById('edit-status').value,
+    format: document.getElementById('edit-format').value.trim(),
+  };
+  const { error } = await sb.from('inspiration_posts').update(updates).eq('id', editingPostId);
+  if(error){ showToast('Erro ao salvar: '+error.message,'err'); return; }
+
+  // Atualiza cache local
+  const idx = allPosts.findIndex(p => p.id === editingPostId);
+  if(idx >= 0) allPosts[idx] = { ...allPosts[idx], ...updates };
+  renderPosts(true);
+  closeEdit();
+  showToast('Post atualizado ✓','ok');
+  loadKPIs(); // atualiza KPIs se status mudou
+}
+
+// ── Deletar ──
+async function deletePost(p){
+  if(!confirm(`Excluir "${p.title}"?`)) return; // fallback aceitável por não existir openConfirmModal aqui
+  const { error } = await sb.from('inspiration_posts').delete().eq('id', p.id);
+  if(error){ showToast('Erro ao excluir: '+error.message,'err'); return; }
+  allPosts = allPosts.filter(x => x.id !== p.id);
+  totalCount--;
+  renderPosts(true);
+  updateBancoMeta();
+  showToast('Post excluído','ok');
+  loadKPIs();
+}
+
+// ── Util ──
+function escHtml(s){
+  if(!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ── Start ──
+init();
+</script>
 </body>
 </html>
