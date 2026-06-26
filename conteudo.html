@@ -73,31 +73,33 @@
     .banco-head { background:var(--deep); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
     .banco-head-title { color:#fff; font-weight:700; font-size:15px; }
     .banco-head-sub { color:var(--lavender); font-size:11px; margin-top:2px; }
-    .banco-list { flex:1; overflow-y:auto; padding:8px; }
+    .banco-list { flex:1; overflow-y:auto; padding:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start; }
     .banco-list::-webkit-scrollbar { width:4px; }
     .banco-list::-webkit-scrollbar-thumb { background:var(--lavender); border-radius:2px; }
-    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; transition:box-shadow .15s; }
-    .banco-card:hover { box-shadow:var(--shadow-sm); }
-    .banco-card-tags { display:flex; gap:6px; margin-bottom:7px; flex-wrap:wrap; }
-    .banco-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
-    .banco-tag.esp { background:var(--bg2); color:var(--purple); }
-    .banco-tag.fmt { background:rgba(196,114,90,.1); color:var(--coral); }
+    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px; cursor:pointer; transition:box-shadow .15s, transform .15s; display:flex; flex-direction:column; gap:6px; }
+    .banco-card:hover { box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+    .banco-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; }
+    .banco-card-tags { display:flex; gap:4px; flex-wrap:wrap; }
+    .banco-tag { font-size:9px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:.5px; text-transform:uppercase; }
+    .banco-tag.esp { background:rgba(74,41,118,.1); color:var(--purple); }
+    .banco-tag.fmt { background:rgba(196,114,90,.12); color:var(--coral); }
     .banco-tag.review { background:rgba(224,122,58,.15); color:var(--orange); }
-    .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); margin-bottom:5px; line-height:1.35; cursor:pointer; }
-    .banco-card-title:hover { color:var(--purple); }
-    .banco-card-caption { font-size:12px; color:var(--text-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .banco-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
-    .banco-card-tags-list { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0; }
-    .banco-card-tag { background:var(--bg2); color:var(--purple); font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; letter-spacing:.3px; }
-    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .banco-card-status { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; flex-shrink:0; }
+    .banco-card-title { font-size:12px; font-weight:700; color:var(--deep); line-height:1.35; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .banco-card-tags-list { display:flex; flex-wrap:wrap; gap:3px; }
+    .banco-card-tag { background:var(--bg2); color:var(--purple); font-size:9px; font-weight:600; padding:1px 6px; border-radius:4px; }
+    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:4px; padding-top:8px; border-top:var(--border); }
+    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:10px; font-weight:600; padding:4px 10px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
     .banco-btn-usar:hover { background:var(--coral-light); }
-    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:12px; transition:background .15s; }
-    .banco-btn-icon:hover { background:var(--bg2); }
+    .banco-btn-icon { background:none; border:none; border-radius:6px; padding:3px 7px; cursor:pointer; font-size:10px; font-weight:600; font-family:inherit; transition:background .15s; }
+    .banco-btn-icon.edit { color:var(--purple); }
+    .banco-btn-icon.edit:hover { background:var(--bg2); }
+    .banco-btn-icon.del { color:#DC2626; }
+    .banco-btn-icon.del:hover { background:#FEF2F2; }
     .banco-btn-add { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; font-weight:600; padding:6px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:all .15s; }
     .banco-btn-add:hover { background:rgba(255,255,255,.25); }
-    .banco-empty { text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
-    .banco-load-more { width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); margin-top:4px; transition:background .15s; }
+    .banco-empty { grid-column:1/-1; text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
+    .banco-load-more { grid-column:1/-1; width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); transition:background .15s; }
     .banco-load-more:hover { background:var(--bg2); }
 
     /* ── Seletor customizado de cliente ── */
@@ -466,7 +468,7 @@
       specialty: 'todas',
       search: '',
       page: 0,
-      PAGE_SIZE: 50,
+      PAGE_SIZE: 40,
     };
 
     const SPECIALTY_LABELS = {
@@ -503,7 +505,7 @@
       while (true) {
         const { data, error } = await sb
           .from('inspiration_posts')
-          .select('*')
+          .select('id, specialty, specialty_key, collection, format, title, tags, reference_link, status, needs_review, created_at')
           .order('created_at', { ascending: false })
           .range(from, from + PAGE - 1);
 
@@ -518,6 +520,32 @@
       BANCO.posts = allPosts;
       bancoBuildSpecialtySelect();
       bancoAplicarFiltro();
+      renderKpisFromPosts();
+    }
+
+    function renderKpisFromPosts() {
+      const total     = BANCO.posts.length;
+      const aprovados = BANCO.posts.filter(p => p.status === 'Aprovado').length;
+      const usados    = BANCO.posts.filter(p => p.status === 'Usado').length;
+      const ideias    = BANCO.posts.filter(p => p.status === 'Ideia').length;
+      const esps      = new Set(BANCO.posts.map(p => p.specialty_key)).size;
+
+      const subEl = document.getElementById('kpiSub');
+      if (subEl) subEl.textContent = `${total} posts catalogados · ${esps} especialidades`;
+
+      const cardsEl = document.getElementById('kpiCards');
+      if (!cardsEl) return;
+      cardsEl.innerHTML = [
+        { label:'Total de Posts',  val:total,     color:'',                hint:'em todas as especialidades' },
+        { label:'Disponíveis',     val:ideias,    color:'var(--orange)',   hint:'· Status: Ideia' },
+        { label:'Aprovados',       val:aprovados, color:'var(--green)',    hint:'· Prontos para produzir' },
+        { label:'Usados',          val:usados,    color:'var(--lavender)', hint:'· Já viraram conteúdo' },
+      ].map(k => `
+        <div class="cn-kpi-card">
+          <div class="cn-kpi-card-label">${k.label}</div>
+          <div class="cn-kpi-card-val" style="${k.color ? `color:${k.color}` : ''}">${k.val}</div>
+          <div class="cn-kpi-card-hint">${k.hint}</div>
+        </div>`).join('');
     }
 
     function bancoBuildSpecialtySelect() {
@@ -552,7 +580,6 @@
         const okReview = !review || String(p.needs_review) === review;
         const okSearch = !q ||
           (p.title      || '').toLowerCase().includes(q) ||
-          (p.caption    || '').toLowerCase().includes(q) ||
           (p.tags       || '').toLowerCase().includes(q) ||
           (p.specialty  || '').toLowerCase().includes(q) ||
           (p.collection || '').toLowerCase().includes(q);
@@ -584,28 +611,26 @@
       }
       el.innerHTML = slice.map(p => {
         const tagsArr = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
-        const statusColor = s => s === 'Aprovado' ? 'var(--green)' : s === 'Usado' ? 'var(--text-dim)' : 'var(--orange)';
+        const statusColor = p.status === 'Aprovado' ? 'var(--green)'
+                          : p.status === 'Usado'    ? 'var(--orange)'
+                          : 'var(--lavender)';
         return `
-        <div class="banco-card" style="cursor:pointer;" onclick="bancoOpenView(${p.id})">
+        <div class="banco-card" onclick="bancoOpenView(${p.id})">
           <div class="banco-card-header">
             <div class="banco-card-tags">
               <span class="banco-tag esp">${p.specialty || ''}</span>
               <span class="banco-tag fmt">${p.format || ''}</span>
               ${p.needs_review ? '<span class="banco-tag review">Revisar</span>' : ''}
             </div>
-            <span style="color:${statusColor(p.status)};font-size:10px;font-weight:700;">${p.status || ''}</span>
+            <span class="banco-card-status" style="color:${statusColor}">${p.status || ''}</span>
           </div>
           <div class="banco-card-title">${p.title || '(sem título)'}</div>
           ${tagsArr.length ? `<div class="banco-card-tags-list">${tagsArr.map(t => `<span class="banco-card-tag">${t}</span>`).join('')}</div>` : ''}
-          <div class="banco-card-caption">${(p.caption || '').replace(/\n/g, ' ').slice(0, 130)}${(p.caption || '').length > 130 ? '...' : ''}</div>
           <div class="banco-card-foot">
-            <button class="banco-btn-usar" data-id="${p.id}"
-              onclick="event.stopPropagation();bancoUsarBase(${p.id})">↓ Usar como base</button>
-            <div style="display:flex;gap:6px;">
-              <button class="banco-btn-icon edit" data-id="${p.id}"
-                onclick="event.stopPropagation();bancoOpenModal(${p.id})" title="Editar">editar</button>
-              <button class="banco-btn-icon del" data-id="${p.id}"
-                onclick="event.stopPropagation();bancoConfirmDelete(${p.id})" title="Excluir">excluir</button>
+            <button class="banco-btn-usar" onclick="event.stopPropagation();bancoUsarBase(${p.id})">↓ Usar como base</button>
+            <div>
+              <button class="banco-btn-icon edit" onclick="event.stopPropagation();bancoOpenModal(${p.id})">editar</button>
+              <button class="banco-btn-icon del" onclick="event.stopPropagation();bancoConfirmDelete(${p.id})">excluir</button>
             </div>
           </div>
         </div>`;
@@ -742,9 +767,18 @@
       );
     }
 
-    function bancoOpenView(id) {
-      const p = BANCO.posts.find(x => x.id === id);
-      if (!p) return;
+    async function bancoOpenView(id) {
+      const { data: p, error } = await sb
+        .from('inspiration_posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error || !p) { showToast('Erro ao carregar post', 'err'); return; }
+
+      const statusColor = p.status === 'Aprovado' ? 'var(--green)'
+                        : p.status === 'Usado'    ? 'var(--orange)'
+                        : 'var(--lavender)';
       const html = `
         <div class="elo-overlay" id="bancoViewModal" onclick="if(event.target===this)document.getElementById('bancoViewModal').remove()">
           <div class="elo-modal" style="width:580px;max-width:94vw;">
@@ -767,7 +801,7 @@
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Status</div>
-                <div style="font-size:14px;font-weight:600;color:var(--green);">${p.status || '—'}</div>
+                <div style="font-size:14px;font-weight:600;color:${statusColor};">${p.status || '—'}</div>
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Coleção</div>
@@ -776,7 +810,7 @@
               ${p.reference_link ? `
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;grid-column:1/-1;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Link Original</div>
-                <a href="${p.reference_link}" target="_blank" rel="noopener" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
+                <a href="${p.reference_link}" target="_blank" rel="noopener noreferrer" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
               </div>` : ''}
             </div>
             <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:var(--border);">
