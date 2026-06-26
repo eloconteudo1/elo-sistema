@@ -464,11 +464,14 @@
 
     const BANCO = {
       posts: [],
-      filtered: [],
-      specialty: 'todas',
-      search: '',
+      total: 0,
       page: 0,
       PAGE_SIZE: 40,
+      loading: false,
+      search: '',
+      specialty: '',
+      format: '',
+      review: '',
     };
 
     const SPECIALTY_LABELS = {
@@ -498,41 +501,79 @@
     };
 
     async function bancoInit() {
-      let allPosts = [];
-      let from = 0;
-      const PAGE = 1000;
+      // Contagem total para KPIs
+      const { count } = await sb
+        .from('inspiration_posts')
+        .select('*', { count: 'exact', head: true });
+      BANCO.total = count || 0;
 
-      while (true) {
-        const { data, error } = await sb
-          .from('inspiration_posts')
-          .select('id, specialty, specialty_key, collection, format, title, tags, reference_link, status, needs_review, created_at')
-          .order('created_at', { ascending: false })
-          .range(from, from + PAGE - 1);
+      // KPIs por status
+      const { data: statusData } = await sb
+        .from('inspiration_posts')
+        .select('status');
+      const aprovados = (statusData||[]).filter(p => p.status === 'Aprovado').length;
+      const usados    = (statusData||[]).filter(p => p.status === 'Usado').length;
+      const ideias    = (statusData||[]).filter(p => p.status === 'Ideia').length;
+      renderKpisFromCounts(BANCO.total, ideias, aprovados, usados);
 
-        if (error) { showToast('Erro ao carregar banco: ' + error.message, 'err'); break; }
-        if (!data || data.length === 0) break;
+      // Especialidades para o select
+      const { data: espData } = await sb
+        .from('inspiration_posts')
+        .select('specialty');
+      bancoBuildSpecialtySelectFromData(espData || []);
 
-        allPosts = allPosts.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
-      }
-
-      BANCO.posts = allPosts;
-      bancoBuildSpecialtySelect();
-      bancoAplicarFiltro();
-      renderKpisFromPosts();
+      // Primeira página
+      await bancoBuscarPagina(true);
     }
 
-    function renderKpisFromPosts() {
-      const total     = BANCO.posts.length;
-      const aprovados = BANCO.posts.filter(p => p.status === 'Aprovado').length;
-      const usados    = BANCO.posts.filter(p => p.status === 'Usado').length;
-      const ideias    = BANCO.posts.filter(p => p.status === 'Ideia').length;
-      const esps      = new Set(BANCO.posts.map(p => p.specialty_key)).size;
+    async function bancoBuscarPagina(reset = false) {
+      if (BANCO.loading) return;
+      BANCO.loading = true;
 
+      if (reset) {
+        BANCO.page = 0;
+        BANCO.posts = [];
+        document.getElementById('bancoList').innerHTML =
+          '<div class="banco-empty" style="opacity:.5;">Carregando...</div>';
+      }
+
+      const from = BANCO.page * BANCO.PAGE_SIZE;
+      const to   = from + BANCO.PAGE_SIZE - 1;
+
+      let query = sb
+        .from('inspiration_posts')
+        .select('id, specialty, specialty_key, collection, format, title, tags, status, needs_review')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (BANCO.specialty) query = query.eq('specialty', BANCO.specialty);
+      if (BANCO.format)    query = query.eq('format', BANCO.format);
+      if (BANCO.review !== '') query = query.eq('needs_review', BANCO.review === 'true');
+      if (BANCO.search) {
+        query = query.or(
+          `title.ilike.%${BANCO.search}%,tags.ilike.%${BANCO.search}%,specialty.ilike.%${BANCO.search}%,collection.ilike.%${BANCO.search}%`
+        );
+      }
+
+      const { data, error } = await query;
+      BANCO.loading = false;
+
+      if (error) { showToast('Erro: ' + error.message, 'err'); return; }
+
+      if (reset) {
+        BANCO.posts = data || [];
+        bancoRenderList(true);
+      } else {
+        BANCO.posts = BANCO.posts.concat(data || []);
+        bancoRenderList(false);
+      }
+
+      BANCO.page++;
+    }
+
+    function renderKpisFromCounts(total, ideias, aprovados, usados) {
       const subEl = document.getElementById('kpiSub');
-      if (subEl) subEl.textContent = `${total} posts catalogados · ${esps} especialidades`;
-
+      if (subEl) subEl.textContent = `${total} posts catalogados`;
       const cardsEl = document.getElementById('kpiCards');
       if (!cardsEl) return;
       cardsEl.innerHTML = [
@@ -548,49 +589,27 @@
         </div>`).join('');
     }
 
-    function bancoBuildSpecialtySelect() {
+    function bancoBuildSpecialtySelectFromData(data) {
       const counts = {};
-      BANCO.posts.forEach(p => {
-        const k = p.specialty || p.specialty_key || 'outros';
-        if (!counts[k]) counts[k] = 0;
-        counts[k]++;
-      });
+      data.forEach(p => { counts[p.specialty] = (counts[p.specialty] || 0) + 1; });
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       const sel = document.getElementById('filterSpecialty');
+      if (!sel) return;
       sel.innerHTML = '<option value="">Todas as especialidades</option>' +
         sorted.map(([esp, n]) => `<option value="${esp}">${esp} (${n})</option>`).join('');
     }
 
     function bancoFiltrar(v) {
-      BANCO.search = v;
-      BANCO.page = 0;
-      bancoAplicarFiltro();
+      BANCO.search = v.trim();
+      clearTimeout(BANCO._searchTimer);
+      BANCO._searchTimer = setTimeout(() => bancoBuscarPagina(true), 400);
     }
 
     function bancoAplicarFiltro() {
-      const q      = (BANCO.search || '').toLowerCase();
-      const esp    = document.getElementById('filterSpecialty')?.value || '';
-      const fmt    = document.getElementById('filterFormat')?.value || '';
-      const review = document.getElementById('filterReview')?.value || '';
-
-      BANCO.filtered = BANCO.posts.filter(p => {
-        const pEsp = p.specialty || p.specialty_key || '';
-        const okEsp    = !esp    || pEsp === esp;
-        const okFmt    = !fmt    || p.format === fmt;
-        const okReview = !review || String(p.needs_review) === review;
-        const okSearch = !q ||
-          (p.title      || '').toLowerCase().includes(q) ||
-          (p.tags       || '').toLowerCase().includes(q) ||
-          (p.specialty  || '').toLowerCase().includes(q) ||
-          (p.collection || '').toLowerCase().includes(q);
-        return okEsp && okFmt && okReview && okSearch;
-      });
-
-      document.getElementById('bancoSub').textContent =
-        `${BANCO.filtered.length} de ${BANCO.posts.length} posts`;
-
-      BANCO.page = 0;
-      bancoRenderList();
+      BANCO.specialty = document.getElementById('filterSpecialty')?.value || '';
+      BANCO.format    = document.getElementById('filterFormat')?.value || '';
+      BANCO.review    = document.getElementById('filterReview')?.value || '';
+      bancoBuscarPagina(true);
     }
 
     function bancoClearFilters() {
@@ -598,18 +617,18 @@
       document.getElementById('filterSpecialty').value = '';
       document.getElementById('filterFormat').value = '';
       document.getElementById('filterReview').value = '';
-      BANCO.search = '';
-      bancoAplicarFiltro();
+      BANCO.search = ''; BANCO.specialty = ''; BANCO.format = ''; BANCO.review = '';
+      bancoBuscarPagina(true);
     }
 
-    function bancoRenderList() {
+    function bancoRenderList(reset) {
       const el = document.getElementById('bancoList');
-      const slice = BANCO.filtered.slice(0, (BANCO.page + 1) * BANCO.PAGE_SIZE);
-      if (!slice.length) {
+      if (!BANCO.posts.length) {
         el.innerHTML = '<div class="banco-empty">Nenhum post encontrado</div>';
         return;
       }
-      el.innerHTML = slice.map(p => {
+
+      const cards = BANCO.posts.map(p => {
         const tagsArr = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
         const statusColor = p.status === 'Aprovado' ? 'var(--green)'
                           : p.status === 'Usado'    ? 'var(--orange)'
@@ -636,18 +655,19 @@
         </div>`;
       }).join('');
 
-      if (BANCO.filtered.length > slice.length) {
-        el.insertAdjacentHTML('beforeend', `
-          <button class="banco-load-more" onclick="bancoLoadMore()">
-            Carregar mais (${BANCO.filtered.length - slice.length} restantes)
-          </button>
-        `);
+      if (reset) {
+        el.innerHTML = cards;
+      } else {
+        el.querySelector('.banco-load-more')?.remove();
+        el.insertAdjacentHTML('beforeend', cards);
       }
-    }
 
-    function bancoLoadMore() {
-      BANCO.page++;
-      bancoRenderList();
+      if (BANCO.posts.length >= BANCO.page * BANCO.PAGE_SIZE) {
+        el.insertAdjacentHTML('beforeend', `
+          <button class="banco-load-more" onclick="bancoBuscarPagina(false)">
+            Carregar mais posts
+          </button>`);
+      }
     }
 
     function bancoOpenModal(id) {
@@ -746,8 +766,7 @@
 
       if (error) { showToast('Erro: ' + error.message, 'err'); return; }
       bancoCloseModal();
-      bancoBuildSpecialtySelect();
-      bancoAplicarFiltro();
+      bancoBuscarPagina(true);
       showToast(id ? 'Ideia atualizada ✓' : 'Ideia adicionada ✓', 'ok');
     }
 
@@ -759,9 +778,7 @@
         async () => {
           const { error } = await sb.from('inspiration_posts').delete().eq('id', id);
           if (error) { showToast('Erro: ' + error.message, 'err'); return; }
-          BANCO.posts = BANCO.posts.filter(x => x.id !== id);
-          bancoBuildSpecialtySelect();
-          bancoAplicarFiltro();
+          bancoBuscarPagina(true);
           showToast('Ideia excluída', 'ok');
         }
       );
