@@ -44,28 +44,15 @@
     .avatar-menu-item:hover { background:var(--bg); }
     .avatar-menu-item.danger { color:#DC2626; }
 
-    /* ── KPIs topbar ── */
-    .cn-topbar-kpis { background:var(--surface); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:16px 24px; display:flex; align-items:center; gap:24px; margin-bottom:16px; flex-shrink:0; }
-    .cn-kpi-info { flex:0 0 auto; }
-    .cn-kpi-label { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
-    .cn-kpi-title { font-size:18px; font-weight:800; color:var(--deep); }
-    .cn-kpi-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
-    .cn-kpi-cards { display:flex; gap:10px; flex:1; }
-    .cn-kpi-card { background:var(--surface); border:var(--border); border-radius:14px; padding:10px 18px; flex:1; }
-    .cn-kpi-card-label { font-size:9px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
-    .cn-kpi-card-val { font-size:26px; font-weight:800; color:var(--deep); line-height:1.1; }
-    .cn-kpi-card-hint { font-size:10px; color:var(--text-dim); margin-top:2px; }
-    .cn-kpi-actions { flex-shrink:0; }
-
     /* ── Barra de busca unificada ── */
-    .cn-search-bar { background:var(--surface); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:14px 20px; margin:0 32px 16px; display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
-    .cn-search-input-wrap { position:relative; display:flex; align-items:center; }
-    .cn-search-icon { position:absolute; left:12px; font-size:14px; pointer-events:none; opacity:.4; }
+    .cn-search-bar { background:var(--surface); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:12px 20px; margin:0 32px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex-shrink:0; }
+    .cn-search-input-wrap { flex:1; min-width:280px; position:relative; display:flex; align-items:center; }
+    .cn-search-icon { position:absolute; left:12px; font-size:14px; pointer-events:none; opacity:.5; }
     .cn-search-main { width:100%; padding:10px 14px 10px 36px; border:var(--border); border-radius:10px; font-family:inherit; font-size:14px; color:var(--text); background:var(--surface2); outline:none; transition:border-color .2s; }
     .cn-search-main:focus { border-color:rgba(196,114,90,.5); }
     .cn-filters { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .cn-filter-select { flex:1; min-width:140px; padding:8px 12px; font-size:12px; }
-    .cn-filter-clear { background:none; border:var(--border); border-radius:8px; padding:7px 14px; font-size:11px; font-weight:600; color:var(--text-dim); cursor:pointer; font-family:inherit; white-space:nowrap; transition:all .15s; }
+    .cn-filter-select { padding:8px 12px; font-size:12px; min-width:160px; width:auto; }
+    .cn-filter-clear { background:none; border:var(--border); border-radius:8px; padding:7px 12px; font-size:11px; font-weight:600; color:var(--text-dim); cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
     .cn-filter-clear:hover { background:var(--bg2); color:var(--coral); }
 
     /* ── Layout principal ── */
@@ -86,30 +73,31 @@
     .banco-head { background:var(--deep); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-radius:var(--radius) var(--radius) 0 0; flex-shrink:0; }
     .banco-head-title { color:#fff; font-weight:700; font-size:15px; }
     .banco-head-sub { color:var(--lavender); font-size:11px; margin-top:2px; }
-    .banco-list { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:8px; }
+    .banco-list { flex:1; overflow-y:auto; padding:8px; }
     .banco-list::-webkit-scrollbar { width:4px; }
     .banco-list::-webkit-scrollbar-thumb { background:var(--lavender); border-radius:2px; }
-    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px 14px; cursor:pointer; transition:box-shadow .15s; margin-bottom:8px; }
+    .banco-card { background:var(--surface); border:var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; transition:box-shadow .15s; }
     .banco-card:hover { box-shadow:var(--shadow-sm); }
-    .banco-card-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:7px; }
-    .banco-tag { font-size:9px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:.5px; text-transform:uppercase; }
-    .banco-tag.esp { background:rgba(74,41,118,.1); color:var(--purple); }
-    .banco-tag.fmt { background:rgba(196,114,90,.12); color:var(--coral); }
+    .banco-card-tags { display:flex; gap:6px; margin-bottom:7px; flex-wrap:wrap; }
+    .banco-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; letter-spacing:.5px; text-transform:uppercase; }
+    .banco-tag.esp { background:var(--bg2); color:var(--purple); }
+    .banco-tag.fmt { background:rgba(196,114,90,.1); color:var(--coral); }
     .banco-tag.review { background:rgba(224,122,58,.15); color:var(--orange); }
-    .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); line-height:1.35; margin-bottom:5px; }
-    .banco-card-caption { font-size:12px; color:var(--text-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:10px; }
-    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:var(--border); }
-    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:5px 12px; border-radius:7px; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .banco-card-title { font-size:13px; font-weight:700; color:var(--deep); margin-bottom:5px; line-height:1.35; cursor:pointer; }
+    .banco-card-title:hover { color:var(--purple); }
+    .banco-card-caption { font-size:12px; color:var(--text-dim); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .banco-card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+    .banco-card-tags-list { display:flex; flex-wrap:wrap; gap:4px; margin:6px 0; }
+    .banco-card-tag { background:var(--bg2); color:var(--purple); font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; letter-spacing:.3px; }
+    .banco-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+    .banco-btn-usar { background:var(--coral); border:none; color:#fff; font-size:11px; font-weight:600; padding:4px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s; }
     .banco-btn-usar:hover { background:var(--coral-light); }
-    .banco-btn-icon { background:none; border:none; padding:4px 8px; cursor:pointer; font-size:11px; font-weight:600; font-family:inherit; border-radius:6px; transition:background .15s; }
-    .banco-btn-icon.edit { color:var(--purple); }
-    .banco-btn-icon.edit:hover { background:var(--bg2); }
-    .banco-btn-icon.del { color:#DC2626; }
-    .banco-btn-icon.del:hover { background:#FEF2F2; }
+    .banco-btn-icon { background:none; border:var(--border); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:12px; transition:background .15s; }
+    .banco-btn-icon:hover { background:var(--bg2); }
     .banco-btn-add { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:12px; font-weight:600; padding:6px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:all .15s; }
     .banco-btn-add:hover { background:rgba(255,255,255,.25); }
     .banco-empty { text-align:center; color:var(--lavender); padding:32px; font-size:13px; }
-    .banco-load-more { width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); transition:background .15s; }
+    .banco-load-more { width:100%; padding:10px; background:var(--surface2); border:var(--border); border-radius:10px; cursor:pointer; font-family:inherit; font-size:12px; font-weight:600; color:var(--purple); margin-top:4px; transition:background .15s; }
     .banco-load-more:hover { background:var(--bg2); }
 
     /* ── Seletor customizado de cliente ── */
@@ -193,19 +181,6 @@
     </div>
   </header>
 
-  <!-- KPIs -->
-  <div class="cn-topbar-kpis" style="margin:0 32px 16px;">
-    <div class="cn-kpi-info">
-      <div class="cn-kpi-label">DASHBOARD</div>
-      <div class="cn-kpi-title">Banco de Inspirações</div>
-      <div class="cn-kpi-sub" id="kpiSub">carregando...</div>
-    </div>
-    <div class="cn-kpi-cards" id="kpiCards"></div>
-    <div class="cn-kpi-actions">
-      <button class="elo-btn-primary" onclick="bancoOpenModal(null)">+ Nova ideia</button>
-    </div>
-  </div>
-
   <!-- BARRA DE BUSCA UNIFICADA -->
   <div class="cn-search-bar">
     <div class="cn-search-input-wrap">
@@ -284,6 +259,7 @@
           <div class="banco-head-title">Banco de Inspirações</div>
           <div class="banco-head-sub" id="bancoSub">carregando...</div>
         </div>
+        <button class="banco-btn-add" onclick="bancoOpenModal(null)">+ Nova ideia</button>
       </div>
 
       <div class="banco-list" id="bancoList"></div>
@@ -486,14 +462,11 @@
 
     const BANCO = {
       posts: [],
-      total: 0,
-      page: 0,
-      PAGE_SIZE: 40,
-      loading: false,
+      filtered: [],
+      specialty: 'todas',
       search: '',
-      specialty: '',
-      format: '',
-      review: '',
+      page: 0,
+      PAGE_SIZE: 50,
     };
 
     const SPECIALTY_LABELS = {
@@ -523,115 +496,74 @@
     };
 
     async function bancoInit() {
-      // Contagem total para KPIs
-      const { count } = await sb
-        .from('inspiration_posts')
-        .select('*', { count: 'exact', head: true });
-      BANCO.total = count || 0;
+      let allPosts = [];
+      let from = 0;
+      const PAGE = 1000;
 
-      // KPIs por status
-      const { data: statusData } = await sb
-        .from('inspiration_posts')
-        .select('status');
-      const aprovados = (statusData||[]).filter(p => p.status === 'Aprovado').length;
-      const usados    = (statusData||[]).filter(p => p.status === 'Usado').length;
-      const ideias    = (statusData||[]).filter(p => p.status === 'Ideia').length;
-      renderKpisFromCounts(BANCO.total, ideias, aprovados, usados);
+      while (true) {
+        const { data, error } = await sb
+          .from('inspiration_posts')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + PAGE - 1);
 
-      // Especialidades para o select
-      const { data: espData } = await sb
-        .from('inspiration_posts')
-        .select('specialty');
-      bancoBuildSpecialtySelectFromData(espData || []);
+        if (error) { showToast('Erro ao carregar banco: ' + error.message, 'err'); break; }
+        if (!data || data.length === 0) break;
 
-      // Primeira página
-      await bancoBuscarPagina(true);
-    }
-
-    async function bancoBuscarPagina(reset = false) {
-      if (BANCO.loading) return;
-      BANCO.loading = true;
-
-      if (reset) {
-        BANCO.page = 0;
-        BANCO.posts = [];
-        document.getElementById('bancoList').innerHTML =
-          '<div class="banco-empty" style="opacity:.5;">Carregando...</div>';
+        allPosts = allPosts.concat(data);
+        if (data.length < PAGE) break;
+        from += PAGE;
       }
 
-      const from = BANCO.page * BANCO.PAGE_SIZE;
-      const to   = from + BANCO.PAGE_SIZE - 1;
-
-      let query = sb
-        .from('inspiration_posts')
-        .select('id, specialty, specialty_key, collection, format, title, tags, status, needs_review')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (BANCO.specialty) query = query.eq('specialty', BANCO.specialty);
-      if (BANCO.format)    query = query.eq('format', BANCO.format);
-      if (BANCO.review !== '') query = query.eq('needs_review', BANCO.review === 'true');
-      if (BANCO.search) {
-        query = query.or(
-          `title.ilike.%${BANCO.search}%,tags.ilike.%${BANCO.search}%,specialty.ilike.%${BANCO.search}%,collection.ilike.%${BANCO.search}%`
-        );
-      }
-
-      const { data, error } = await query;
-      BANCO.loading = false;
-
-      if (error) { showToast('Erro: ' + error.message, 'err'); return; }
-
-      if (reset) {
-        BANCO.posts = data || [];
-        bancoRenderList(true);
-      } else {
-        BANCO.posts = BANCO.posts.concat(data || []);
-        bancoRenderList(false);
-      }
-
-      BANCO.page++;
+      BANCO.posts = allPosts;
+      bancoBuildSpecialtySelect();
+      bancoAplicarFiltro();
     }
 
-    function renderKpisFromCounts(total, ideias, aprovados, usados) {
-      const subEl = document.getElementById('kpiSub');
-      if (subEl) subEl.textContent = `${total} posts catalogados`;
-      const cardsEl = document.getElementById('kpiCards');
-      if (!cardsEl) return;
-      cardsEl.innerHTML = [
-        { label:'Total de Posts',  val:total,     color:'',                hint:'em todas as especialidades' },
-        { label:'Disponíveis',     val:ideias,    color:'var(--orange)',   hint:'· Status: Ideia' },
-        { label:'Aprovados',       val:aprovados, color:'var(--green)',    hint:'· Prontos para produzir' },
-        { label:'Usados',          val:usados,    color:'var(--lavender)', hint:'· Já viraram conteúdo' },
-      ].map(k => `
-        <div class="cn-kpi-card">
-          <div class="cn-kpi-card-label">${k.label}</div>
-          <div class="cn-kpi-card-val" style="${k.color ? `color:${k.color}` : ''}">${k.val}</div>
-          <div class="cn-kpi-card-hint">${k.hint}</div>
-        </div>`).join('');
-    }
-
-    function bancoBuildSpecialtySelectFromData(data) {
+    function bancoBuildSpecialtySelect() {
       const counts = {};
-      data.forEach(p => { counts[p.specialty] = (counts[p.specialty] || 0) + 1; });
+      BANCO.posts.forEach(p => {
+        const k = p.specialty || p.specialty_key || 'outros';
+        if (!counts[k]) counts[k] = 0;
+        counts[k]++;
+      });
       const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       const sel = document.getElementById('filterSpecialty');
-      if (!sel) return;
       sel.innerHTML = '<option value="">Todas as especialidades</option>' +
         sorted.map(([esp, n]) => `<option value="${esp}">${esp} (${n})</option>`).join('');
     }
 
     function bancoFiltrar(v) {
-      BANCO.search = v.trim();
-      clearTimeout(BANCO._searchTimer);
-      BANCO._searchTimer = setTimeout(() => bancoBuscarPagina(true), 400);
+      BANCO.search = v;
+      BANCO.page = 0;
+      bancoAplicarFiltro();
     }
 
     function bancoAplicarFiltro() {
-      BANCO.specialty = document.getElementById('filterSpecialty')?.value || '';
-      BANCO.format    = document.getElementById('filterFormat')?.value || '';
-      BANCO.review    = document.getElementById('filterReview')?.value || '';
-      bancoBuscarPagina(true);
+      const q      = (BANCO.search || '').toLowerCase();
+      const esp    = document.getElementById('filterSpecialty')?.value || '';
+      const fmt    = document.getElementById('filterFormat')?.value || '';
+      const review = document.getElementById('filterReview')?.value || '';
+
+      BANCO.filtered = BANCO.posts.filter(p => {
+        const pEsp = p.specialty || p.specialty_key || '';
+        const okEsp    = !esp    || pEsp === esp;
+        const okFmt    = !fmt    || p.format === fmt;
+        const okReview = !review || String(p.needs_review) === review;
+        const okSearch = !q ||
+          (p.title      || '').toLowerCase().includes(q) ||
+          (p.caption    || '').toLowerCase().includes(q) ||
+          (p.tags       || '').toLowerCase().includes(q) ||
+          (p.specialty  || '').toLowerCase().includes(q) ||
+          (p.collection || '').toLowerCase().includes(q);
+        return okEsp && okFmt && okReview && okSearch;
+      });
+
+      document.getElementById('bancoSub').textContent =
+        `${BANCO.filtered.length} de ${BANCO.posts.length} posts`;
+
+      BANCO.page = 0;
+      bancoRenderList();
     }
 
     function bancoClearFilters() {
@@ -639,51 +571,58 @@
       document.getElementById('filterSpecialty').value = '';
       document.getElementById('filterFormat').value = '';
       document.getElementById('filterReview').value = '';
-      BANCO.search = ''; BANCO.specialty = ''; BANCO.format = ''; BANCO.review = '';
-      bancoBuscarPagina(true);
+      BANCO.search = '';
+      bancoAplicarFiltro();
     }
 
-    function bancoRenderList(reset) {
+    function bancoRenderList() {
       const el = document.getElementById('bancoList');
-      if (!BANCO.posts.length) {
+      const slice = BANCO.filtered.slice(0, (BANCO.page + 1) * BANCO.PAGE_SIZE);
+      if (!slice.length) {
         el.innerHTML = '<div class="banco-empty">Nenhum post encontrado</div>';
         return;
       }
-
-      const cards = BANCO.posts.map(p => {
-        const caption = (p.caption || (p.tags || '')).replace(/\n/g, ' ').slice(0, 130);
+      el.innerHTML = slice.map(p => {
+        const tagsArr = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+        const statusColor = s => s === 'Aprovado' ? 'var(--green)' : s === 'Usado' ? 'var(--text-dim)' : 'var(--orange)';
         return `
-        <div class="banco-card" onclick="bancoOpenView(${p.id})">
-          <div class="banco-card-tags">
-            <span class="banco-tag esp">${p.specialty || ''}</span>
-            <span class="banco-tag fmt">${p.format || ''}</span>
-            ${p.needs_review ? '<span class="banco-tag review">Revisar</span>' : ''}
+        <div class="banco-card" style="cursor:pointer;" onclick="bancoOpenView(${p.id})">
+          <div class="banco-card-header">
+            <div class="banco-card-tags">
+              <span class="banco-tag esp">${p.specialty || ''}</span>
+              <span class="banco-tag fmt">${p.format || ''}</span>
+              ${p.needs_review ? '<span class="banco-tag review">Revisar</span>' : ''}
+            </div>
+            <span style="color:${statusColor(p.status)};font-size:10px;font-weight:700;">${p.status || ''}</span>
           </div>
           <div class="banco-card-title">${p.title || '(sem título)'}</div>
-          <div class="banco-card-caption">${caption}${caption.length >= 130 ? '...' : ''}</div>
+          ${tagsArr.length ? `<div class="banco-card-tags-list">${tagsArr.map(t => `<span class="banco-card-tag">${t}</span>`).join('')}</div>` : ''}
+          <div class="banco-card-caption">${(p.caption || '').replace(/\n/g, ' ').slice(0, 130)}${(p.caption || '').length > 130 ? '...' : ''}</div>
           <div class="banco-card-foot">
-            <button class="banco-btn-usar" onclick="event.stopPropagation();bancoUsarBase(${p.id})">↓ Usar como base</button>
-            <div>
-              <button class="banco-btn-icon edit" onclick="event.stopPropagation();bancoOpenModal(${p.id})">editar</button>
-              <button class="banco-btn-icon del" onclick="event.stopPropagation();bancoConfirmDelete(${p.id})">excluir</button>
+            <button class="banco-btn-usar" data-id="${p.id}"
+              onclick="event.stopPropagation();bancoUsarBase(${p.id})">↓ Usar como base</button>
+            <div style="display:flex;gap:6px;">
+              <button class="banco-btn-icon edit" data-id="${p.id}"
+                onclick="event.stopPropagation();bancoOpenModal(${p.id})" title="Editar">editar</button>
+              <button class="banco-btn-icon del" data-id="${p.id}"
+                onclick="event.stopPropagation();bancoConfirmDelete(${p.id})" title="Excluir">excluir</button>
             </div>
           </div>
         </div>`;
       }).join('');
 
-      if (reset) {
-        el.innerHTML = cards;
-      } else {
-        el.querySelector('.banco-load-more')?.remove();
-        el.insertAdjacentHTML('beforeend', cards);
-      }
-
-      if (BANCO.posts.length >= BANCO.page * BANCO.PAGE_SIZE) {
+      if (BANCO.filtered.length > slice.length) {
         el.insertAdjacentHTML('beforeend', `
-          <button class="banco-load-more" onclick="bancoBuscarPagina(false)">
-            Carregar mais posts
-          </button>`);
+          <button class="banco-load-more" onclick="bancoLoadMore()">
+            Carregar mais (${BANCO.filtered.length - slice.length} restantes)
+          </button>
+        `);
       }
+    }
+
+    function bancoLoadMore() {
+      BANCO.page++;
+      bancoRenderList();
     }
 
     function bancoOpenModal(id) {
@@ -782,7 +721,8 @@
 
       if (error) { showToast('Erro: ' + error.message, 'err'); return; }
       bancoCloseModal();
-      bancoBuscarPagina(true);
+      bancoBuildSpecialtySelect();
+      bancoAplicarFiltro();
       showToast(id ? 'Ideia atualizada ✓' : 'Ideia adicionada ✓', 'ok');
     }
 
@@ -794,24 +734,17 @@
         async () => {
           const { error } = await sb.from('inspiration_posts').delete().eq('id', id);
           if (error) { showToast('Erro: ' + error.message, 'err'); return; }
-          bancoBuscarPagina(true);
+          BANCO.posts = BANCO.posts.filter(x => x.id !== id);
+          bancoBuildSpecialtySelect();
+          bancoAplicarFiltro();
           showToast('Ideia excluída', 'ok');
         }
       );
     }
 
-    async function bancoOpenView(id) {
-      const { data: p, error } = await sb
-        .from('inspiration_posts')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error || !p) { showToast('Erro ao carregar post', 'err'); return; }
-
-      const statusColor = p.status === 'Aprovado' ? 'var(--green)'
-                        : p.status === 'Usado'    ? 'var(--orange)'
-                        : 'var(--lavender)';
+    function bancoOpenView(id) {
+      const p = BANCO.posts.find(x => x.id === id);
+      if (!p) return;
       const html = `
         <div class="elo-overlay" id="bancoViewModal" onclick="if(event.target===this)document.getElementById('bancoViewModal').remove()">
           <div class="elo-modal" style="width:580px;max-width:94vw;">
@@ -834,7 +767,7 @@
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Status</div>
-                <div style="font-size:14px;font-weight:600;color:${statusColor};">${p.status || '—'}</div>
+                <div style="font-size:14px;font-weight:600;color:var(--green);">${p.status || '—'}</div>
               </div>
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Coleção</div>
@@ -843,7 +776,7 @@
               ${p.reference_link ? `
               <div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 14px;grid-column:1/-1;">
                 <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Link Original</div>
-                <a href="${p.reference_link}" target="_blank" rel="noopener noreferrer" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
+                <a href="${p.reference_link}" target="_blank" rel="noopener" style="color:var(--purple);font-size:14px;font-weight:600;text-decoration:none;">↗ Ver no Instagram</a>
               </div>` : ''}
             </div>
             <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:var(--border);">
