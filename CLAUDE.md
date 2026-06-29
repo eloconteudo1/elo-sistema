@@ -182,6 +182,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - `openCalModal()` e `closeCalModal()` limpam o dataset, restauram título "Novo evento" e botão "Salvar"
 - Versão 3.4, data 30/06/2026
 
+**Sessão 9C — Financeiro + conteudo.html + Rodapé**
+- Financeiro: pagamentos sem cliente válido filtrados (`p.is_manual || T.clients.find(c => c.id === p.client_id)`)
+- Financeiro: botão ✏ em cada linha + `openEditPaymentModal` + `savePaymentAmount` para editar valor
+- conteudo.html: topbar já estava padrão (logo ELO, abas, relógio) — sem alteração
+- Versão 3.5, data 30/06/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -277,6 +283,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S8 | ~~Sessão 8: Relatório por cliente na aba Clientes do Resultado~~ | **Concluído** |
 | S9A | ~~Sessão 9A: Favoritos === true + anotações colapsáveis~~ | **Concluído** |
 | S9B | ~~Sessão 9B: Bug alerta calendário + edição de eventos~~ | **Concluído** |
+| S9C | ~~Sessão 9C: Financeiro edição de valor + rodapé 3.5~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

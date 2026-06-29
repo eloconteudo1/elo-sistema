@@ -1288,7 +1288,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.4 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.5 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1358,7 +1358,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.4</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.5</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -4177,7 +4177,9 @@ function finClientDueDay(p) {
 }
 
 function renderFinanceiro() {
-  const payments = FIN.payments;
+  const payments = FIN.payments.filter(p =>
+    p.is_manual || T.clients.find(c => c.id === p.client_id)
+  );
   const costs    = FIN.costs;
 
   const totalReceita   = payments.reduce((s,p) => s + Number(p.amount), 0);
@@ -4261,7 +4263,15 @@ function renderFinanceiro() {
           <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(p.amount))}</td>
           <td style="${TDnw}text-align:center;">${finClientDueDay(p)}</td>
           <td style="${TDnw}text-align:center;">${status}</td>
-          <td style="${TDnw}text-align:center;">${action}${del}</td>
+          <td style="${TDnw}text-align:center;">
+            <div style="display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
+              ${action}
+              <button onclick="openEditPaymentModal(${p.id},${p.amount})"
+                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px;opacity:.5;line-height:1;"
+                title="Editar valor">✏</button>
+              ${del}
+            </div>
+          </td>
         </tr>`;
       }).join('');
 
@@ -4485,6 +4495,44 @@ async function finDeletePayment(id) {
     renderFinanceiro();
     showToast('Removido','warn');
   });
+}
+
+function openEditPaymentModal(id, currentAmount) {
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:320px;">
+      <div class="modal-header">
+        <span class="modal-title">Editar valor</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Valor (R$)</label>
+        <input id="edit-pay-amount" class="field-input" type="number" min="0" step="0.01"
+          value="${Number(currentAmount).toFixed(2)}"
+          style="font-size:20px;font-weight:700;text-align:center;" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="savePaymentAmount(${id})">Salvar</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => {
+    const input = document.getElementById('edit-pay-amount');
+    if (input) { input.focus(); input.select(); }
+  }, 50);
+}
+async function savePaymentAmount(id) {
+  const val = parseFloat(document.getElementById('edit-pay-amount')?.value);
+  if (isNaN(val) || val < 0) { showToast('Valor inválido', 'warn'); return; }
+  const { error } = await sb.from('monthly_payments').update({ amount: val }).eq('id', id);
+  if (error) { showToast('Erro ao salvar', 'err'); return; }
+  const idx = FIN.payments.findIndex(p => p.id === id);
+  if (idx !== -1) FIN.payments[idx].amount = val;
+  closeModal();
+  showToast('Valor atualizado ✓', 'ok');
+  renderFinanceiro();
 }
 
 async function finDeleteCost(id, desc) {
