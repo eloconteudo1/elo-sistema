@@ -376,11 +376,17 @@
     .note-item:last-child { border-bottom:none; }
     .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
-    .note-item-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; line-height:1.4; }
-    .note-item-text:hover { color:var(--purple); }
+    .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:default; }
+    .note-item-preview strong { font-weight:800; color:var(--deep); display:block; margin-bottom:1px; }
+    .note-item-full { display:none; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; }
+    .note-item-full strong { font-weight:800; color:var(--deep); display:block; margin-bottom:2px; }
+    .note-item-footer { display:flex; align-items:center; justify-content:space-between; margin-top:3px; }
+    .note-item-date { font-size:10px; color:var(--text-dim); opacity:.65; }
+    .note-expand-btn { background:none; border:none; cursor:pointer; font-family:inherit; font-size:10px; font-weight:700; color:var(--coral); padding:0; line-height:1; }
+    .note-expand-btn:hover { opacity:.75; }
+    .note-item-body { flex:1; min-width:0; }
     .cal-note-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; white-space:normal; line-height:1.5; word-break:break-word; }
     .cal-note-text:hover { color:var(--purple); }
-    .note-item-date { font-size:11px; color:var(--text-dim); margin-top:2px; opacity:.65; }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
@@ -1282,7 +1288,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.0 · ELO Comunicação · Atualizado em 28/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.3 · ELO Comunicação · Atualizado em 29/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1352,9 +1358,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.0</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.3</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">28/06/2026</span></span>
+    <span>Atualizado em <span id="build-date">29/06/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1968,6 +1974,19 @@ async function initHome() {
   if (notesList && !notesList._delegated) {
     notesList._delegated = true;
     notesList.addEventListener('click', async function(ev) {
+      // Expandir / colapsar nota
+      const expandBtn = ev.target.closest('[data-expand-note]');
+      if (expandBtn) {
+        const id = expandBtn.dataset.expandNote;
+        const preview = document.getElementById(`note-preview-${id}`);
+        const full    = document.getElementById(`note-full-${id}`);
+        if (!preview || !full) return;
+        const isExpanded = full.style.display === 'block';
+        preview.style.display = isExpanded ? '' : 'none';
+        full.style.display    = isExpanded ? 'none' : 'block';
+        expandBtn.textContent = isExpanded ? 'ver +' : 'ver menos';
+        return;
+      }
       // Concluir (bolinha)
       const checkBtn = ev.target.closest('[data-complete-note]');
       if (checkBtn) {
@@ -2066,8 +2085,8 @@ function toggleClientDrop() {
 function openMobileClientPicker() {
   document.getElementById('mobile-client-sheet')?.remove();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
-  const favs     = alpha(T.clients.filter(c => c.is_favorite && !c.is_internal));
-  const externos = alpha(T.clients.filter(c => !c.is_favorite && !c.is_internal));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite === true && !c.is_internal));
+  const externos = alpha(T.clients.filter(c => c.is_favorite !== true && !c.is_internal));
   const internos = alpha(T.clients.filter(c => c.is_internal));
   const renderGroup = (label, arr) => {
     if (!arr.length) return '';
@@ -2123,8 +2142,8 @@ function filterMobileClients() {
   const term = (document.getElementById('mobile-client-search')?.value||'').toLowerCase().trim();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
   const match = c => !term || normalizeStr(c.name).includes(normalizeStr(term));
-  const favs     = alpha(T.clients.filter(c => c.is_favorite && !c.is_internal && match(c)));
-  const externos = alpha(T.clients.filter(c => !c.is_favorite && !c.is_internal && match(c)));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite === true && !c.is_internal && match(c)));
+  const externos = alpha(T.clients.filter(c => c.is_favorite !== true && !c.is_internal && match(c)));
   const internos = alpha(T.clients.filter(c => c.is_internal && match(c)));
   const renderGroup = (label, arr) => {
     if (!arr.length) return '';
@@ -2496,11 +2515,23 @@ function renderNotesList() {
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="note-item">
+    const lines = note.content.split('\n');
+    const titulo = (lines[0] || '').replace(/</g,'&lt;');
+    const resto  = lines.slice(1).join('\n').trim().replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    const corpo  = resto ? `<br>${resto}` : '';
+    return `<div class="note-item" data-note-item-id="${note.id}">
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
-      <div style="flex:1;min-width:0;">
-        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
-        <div class="note-item-date">${dateStr}</div>
+      <div class="note-item-body">
+        <div id="note-preview-${note.id}" class="note-item-preview">
+          <strong>${titulo}</strong>${corpo}
+        </div>
+        <div id="note-full-${note.id}" class="note-item-full">
+          <strong>${titulo}</strong>${corpo}
+        </div>
+        <div class="note-item-footer">
+          <span class="note-item-date">${dateStr}</span>
+          <button class="note-expand-btn" data-expand-note="${note.id}">ver +</button>
+        </div>
       </div>
     </div>`;
   }).join('');

@@ -167,6 +167,13 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Funções: `saveNote()`, `renderNotesList()`, `renderCalNotes()`, `editNoteInline(el, id)`
 - Legenda removida do Calendário; `settings.scratchpad` não é mais usado
 
+**Sessão 9A — Favoritos + Anotações colapsáveis**
+- Favoritos corrigidos com `=== true` (e `!== true`) em `openMobileClientPicker` e `filterMobileClients` (renderClientList já estava correto)
+- Anotações com preview colapsável: primeira linha em negrito (título) + até 3 linhas + botão "ver +" / "ver menos"
+- CSS: `.note-item-preview`, `.note-item-full`, `.note-item-body`, `.note-item-footer`, `.note-expand-btn`
+- Handler `data-expand-note` adicionado ao event delegation do `#notes-list`
+- Versão 3.3, data 29/06/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -260,6 +267,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S2 | ~~Melhorias UX: busca cliente, alertas visuais, mobile nav — Sprint 2~~ | **Concluído** |
 | S3 | ~~Sessão 6C: anotações, badge, card financeiro, mobile client/agenda~~ | **Concluído** |
 | S8 | ~~Sessão 8: Relatório por cliente na aba Clientes do Resultado~~ | **Concluído** |
+| S9A | ~~Sessão 9A: Favoritos === true + anotações colapsáveis~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
