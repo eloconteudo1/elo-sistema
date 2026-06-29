@@ -226,7 +226,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Logo:** `logo-elo.png` na raiz do repositório, exibido no `.topbar-brand` com `height:34px`
   - Substitui o texto "ELO / Sistema de gestão" que existia antes
   - CSS `.name` e `.tagline` removidos
-- **Rodapé:** elemento `#build-date` dentro do `<footer class="elo-footer">` — atualizar a cada commit
+- **Rodapé:** `#version-number` (versão), `#build-date` (data DD/MM/AAAA), `#sobre-version` (aba Sobre) — atualizar a cada commit
+
+### Sessão 7 — Correções desktop + Calendário + Conteúdo
+
+- **Favoritos corrigidos:** filtro usa `=== true` em vez de truthy — `null`/`undefined` não aparecem em Favoritos
+- **Anotações texto longo:** Home mostra 2 linhas + ellipsis (`-webkit-line-clamp:2`); Calendário usa `.cal-note-text` sem limite de linhas
+- **Calendário:** chips verdes de horas (`hoursChip`) removidos da grade mensal — dados `CAL.hoursByDay` mantidos
+- **Emojis removidos:** labels "⭐ Favoritos", "⭐ Interno", botões importar/exportar, card financeiro
+- **Badge financeiro:** `#alert-badge` esvaziado no HTML — `updateAlertBadge()` sempre `display:none`
+- **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
+- **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
 ---
 
@@ -250,7 +260,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Toasts visíveis** para todo erro/sucesso (Helô não acessa o console).
 - **Confirmação via modal** antes de excluir (nunca `confirm()` nativo).
 - **Atualização otimista** no financeiro.
-- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em Jun/2026`
+- **Rodapé:** `Sistema ELO | Versão 3.0 | ELO Comunicação · Umuarama-PR | Atualizado em 28/06/2026`
 - Interface toda em **português do Brasil**.
 - Status financeiro: `PAGO` / `ABERTO` / `VENCIDO` (maiúsculas).
 
@@ -260,9 +270,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 A cada commit que altera funcionalidades visíveis, atualizar:
 
-1. **`#build-date`** no footer do `index.html` — texto `"Mês/AAAA"` em português (ex: `"Jun/2026"`, `"Jul/2026"`)
-2. **Aba Sobre** na tela Config — mesmo formato
-3. **Este CLAUDE.md** — seção 7 e/ou 8 conforme o que foi implementado
+1. **`#version-number`** no footer — texto `"Versão X.Y"`
+2. **`#build-date`** no footer — data `"DD/MM/AAAA"` (ex: `"28/06/2026"`)
+3. **`#sobre-version`** na aba Sobre — `"Versão X.Y · ELO Comunicação · Atualizado em DD/MM/AAAA"`
+4. **Este CLAUDE.md** — seção 7 e/ou 8 conforme o que foi implementado
+
+**Incremento de versão:**
+- Correções/ajustes: 3.0 → 3.1 → 3.2 (segundo número)
+- Funcionalidades novas: 3.0 → 4.0 (primeiro número)
 
 ---
 

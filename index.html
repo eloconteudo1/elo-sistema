@@ -376,8 +376,10 @@
     .note-item:last-child { border-bottom:none; }
     .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
-    .note-item-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+    .note-item-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; line-height:1.4; }
     .note-item-text:hover { color:var(--purple); }
+    .cal-note-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; white-space:normal; line-height:1.5; word-break:break-word; }
+    .cal-note-text:hover { color:var(--purple); }
     .note-item-date { font-size:11px; color:var(--text-dim); margin-top:2px; opacity:.65; }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
@@ -450,9 +452,7 @@
     </nav>
     <div class="topbar-right">
       <div class="topbar-pill" id="today-pill">0m hoje</div>
-      <div id="alert-badge" onclick="navigateTo('financeiro')" style="display:none;background:#DC2626;color:white;border-radius:50%;width:22px;height:22px;font-size:11px;font-weight:800;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;" title="Alertas de pagamento">
-        <span id="alert-badge-count">0</span>
-      </div>
+      <div id="alert-badge" style="display:none;"></div>
       <div class="topbar-clock">
         <div class="time" id="clock-time">--:--</div>
         <div class="date" id="clock-date">---</div>
@@ -657,7 +657,7 @@
 
           <!-- Financeiro -->
           <div id="fin-card" style="display:none;" class="fin-card">
-            <div class="sec-label" style="color:var(--coral);margin-bottom:14px;">💰 Financeiro</div>
+            <div class="sec-label" style="color:var(--coral);margin-bottom:14px;">Financeiro</div>
             <div id="fin-list"></div>
           </div>
         </aside>
@@ -1236,7 +1236,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600">Versão 3.0 · ELO Comunicação</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.0 · ELO Comunicação · Atualizado em 28/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1254,47 +1254,47 @@
 
           <!-- Importar Clientes -->
           <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
-            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">📥 Importar Clientes</div>
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">Importar Clientes</div>
             <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">
               Arquivo CSV com colunas:<br>
               <code style="font-size:11px;background:rgba(74,41,118,.07);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px">nome, especialidade, plano, valor, vencimento, forma_pagamento, telefone, posts_mes, observacoes</code>
             </div>
             <input type="file" id="imp-cli-file" accept=".csv" style="display:none" onchange="cfgPreviewClientes(this)">
-            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-cli-file').click()">📂 Escolher arquivo CSV</button>
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-cli-file').click()">Escolher arquivo CSV</button>
             <div id="imp-cli-preview" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
               <div id="imp-cli-info" style="font-size:12px;font-weight:700;color:var(--purple)"></div>
               <div id="imp-cli-rows" style="max-height:160px;overflow-y:auto;border:var(--border);border-radius:10px;font-size:11px;font-family:monospace"></div>
               <div style="display:flex;gap:8px">
                 <button class="elo-btn-outline" onclick="cfgCancelClientes()" style="flex:1;justify-content:center">Cancelar</button>
-                <button class="elo-btn-primary" id="imp-cli-btn" onclick="cfgImportClientes()" style="flex:2;justify-content:center">✅ Importar</button>
+                <button class="elo-btn-primary" id="imp-cli-btn" onclick="cfgImportClientes()" style="flex:2;justify-content:center">Importar</button>
               </div>
             </div>
           </div>
 
           <!-- Importar Pagamentos -->
           <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
-            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">💰 Importar Pagamentos Mensais</div>
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">Importar Pagamentos Mensais</div>
             <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">
               Arquivo CSV com colunas:<br>
               <code style="font-size:11px;background:rgba(74,41,118,.07);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px">cliente, valor, mes, ano, pago (sim/nao)</code>
             </div>
             <input type="file" id="imp-pay-file" accept=".csv" style="display:none" onchange="cfgPreviewPagamentos(this)">
-            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-pay-file').click()">📂 Escolher arquivo CSV</button>
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById('imp-pay-file').click()">Escolher arquivo CSV</button>
             <div id="imp-pay-preview" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
               <div id="imp-pay-info" style="font-size:12px;font-weight:700;color:var(--purple)"></div>
               <div id="imp-pay-rows" style="max-height:160px;overflow-y:auto;border:var(--border);border-radius:10px;font-size:11px;font-family:monospace"></div>
               <div style="display:flex;gap:8px">
                 <button class="elo-btn-outline" onclick="cfgCancelPagamentos()" style="flex:1;justify-content:center">Cancelar</button>
-                <button class="elo-btn-primary" id="imp-pay-btn" onclick="cfgImportPagamentos()" style="flex:2;justify-content:center">✅ Importar</button>
+                <button class="elo-btn-primary" id="imp-pay-btn" onclick="cfgImportPagamentos()" style="flex:2;justify-content:center">Importar</button>
               </div>
             </div>
           </div>
 
           <!-- Exportar backup -->
           <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
-            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">💾 Exportar Dados</div>
+            <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">Exportar Dados</div>
             <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">Baixe um backup completo dos seus dados em JSON.</div>
-            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="cfgExportBackup()">⬇️ Baixar backup JSON</button>
+            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="cfgExportBackup()">Baixar backup JSON</button>
           </div>
 
         </div><!-- /cfg-pane-sobre -->
@@ -1306,9 +1306,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span>Versão 3.0</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.0</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">Jun/2026</span></span>
+    <span>Atualizado em <span id="build-date">28/06/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1531,7 +1531,7 @@ async function renderMobileAgenda() {
 
   // 1. Compromissos
   html += `<div style="${cardS}">
-    <div style="${lblS}">📅 Compromissos</div>`;
+    <div style="${lblS}">Compromissos</div>`;
   if (upcoming.length) {
     upcoming.forEach(a => {
       const d = new Date(a.scheduled_at);
@@ -1582,7 +1582,7 @@ async function renderMobileAgenda() {
 
   // 4. Alertas financeiros
   html += `<div style="${cardS}">
-    <div style="${lblS}">💰 Alertas de pagamento</div>`;
+    <div style="${lblS}">Alertas de pagamento</div>`;
   if (vencidos.length || avencer.length) {
     const sortedVencidos = [...vencidos].sort((a,b) => (b.daysOverdue||0) - (a.daysOverdue||0));
     const sortedAvencer  = [...avencer].sort((a,b) => (a.daysLeft||0) - (b.daysLeft||0));
@@ -2058,7 +2058,7 @@ function openMobileClientPicker() {
                  font-size:14px;outline:none;background:var(--bg);" />
       </div>
       <div id="mobile-client-list" style="overflow-y:auto;flex:1;">
-        ${renderGroup('⭐ Favoritos', favs)}
+        ${renderGroup('Favoritos', favs)}
         ${renderGroup('Clientes', externos)}
         ${renderGroup('Interno', internos)}
       </div>
@@ -2090,7 +2090,7 @@ function filterMobileClients() {
         <span style="font-size:15px;font-weight:500;color:var(--deep);">${c.name}</span>
       </div>`).join('');
   };
-  const html = renderGroup('⭐ Favoritos', favs) + renderGroup('Clientes', externos) + renderGroup('Interno', internos);
+  const html = renderGroup('Favoritos', favs) + renderGroup('Clientes', externos) + renderGroup('Interno', internos);
   document.getElementById('mobile-client-list').innerHTML = html ||
     `<div style="padding:24px;text-align:center;color:var(--text-dim);font-size:14px;">Nenhum cliente encontrado</div>`;
 }
@@ -2113,10 +2113,10 @@ function renderClientList() {
   const applySearch = arr => term ? arr.filter(c => normalizeStr(c.name).includes(normalizeStr(term))) : arr;
   const internals = T.clients.filter(c => c.is_internal);
   const externals = T.clients.filter(c => !c.is_internal);
-  const favs      = applySearch(alpha(externals.filter(c => c.is_favorite)));
-  const nonFavs   = applySearch(alpha(externals.filter(c => !c.is_favorite)));
-  const intFavs   = applySearch(alpha(internals.filter(c => c.is_favorite)));
-  const intNonFavs= applySearch(alpha(internals.filter(c => !c.is_favorite)));
+  const favs      = applySearch(alpha(externals.filter(c => c.is_favorite === true)));
+  const nonFavs   = applySearch(alpha(externals.filter(c => c.is_favorite !== true)));
+  const intFavs   = applySearch(alpha(internals.filter(c => c.is_favorite === true)));
+  const intNonFavs= applySearch(alpha(internals.filter(c => c.is_favorite !== true)));
   const optHtml = (c, extraClass='') => {
     const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
     const sel = T.selectedClientId===c.id;
@@ -2127,9 +2127,9 @@ function renderClientList() {
     </div>`;
   };
   let html = '';
-  if (favs.length)        { html += `<div class="client-group-label">⭐ Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (favs.length)        { html += `<div class="client-group-label">Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
   if (nonFavs.length)     { html += `<div class="client-group-label">Clientes</div>`;    nonFavs.forEach(c => html += optHtml(c,'')); }
-  if (intFavs.length)     { html += `<div class="client-group-label">⭐ Interno</div>`;  intFavs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (intFavs.length)     { html += `<div class="client-group-label">Interno</div>`;  intFavs.forEach(c => html += optHtml(c,' fav-item')); }
   if (intNonFavs.length)  { html += `<div class="client-group-label">Interno</div>`;     intNonFavs.forEach(c => html += optHtml(c,'')); }
   if (!favs.length && !nonFavs.length && !intFavs.length && !intNonFavs.length) {
     html = `<div style="padding:20px 16px;text-align:center;font-size:13px;color:var(--text-dim);opacity:.6;">Nenhum cliente encontrado</div>`;
@@ -2513,7 +2513,7 @@ async function renderCalNotes() {
     return `<div class="note-item">
       <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
       <div style="flex:1;min-width:0;">
-        <div class="note-item-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="cal-note-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
     </div>`;
@@ -3610,18 +3610,13 @@ function renderCalGrid() {
     }).join('');
     if (events.length > 2) chips += `<div style="font-size:10px;color:#999;padding-left:5px;">+${events.length-2} mais</div>`;
 
-    // Horas trabalhadas no dia
-    const dayMins = CAL.hoursByDay?.[day] || 0;
-    const hoursChip = dayMins > 0
-      ? `<div style="font-size:9px;font-weight:700;color:#1D9E75;background:rgba(29,158,117,.1);padding:1px 5px;border-radius:4px;margin-top:2px;">⏱ ${Math.floor(dayMins/60)}h${dayMins%60>0?String(dayMins%60).padStart(2,'0')+'m':''}</div>`
-      : '';
 
     html += `<div class="${cls}" onclick="calSelectDay(${day})">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div class="cal-cell-num">${day}</div>
         <button class="cal-add-btn" onclick="event.stopPropagation();openCalModal(${day})">+</button>
       </div>
-      ${chips}${hoursChip}
+      ${chips}
     </div>`;
   });
   document.getElementById('cal-days-grid').innerHTML = html;
@@ -5131,7 +5126,7 @@ async function cfgImportClientes() {
     error ? err++ : ok++;
   }
   cfgCancelClientes();
-  btn.disabled=false; btn.textContent='✅ Importar';
+  btn.disabled=false; btn.textContent='Importar';
   showToast(`Importados: ${ok} cliente(s)${err?` · ${err} erro(s)`:''}`, err?'warn':'ok');
 }
 
@@ -5170,7 +5165,7 @@ async function cfgImportPagamentos() {
     error ? err++ : ok++;
   }
   cfgCancelPagamentos();
-  btn.disabled=false; btn.textContent='✅ Importar';
+  btn.disabled=false; btn.textContent='Importar';
   showToast(`Importados: ${ok} pagamento(s)${err?` · ${err} erro(s)`:''}`, err?'warn':'ok');
 }
 

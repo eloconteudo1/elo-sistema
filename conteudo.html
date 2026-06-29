@@ -42,12 +42,20 @@ body{
 }
 
 /* ── TOPBAR ── */
+.elo-topbar { height:72px; background:linear-gradient(90deg,#2E1B4E 0%,#1D0D31 100%); display:flex; align-items:center; padding:0 32px; gap:20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,.18); }
+.topbar-brand { display:flex; align-items:center; flex-shrink:0; }
+.elo-top-tab { padding:8px 20px; border-radius:10px; background:transparent; border:none; color:rgba(255,255,255,.6); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:all .18s; white-space:nowrap; text-decoration:none; display:inline-flex; align-items:center; }
+.elo-top-tab:hover { color:white; background:rgba(255,255,255,.10); }
+.elo-top-tab.active { color:white; background:rgba(255,255,255,.18); font-weight:800; }
+.topbar-right { display:flex; align-items:center; gap:16px; flex-shrink:0; margin-left:auto; }
+.topbar-clock .time { font-size:15px; font-weight:700; color:white; }
+.topbar-clock .date { font-size:11px; color:rgba(255,255,255,.5); text-transform:capitalize; }
+
+/* ── TOPBAR ANTIGA (removida) ── */
 .topbar{
   background:var(--deep2);
-  height:54px;
-  display:flex;
-  align-items:center;
-  padding:0 28px;
+  height:0;
+  display:none;
   gap:0;
   flex-shrink:0;
   z-index:100;
@@ -489,25 +497,27 @@ body{
 <body>
 
 <!-- TOPBAR -->
-<div class="topbar">
-  <a class="topbar-logo" href="index.html">
-    <div class="logo-icon">ELO</div>
-    <div class="logo-text">ELO Sistema<span>Comunicação</span></div>
-  </a>
-  <nav class="topbar-nav">
-    <a href="index.html">Timer</a>
-    <a href="index.html#resultado">Resultado</a>
-    <a href="index.html#clientes">Clientes</a>
-    <a href="index.html#financeiro">Financeiro</a>
-    <a href="conteudo.html" class="active">Conteúdo</a>
-  </nav>
+<header class="elo-topbar">
+  <div class="topbar-brand">
+    <img src="logo-elo.png" alt="ELO Comunicação"
+      style="height:34px;width:auto;object-fit:contain;display:block;" />
+  </div>
+  <div style="display:flex;gap:4px;flex:1;">
+    <a class="elo-top-tab" href="index.html" style="text-decoration:none;">Home</a>
+    <a class="elo-top-tab" href="index.html#resultado" style="text-decoration:none;">Resultado</a>
+    <a class="elo-top-tab" href="index.html#calendario" style="text-decoration:none;">Calendário</a>
+    <a class="elo-top-tab" href="index.html#clientes" style="text-decoration:none;">Clientes</a>
+    <a class="elo-top-tab" href="index.html#financeiro" style="text-decoration:none;">Financeiro</a>
+    <a class="elo-top-tab active" href="conteudo.html" style="text-decoration:none;">Conteúdo</a>
+    <a class="elo-top-tab" href="index.html#config" style="text-decoration:none;">Config.</a>
+  </div>
   <div class="topbar-right">
-    <div>
-      <div class="topbar-clock" id="clock">--:--</div>
-      <div class="topbar-date" id="datestr"></div>
+    <div class="topbar-clock">
+      <div class="time" id="clock">--:--</div>
+      <div class="date" id="datestr"></div>
     </div>
   </div>
-</div>
+</header>
 
 <!-- PAGE -->
 <div class="page">
