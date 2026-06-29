@@ -677,6 +677,7 @@
           <div style="display:flex;background:rgba(46,27,78,.07);border-radius:10px;padding:3px;gap:2px;">
             <button id="res-tab-hoje" onclick="resSetView('hoje')" style="padding:5px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:var(--coral);color:white;transition:all .15s;">Hoje</button>
             <button id="res-tab-mes" onclick="resSetView('mes')" style="padding:5px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--text-dim);transition:all .15s;">Mês</button>
+            <button id="res-tab-clientes" onclick="resSetView('clientes')" style="padding:5px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:transparent;color:var(--text-dim);transition:all .15s;">Clientes</button>
           </div>
           <div id="res-nav-mes" style="display:none;align-items:center;gap:8px;">
             <button onclick="resNavMes(-1)" style="width:28px;height:28px;border-radius:8px;border:var(--border);background:rgba(255,255,255,.88);cursor:pointer;font-size:14px;display:grid;place-items:center;color:var(--deep);">‹</button>
@@ -749,6 +750,51 @@
             </div>
           </div>
         </div>
+
+      <!-- VIEW: CLIENTES -->
+      <div id="res-view-clientes" style="display:none;">
+        <!-- Filtros -->
+        <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:14px;
+                    box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:18px;
+                    display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:200px;flex:1;">
+            <label style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Cliente</label>
+            <select id="rep-client-sel" class="elo-select" style="height:36px;">
+              <option value="">Todos os clientes</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">De</label>
+            <input id="rep-date-start" type="date" class="elo-input" style="height:36px;width:140px;" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);">Até</label>
+            <input id="rep-date-end" type="date" class="elo-input" style="height:36px;width:140px;" />
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="repSetPeriod('week')"
+              style="padding:6px 12px;border-radius:8px;border:1.5px solid rgba(74,41,118,.15);
+                     background:none;font-family:inherit;font-size:11px;font-weight:700;
+                     color:var(--text-dim);cursor:pointer;">Semana</button>
+            <button onclick="repSetPeriod('month')"
+              style="padding:6px 12px;border-radius:8px;border:1.5px solid rgba(74,41,118,.15);
+                     background:none;font-family:inherit;font-size:11px;font-weight:700;
+                     color:var(--text-dim);cursor:pointer;">Mês atual</button>
+            <button onclick="repSetPeriod('lastmonth')"
+              style="padding:6px 12px;border-radius:8px;border:1.5px solid rgba(74,41,118,.15);
+                     background:none;font-family:inherit;font-size:11px;font-weight:700;
+                     color:var(--text-dim);cursor:pointer;">Mês anterior</button>
+          </div>
+          <button onclick="repGenerate()"
+            style="padding:8px 22px;border-radius:10px;border:none;
+                   background:var(--coral);color:#fff;font-family:inherit;
+                   font-size:13px;font-weight:700;cursor:pointer;height:36px;">
+            Gerar
+          </button>
+        </div>
+        <!-- Resultado do relatório -->
+        <div id="rep-output"></div>
+      </div>
 
       </div>
     </div>
@@ -4393,20 +4439,216 @@ function resNavMes(dir) {
 
 function resSetView(mode) {
   resViewMode = mode;
-  const tabs = ['hoje','mes'];
+  const tabs = ['hoje', 'mes', 'clientes'];
   tabs.forEach(t => {
     const btn = document.getElementById('res-tab-' + t);
-    if (btn) { btn.style.background = t === mode ? 'var(--coral)' : 'transparent'; btn.style.color = t === mode ? 'white' : 'var(--text-dim)'; }
+    if (btn) {
+      btn.style.background = t === mode ? 'var(--coral)' : 'transparent';
+      btn.style.color = t === mode ? 'white' : 'var(--text-dim)';
+    }
   });
-  document.getElementById('res-view-hoje').style.display = mode === 'hoje' ? '' : 'none';
-  document.getElementById('res-view-mes').style.display = mode === 'mes' ? '' : 'none';
-  document.getElementById('res-nav-mes').style.display = mode === 'mes' ? 'flex' : 'none';
-  document.getElementById('res-month-label').textContent = MONTHS_PT[resMonth-1] + '/' + resYear;
-  if (mode === 'hoje') resRenderHoje();
-  else resRenderMes();
+  document.getElementById('res-view-hoje').style.display     = mode === 'hoje'     ? '' : 'none';
+  document.getElementById('res-view-mes').style.display      = mode === 'mes'      ? '' : 'none';
+  document.getElementById('res-view-clientes').style.display = mode === 'clientes' ? '' : 'none';
+  document.getElementById('res-nav-mes').style.display       = mode === 'mes'      ? 'flex' : 'none';
+  document.getElementById('res-month-label').textContent     = MONTHS_PT[resMonth-1] + '/' + resYear;
+  if (mode === 'hoje')          resRenderHoje();
+  else if (mode === 'mes')      resRenderMes();
+  else if (mode === 'clientes') repInit();
 }
 
 function resFmin(m) { const h = Math.floor(m/60), min = m%60; return h > 0 ? `${h}h ${min}m` : `${min}m`; }
+
+// ════════════════════════════════════════════════════════════════
+// RESULTADO — RELATÓRIO POR CLIENTE
+// ════════════════════════════════════════════════════════════════
+function repInit() {
+  const sel = document.getElementById('rep-client-sel');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Todos os clientes</option>' +
+    [...T.clients]
+      .filter(c => !c.is_internal)
+      .sort((a,b) => a.name.localeCompare(b.name,'pt-BR'))
+      .map(c => `<option value="${c.id}" ${c.id==current?'selected':''}>${c.name}</option>`)
+      .join('');
+  if (!document.getElementById('rep-date-start').value) {
+    repSetPeriod('month');
+  }
+}
+
+function repSetPeriod(type) {
+  const now = new Date();
+  let start, end;
+  if (type === 'week') {
+    const day = now.getDay();
+    start = new Date(now);
+    start.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+  } else if (type === 'month') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    end   = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else if (type === 'lastmonth') {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    end   = new Date(now.getFullYear(), now.getMonth(), 0);
+  }
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('rep-date-start').value = fmt(start);
+  document.getElementById('rep-date-end').value   = fmt(end);
+}
+
+async function repGenerate() {
+  const output = document.getElementById('rep-output');
+  output.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);">Carregando...</div>`;
+  const clientId  = document.getElementById('rep-client-sel').value;
+  const dateStart = document.getElementById('rep-date-start').value;
+  const dateEnd   = document.getElementById('rep-date-end').value;
+  if (!dateStart || !dateEnd) { showToast('Selecione o período','warn'); return; }
+  const startTs = new Date(dateStart + 'T00:00:00').getTime();
+  const endTs   = new Date(dateEnd   + 'T23:59:59').getTime();
+  let query = sb.from('time_entries')
+    .select('client_id, task_id, task_name, duration_minutes, start_time')
+    .gte('start_time', startTs)
+    .lte('start_time', endTs);
+  if (clientId) query = query.eq('client_id', Number(clientId));
+  const { data: entries, error } = await query;
+  if (error) { showToast('Erro ao carregar dados','err'); return; }
+  const { data: settings } = await sb.from('settings')
+    .select('hourly_rate_min,hourly_rate_optimal').eq('id',1).single();
+  const hourlyMin = settings?.hourly_rate_min ?? 0;
+  const hourlyOpt = settings?.hourly_rate_optimal ?? 0;
+  const fBRL = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+  const byClient = {};
+  let totalMins = 0;
+  for (const e of (entries || [])) {
+    if (!byClient[e.client_id]) byClient[e.client_id] = { mins: 0, tasks: {} };
+    byClient[e.client_id].mins += (e.duration_minutes || 0);
+    const tName = e.task_name || 'Sem tarefa';
+    byClient[e.client_id].tasks[tName] = (byClient[e.client_id].tasks[tName] || 0) + (e.duration_minutes || 0);
+    totalMins += (e.duration_minutes || 0);
+  }
+  if (!totalMins) {
+    output.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:14px;">Nenhum registro encontrado no período selecionado.</div>`;
+    return;
+  }
+  const sorted = Object.entries(byClient)
+    .map(([cid, data]) => ({ client: T.clients.find(c => c.id === Number(cid)), ...data }))
+    .sort((a,b) => b.mins - a.mins);
+  const PALETTE = ['#C4725A','#4A2976','#2FB989','#E07A3A','#3B82F6','#BFA8D9','#C4487A','#1D9E75'];
+  const fmtDate = s => s.split('-').reverse().join('/');
+  const periodoLabel = `${fmtDate(dateStart)} a ${fmtDate(dateEnd)}`;
+  let html = `
+    <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:14px;
+                box-shadow:var(--shadow-sm);padding:18px 22px;margin-bottom:16px;
+                display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);">Relatório de horas</div>
+        <div style="font-size:15px;font-weight:800;color:var(--deep);margin-top:2px;">${periodoLabel}</div>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+        <div style="text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:var(--coral);">${resFmin(totalMins)}</div>
+          <div style="font-size:10px;color:var(--text-dim);font-weight:600;">Total</div>
+        </div>
+        ${hourlyMin > 0 ? `<div style="text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:var(--orange);">${fBRL((totalMins/60)*hourlyMin)}</div>
+          <div style="font-size:10px;color:var(--text-dim);font-weight:600;">Valor mín</div>
+        </div>` : ''}
+        ${hourlyOpt > 0 ? `<div style="text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:var(--green);">${fBRL((totalMins/60)*hourlyOpt)}</div>
+          <div style="font-size:10px;color:var(--text-dim);font-weight:600;">Valor ótimo</div>
+        </div>` : ''}
+        <button onclick="repCopyText()"
+          style="padding:8px 16px;border-radius:10px;border:1.5px solid rgba(74,41,118,.2);
+                 background:none;font-family:inherit;font-size:12px;font-weight:700;
+                 color:var(--purple);cursor:pointer;">
+          Copiar resumo
+        </button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">`;
+  sorted.forEach((item, idx) => {
+    const clientName = item.client?.name || 'Cliente desconhecido';
+    const color = item.client?.color || PALETTE[idx % PALETTE.length];
+    const pct = totalMins > 0 ? Math.round((item.mins / totalMins) * 100) : 0;
+    const valueMin = hourlyMin > 0 ? fBRL((item.mins/60) * hourlyMin) : null;
+    const valueOpt = hourlyOpt > 0 ? fBRL((item.mins/60) * hourlyOpt) : null;
+    const tasksSorted = Object.entries(item.tasks).sort((a,b) => b[1] - a[1]);
+    html += `
+      <div style="background:rgba(255,255,255,.88);border:var(--border);border-radius:var(--radius);
+                  box-shadow:var(--shadow-sm);padding:22px 24px;border-left:4px solid ${color};">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+            <span style="font-size:15px;font-weight:800;color:var(--deep);">${clientName}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <span style="font-size:20px;font-weight:900;color:${color};">${resFmin(item.mins)}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text-dim);">${pct}% do tempo</span>
+            ${valueMin ? `<span style="font-size:12px;font-weight:700;color:var(--orange);">${valueMin}</span>` : ''}
+            ${valueOpt ? `<span style="font-size:12px;font-weight:700;color:var(--green);">${valueOpt}</span>` : ''}
+          </div>
+        </div>
+        <div style="height:6px;background:rgba(46,27,78,.07);border-radius:3px;margin-bottom:14px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .4s;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          ${tasksSorted.map(([tName, tMins], ti) => {
+            const tPct = item.mins > 0 ? Math.round((tMins/item.mins)*100) : 0;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;
+                              border-bottom:${ti < tasksSorted.length-1 ? '.5px solid rgba(74,41,118,.07)' : 'none'};">
+              <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);">${tName}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--deep);min-width:60px;text-align:right;">${resFmin(tMins)}</span>
+              <span style="font-size:11px;color:var(--text-dim);min-width:32px;text-align:right;">${tPct}%</span>
+              <div style="width:60px;height:4px;background:rgba(46,27,78,.07);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;width:${tPct}%;background:${color};opacity:.6;border-radius:2px;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+  output.innerHTML = html;
+  window._repData = { sorted, totalMins, hourlyMin, hourlyOpt, periodoLabel };
+}
+
+function repCopyText() {
+  const d = window._repData;
+  if (!d) return;
+  const fBRL = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+  let lines = [`Relatório de horas — ${d.periodoLabel}`, `Total: ${resFmin(d.totalMins)}`, ''];
+  d.sorted.forEach(item => {
+    const name = item.client?.name || 'Desconhecido';
+    const pct = d.totalMins > 0 ? Math.round((item.mins/d.totalMins)*100) : 0;
+    lines.push(`${name}: ${resFmin(item.mins)} (${pct}%)`);
+    Object.entries(item.tasks).sort((a,b)=>b[1]-a[1]).forEach(([t,m]) => {
+      lines.push(`  · ${t}: ${resFmin(m)}`);
+    });
+    lines.push('');
+  });
+  if (d.hourlyOpt > 0) lines.push(`Valor ótimo total: ${fBRL((d.totalMins/60)*d.hourlyOpt)}`);
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Resumo copiado!','ok');
+  }).catch(() => {
+    const mc = document.getElementById('modal-container');
+    mc.className = 'open';
+    mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header"><span class="modal-title">Resumo de horas</span>
+          <button class="modal-close" onclick="closeModal()">×</button></div>
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Selecione tudo e copie (Ctrl+A, Ctrl+C):</p>
+        <textarea style="width:100%;height:220px;font-family:monospace;font-size:12px;
+          border:var(--border);border-radius:8px;padding:10px;resize:none;" readonly>${text}</textarea>
+        <div class="modal-footer">
+          <button class="btn-primary" onclick="closeModal()">Fechar</button>
+        </div>
+      </div>
+    </div>`;
+  });
+}
 
 function resDonutSVG(slices, size, label) {
   const total = slices.reduce((s,x) => s + x.value, 0);

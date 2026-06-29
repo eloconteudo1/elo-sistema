@@ -228,6 +228,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
   - CSS `.name` e `.tagline` removidos
 - **Rodapé:** `#version-number` (versão), `#build-date` (data DD/MM/AAAA), `#sobre-version` (aba Sobre) — atualizar a cada commit
 
+### Sessão 8 — Relatório por cliente (Resultado)
+
+- Nova sub-aba **"Clientes"** no toggle do Resultado (ao lado de Hoje e Mês)
+- Filtros: seletor de cliente (externos, ordem alfabética) + período De/Até + atalhos Semana/Mês atual/Mês anterior
+- Botão "Gerar" busca `time_entries` no período, agrupa por cliente e tarefa
+- Cards por cliente: horas, % do tempo, barra de progresso, valor mín/ótimo (se configurados), lista de tarefas ordenadas
+- Cabeçalho do relatório: total de horas + valores globais + botão "Copiar resumo"
+- "Copiar resumo" gera texto formatado para o Assistente; fallback com modal/textarea se clipboard bloqueado
+- Funções: `repInit()`, `repSetPeriod(type)`, `repGenerate()`, `repCopyText()`
+- Sem alteração de schema — usa `time_entries` e `settings` já existentes
+
 ### Sessão 7 — Correções desktop + Calendário + Conteúdo
 
 - **Favoritos corrigidos:** filtro usa `=== true` em vez de truthy — `null`/`undefined` não aparecem em Favoritos
@@ -248,6 +259,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S1 | ~~Ordenação tarefas favoritas + clientes — Sprint 1~~ | **Concluído** |
 | S2 | ~~Melhorias UX: busca cliente, alertas visuais, mobile nav — Sprint 2~~ | **Concluído** |
 | S3 | ~~Sessão 6C: anotações, badge, card financeiro, mobile client/agenda~~ | **Concluído** |
+| S8 | ~~Sessão 8: Relatório por cliente na aba Clientes do Resultado~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
