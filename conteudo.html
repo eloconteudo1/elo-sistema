@@ -51,26 +51,6 @@ body{
 .topbar-clock .time { font-size:15px; font-weight:700; color:white; }
 .topbar-clock .date { font-size:11px; color:rgba(255,255,255,.5); text-transform:capitalize; }
 
-/* ── TOPBAR ANTIGA (removida) ── */
-.topbar{
-  background:var(--deep2);
-  height:0;
-  display:none;
-  gap:0;
-  flex-shrink:0;
-  z-index:100;
-}
-.topbar-logo{display:flex;align-items:center;gap:8px;margin-right:32px;text-decoration:none;}
-.logo-icon{width:32px;height:32px;background:var(--coral);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;letter-spacing:-1px;}
-.logo-text{color:#fff;font-weight:700;font-size:13px;line-height:1.1;}
-.logo-text span{display:block;font-size:9px;font-weight:400;color:var(--lavender);letter-spacing:1px;text-transform:uppercase;}
-.topbar-nav{display:flex;gap:2px;flex:1;justify-content:center;}
-.topbar-nav a{color:rgba(255,255,255,.5);font-size:13px;font-weight:500;padding:6px 15px;border-radius:9px;text-decoration:none;transition:all .15s;}
-.topbar-nav a:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
-.topbar-nav a.active{background:var(--purple);color:#fff;}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.topbar-clock{color:#fff;font-size:13px;font-weight:700;line-height:1.1;text-align:right;}
-.topbar-date{color:var(--lavender);font-size:10px;}
 
 /* ── PAGE ── */
 .page{
@@ -673,7 +653,6 @@ body{
     <div class="modal-grid" id="m-grid"></div>
     <div class="modal-footer">
       <button class="btn-cancel-modal" onclick="closeModal()">Fechar</button>
-      <button class="btn-usar-modal" id="btn-usar-modal" onclick="usarBase()">↓ Usar como base no editor</button>
     </div>
   </div>
 </div>
@@ -993,6 +972,7 @@ function buildCard(p){
   const title = escHtml(p.title || '(sem título)');
   const caption = escHtml((p.caption || '').slice(0, 220));
 
+  div.style.cursor = 'pointer';
   div.innerHTML = `
     <div class="post-card-top">
       <div class="post-card-tags">
@@ -1003,21 +983,9 @@ function buildCard(p){
     </div>
     <div class="post-card-title">${title}</div>
     <div class="post-card-preview">${caption}</div>
-    <div class="post-card-foot">
-      <span class="post-card-esp-hint">${escHtml(p.collection || '')}</span>
-      <div class="post-card-actions">
-        <button class="btn-usar" data-id="${p.id}">↓ Usar como base</button>
-        <button class="btn-icon" data-view="${p.id}" title="Ver completo">👁</button>
-        <button class="btn-icon" data-edit="${p.id}" title="Editar">✏️</button>
-        <button class="btn-icon" data-del="${p.id}" title="Excluir" style="color:var(--coral);">🗑</button>
-      </div>
-    </div>
   `;
 
-  div.querySelector('[data-id]').addEventListener('click', () => usarBase(p));
-  div.querySelector('[data-view]').addEventListener('click', () => openModal(p));
-  div.querySelector('[data-edit]').addEventListener('click', () => openEdit(p));
-  div.querySelector('[data-del]').addEventListener('click', () => deletePost(p));
+  div.addEventListener('click', () => openModal(p));
 
   return div;
 }

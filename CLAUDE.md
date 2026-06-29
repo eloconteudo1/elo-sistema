@@ -188,6 +188,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - conteudo.html: topbar já estava padrão (logo ELO, abas, relógio) — sem alteração
 - Versão 3.5, data 30/06/2026
 
+**Sessão 9D — Correções Anotações + conteudo.html**
+- Fix "ver +" nas anotações: `dataset.expanded` em vez de `full.style.display === 'block'` (que nunca batia pois display vinha do CSS)
+- Edição inline restaurada: `onclick="editNoteInline"` adicionado ao `note-item-preview` e `note-item-full`
+- Espelho do Calendário: `\n` convertido para `<br>` em `renderCalNotes()` — texto agora quebra em múltiplas linhas
+- conteudo.html: CSS antigo da topbar (`.topbar`, `.topbar-nav`, etc.) removido do `<style>`
+- conteudo.html: `buildCard()` simplificado — card inteiro clicável (`div.addEventListener('click', openModal)`), botões de ação removidos
+- conteudo.html: modal sem botão "Usar como base", apenas "Fechar"
+- Versão 3.6, data 29/06/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -284,6 +293,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9A | ~~Sessão 9A: Favoritos === true + anotações colapsáveis~~ | **Concluído** |
 | S9B | ~~Sessão 9B: Bug alerta calendário + edição de eventos~~ | **Concluído** |
 | S9C | ~~Sessão 9C: Financeiro edição de valor + rodapé 3.5~~ | **Concluído** |
+| S9D | ~~Sessão 9D: Fix "ver +" anotações, edição inline, calendário texto completo, conteudo.html~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

@@ -1288,7 +1288,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.5 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.6 · ELO Comunicação · Atualizado em 29/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1358,9 +1358,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.5</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.6</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">30/06/2026</span></span>
+    <span>Atualizado em <span id="build-date">29/06/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1981,9 +1981,10 @@ async function initHome() {
         const preview = document.getElementById(`note-preview-${id}`);
         const full    = document.getElementById(`note-full-${id}`);
         if (!preview || !full) return;
-        const isExpanded = full.style.display === 'block';
+        const isExpanded = full.dataset.expanded === '1';
         preview.style.display = isExpanded ? '' : 'none';
         full.style.display    = isExpanded ? 'none' : 'block';
+        full.dataset.expanded = isExpanded ? '0' : '1';
         expandBtn.textContent = isExpanded ? 'ver +' : 'ver menos';
         return;
       }
@@ -2522,10 +2523,12 @@ function renderNotesList() {
     return `<div class="note-item" data-note-item-id="${note.id}">
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
       <div class="note-item-body">
-        <div id="note-preview-${note.id}" class="note-item-preview">
+        <div id="note-preview-${note.id}" class="note-item-preview"
+          onclick="editNoteInline(this,${note.id})" title="Clique para editar" style="cursor:text;">
           <strong>${titulo}</strong>${corpo}
         </div>
-        <div id="note-full-${note.id}" class="note-item-full">
+        <div id="note-full-${note.id}" class="note-item-full"
+          onclick="editNoteInline(this,${note.id})" title="Clique para editar" style="cursor:text;">
           <strong>${titulo}</strong>${corpo}
         </div>
         <div class="note-item-footer">
@@ -2590,7 +2593,7 @@ async function renderCalNotes() {
     return `<div class="note-item">
       <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
       <div style="flex:1;min-width:0;">
-        <div class="cal-note-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;')}</div>
+        <div class="cal-note-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
     </div>`;
