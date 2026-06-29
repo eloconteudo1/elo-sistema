@@ -174,6 +174,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Handler `data-expand-note` adicionado ao event delegation do `#notes-list`
 - Versão 3.3, data 29/06/2026
 
+**Sessão 9B — Calendário: bug alerta + edição de eventos**
+- Bug do alerta corrigido: payload condicional (`if (alertMin) payload.alert_minutes_before = ...`) em appointments e scheduled_tasks. SQL: `ALTER TABLE ... ADD COLUMN IF NOT EXISTS alert_minutes_before integer DEFAULT NULL`
+- Edição de eventos: `getEventsByDay()` inclui `id` nos objetos; botão ✏ na sidebar de cada evento
+- `openCalEditModal(id, type)` preenche modal com dados do item existente, seleciona tab correta, seta `modal.dataset.editId/editType`
+- `saveCalEvent()` detecta `isEdit` via `modal.dataset.editId` e faz UPDATE; INSERT quando novo
+- `openCalModal()` e `closeCalModal()` limpam o dataset, restauram título "Novo evento" e botão "Salvar"
+- Versão 3.4, data 30/06/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -268,6 +276,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S3 | ~~Sessão 6C: anotações, badge, card financeiro, mobile client/agenda~~ | **Concluído** |
 | S8 | ~~Sessão 8: Relatório por cliente na aba Clientes do Resultado~~ | **Concluído** |
 | S9A | ~~Sessão 9A: Favoritos === true + anotações colapsáveis~~ | **Concluído** |
+| S9B | ~~Sessão 9B: Bug alerta calendário + edição de eventos~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

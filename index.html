@@ -1288,7 +1288,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.3 · ELO Comunicação · Atualizado em 29/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.4 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1358,9 +1358,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.3</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.4</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">29/06/2026</span></span>
+    <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3637,7 +3637,7 @@ function getEventsByDay() {
     if (d.getMonth() === CAL.month && d.getFullYear() === CAL.year) {
       const day = d.getDate();
       if (!map[day]) map[day] = [];
-      map[day].push({ type:'appointment', title:appt.title, time:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), isDone:appt.is_done });
+      map[day].push({ id:appt.id, type:'appointment', title:appt.title, time:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), isDone:appt.is_done });
     }
   }
   for (const task of CAL.scheduledTasks) {
@@ -3647,7 +3647,7 @@ function getEventsByDay() {
     const [yyyy, mm, dd] = parts.map(Number);
     if (mm-1 === CAL.month && yyyy === CAL.year) {
       if (!map[dd]) map[dd] = [];
-      map[dd].push({ type:'task', title:task.title, time:task.scheduled_time||null, priority:task.priority||'media', isDone:task.is_done });
+      map[dd].push({ id:task.id, type:'task', title:task.title, time:task.scheduled_time||null, priority:task.priority||'media', isDone:task.is_done });
     }
   }
   return map;
@@ -3736,7 +3736,11 @@ function renderCalSidebar() {
           const op = ev.isDone ? '0.5' : '1';
           const timeHtml = ev.time ? `<div style="font-size:11px;color:#888;margin-top:2px;">🕐 ${ev.time}</div>` : '';
           return `<div style="padding:10px 14px;border-radius:10px;background:${bg};border-left:3px solid ${col};opacity:${op};">
-            <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${col};margin-bottom:2px;">${lbl}${done}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${col};">${lbl}${done}</div>
+              <button onclick="openCalEditModal(${ev.id},'${ev.type}')"
+                style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 2px;opacity:.6;line-height:1;" title="Editar">✏</button>
+            </div>
             <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${ev.title}</div>
             ${timeHtml}
           </div>`;
@@ -3814,11 +3818,69 @@ function openCalModal(day) {
 
   setCalModalTab('compromisso');
   const modal = document.getElementById('cal-modal');
+  modal.dataset.editId   = '';
+  modal.dataset.editType = '';
+  const titleEl = modal.querySelector('h2');
+  if (titleEl) titleEl.textContent = 'Novo evento';
+  const saveBtn = document.getElementById('cal-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Salvar';
   modal.style.display = 'flex';
   setTimeout(() => document.getElementById('cme-title').focus(), 50);
 }
 function closeCalModal() {
-  document.getElementById('cal-modal').style.display = 'none';
+  const modal = document.getElementById('cal-modal');
+  modal.style.display = 'none';
+  modal.dataset.editId   = '';
+  modal.dataset.editType = '';
+  const titleEl = modal.querySelector('h2');
+  if (titleEl) titleEl.textContent = 'Novo evento';
+  const saveBtn = document.getElementById('cal-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Salvar';
+}
+
+function openCalEditModal(id, type) {
+  let item = null;
+  if (type === 'appointment') {
+    item = CAL.appointments.find(a => a.id === id);
+  } else {
+    item = CAL.scheduledTasks.find(t => t.id === id);
+  }
+  if (!item) { showToast('Item não encontrado', 'err'); return; }
+
+  document.getElementById('cme-title').value = item.title || '';
+  document.getElementById('cme-desc').value  = item.description || '';
+
+  if (type === 'appointment') {
+    const d = new Date(Number(item.scheduled_at));
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    document.getElementById('cme-date').value = `${dd}/${mm}/${d.getFullYear()}`;
+    document.getElementById('cme-time').value = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  } else {
+    document.getElementById('cme-date').value = dbDateToDisplay(item.scheduled_date) || '';
+    document.getElementById('cme-time').value = item.scheduled_time || '';
+    const prioEl = document.getElementById('cme-priority');
+    if (prioEl) prioEl.value = item.priority || 'media';
+  }
+
+  const alertEl = document.getElementById('cme-alert');
+  if (alertEl) alertEl.value = item.alert_minutes_before ? String(item.alert_minutes_before) : '';
+
+  const sel = document.getElementById('cme-client');
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    (T.clients||[]).map(c => `<option value="${c.id}"${c.id === item.client_id ? ' selected' : ''}>${c.name}</option>`).join('');
+
+  setCalModalTab(type === 'appointment' ? 'compromisso' : 'tarefa');
+
+  const modal = document.getElementById('cal-modal');
+  modal.dataset.editId   = id;
+  modal.dataset.editType = type;
+  const titleEl = modal.querySelector('h2');
+  if (titleEl) titleEl.textContent = type === 'appointment' ? 'Editar compromisso' : 'Editar tarefa';
+  const saveBtn = document.getElementById('cal-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Atualizar';
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('cme-title').focus(), 50);
 }
 
 function setCalModalTab(tab) {
@@ -3832,45 +3894,68 @@ function setCalModalTab(tab) {
 }
 
 async function saveCalEvent() {
+  const modal    = document.getElementById('cal-modal');
+  const editId   = modal.dataset.editId   ? Number(modal.dataset.editId)   : null;
+  const editType = modal.dataset.editType || null;
+  const isEdit   = !!editId;
+
   const title = document.getElementById('cme-title').value.trim();
   if (!title) { showToast('Informe o título','err'); return; }
-  const date = document.getElementById('cme-date').value;
-  const time = document.getElementById('cme-time').value;
+  const date     = document.getElementById('cme-date').value;
+  const time     = document.getElementById('cme-time').value;
   const alertMin = document.getElementById('cme-alert').value;
-  const desc = document.getElementById('cme-desc').value.trim();
+  const desc     = document.getElementById('cme-desc').value.trim();
   const clientId = document.getElementById('cme-client').value;
-  const btn = document.getElementById('cal-save-btn');
-  btn.textContent = 'Salvando...'; btn.disabled = true;
+  const btn      = document.getElementById('cal-save-btn');
+  btn.textContent = isEdit ? 'Atualizando...' : 'Salvando...';
+  btn.disabled = true;
 
   if (CAL.modalTab === 'compromisso') {
     const parts = date.split('/');
-    if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)','err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+    if (parts.length !== 3) {
+      showToast('Data inválida (DD/MM/AAAA)','err');
+      btn.textContent = isEdit ? 'Atualizar' : 'Salvar';
+      btn.disabled = false; return;
+    }
     const [dd, mm, yyyy] = parts.map(Number);
     const [hh, min] = time ? time.split(':').map(Number) : [0,0];
     const scheduled_at = new Date(yyyy, mm-1, dd, hh||0, min||0).getTime();
-    const { data, error } = await sb.from('appointments').insert({
-      title, description: desc||null, scheduled_at,
-      alert_minutes_before: alertMin ? Number(alertMin) : null,
-      client_id: clientId ? Number(clientId) : null,
-      is_done: false,
-    }).select().single();
-    if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
-    CAL.appointments.push(data);
+    const payload = { title, description: desc||null, scheduled_at, client_id: clientId ? Number(clientId) : null };
+    if (alertMin) payload.alert_minutes_before = Number(alertMin);
+    if (isEdit) {
+      const { error } = await sb.from('appointments').update(payload).eq('id', editId);
+      if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Atualizar'; btn.disabled=false; return; }
+      const idx = CAL.appointments.findIndex(a => a.id === editId);
+      if (idx !== -1) CAL.appointments[idx] = { ...CAL.appointments[idx], ...payload };
+    } else {
+      payload.is_done = false;
+      const { data, error } = await sb.from('appointments').insert(payload).select().single();
+      if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+      CAL.appointments.push(data);
+    }
   } else {
     const priority = document.getElementById('cme-priority').value;
-    const { data, error } = await sb.from('scheduled_tasks').insert({
+    const payload = {
       title, description: desc||null,
       scheduled_date: inputToDbDate(date), scheduled_time: time||null,
       priority, client_id: clientId ? Number(clientId) : null,
-      alert_minutes_before: alertMin ? Number(alertMin) : null,
-      is_done: false,
-    }).select().single();
-    if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
-    CAL.scheduledTasks.push(data);
+    };
+    if (alertMin) payload.alert_minutes_before = Number(alertMin);
+    if (isEdit) {
+      const { error } = await sb.from('scheduled_tasks').update(payload).eq('id', editId);
+      if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Atualizar'; btn.disabled=false; return; }
+      const idx = CAL.scheduledTasks.findIndex(t => t.id === editId);
+      if (idx !== -1) CAL.scheduledTasks[idx] = { ...CAL.scheduledTasks[idx], ...payload };
+    } else {
+      payload.is_done = false;
+      const { data, error } = await sb.from('scheduled_tasks').insert(payload).select().single();
+      if (error) { showToast('Erro: '+error.message,'err'); btn.textContent='Salvar'; btn.disabled=false; return; }
+      CAL.scheduledTasks.push(data);
+    }
   }
   closeCalModal();
-  btn.textContent='Salvar'; btn.disabled=false;
-  showToast(CAL.modalTab === 'compromisso' ? 'Compromisso criado!':'Tarefa criada!','ok');
+  btn.textContent = 'Salvar'; btn.disabled = false;
+  showToast(isEdit ? 'Atualizado ✓' : (CAL.modalTab === 'compromisso' ? 'Compromisso criado!' : 'Tarefa criada!'), 'ok');
   renderCalGrid();
   renderCalSidebar();
 }
