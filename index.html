@@ -2025,7 +2025,7 @@ async function loadHomeData() {
     sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('tasks').select('*').eq('is_active',true).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
-    sb.from('scheduled_tasks').select('*').order('created_at',{ascending:false}),
+    sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}),
     sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
     sb.from('settings').select('*').eq('id',1).single(),
     sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'),
