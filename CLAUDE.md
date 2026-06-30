@@ -330,6 +330,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S12A | ~~Sessão 12A: Fix alarmes pessoais — user_id adicionado no insert (desktop e mobile)~~ | **Concluído** |
 | S12C | ~~Sessão 12C: Proteção clique duplo no cronômetro — T.actionInProgress em pause/resume + desabilitar botões~~ | **Concluído** |
 | S13 | ~~Sessão 13: Anotações — primeira palavra em negrito + card visual (Home e Calendário) + bolinha verde~~ | **Concluído** |
+| S10 | ~~Sessão 10: Performance Home — notes.limit(20) + scheduled_tasks com lte 60 dias + índices no Supabase~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

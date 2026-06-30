@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.15 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.16 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.15</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.16</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -2008,11 +2008,11 @@ async function loadHomeData() {
     sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
-    sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}),
+    sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).lte('scheduled_date', new Date(Date.now()+60*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}),
     sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
     sb.from('settings').select('*').eq('id',1).single(),
     sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'),
-    sb.from('notes').select('*').order('created_at',{ascending:false}),
+    sb.from('notes').select('*').order('created_at',{ascending:false}).limit(20),
   ]);
   T.clients = cl.data||[];
   if (sg.data) T.settings = { ...T.settings, ...sg.data };
