@@ -376,7 +376,7 @@
     .note-item:last-child { border-bottom:none; }
     .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
-    .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:pointer; }
+    .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:pointer; background:#f9f8fc; border-left:3px solid var(--purple); border-radius:8px; padding:8px 10px; }
     .note-item-preview strong { font-weight:800; color:var(--deep); display:block; margin-bottom:1px; }
     .note-item-preview:hover { opacity:.8; }
     .note-item-date { font-size:10px; color:var(--text-dim); opacity:.65; }
@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.13 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.14 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.13</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.14</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -2513,15 +2513,16 @@ function renderNotesList() {
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const lines = note.content.split('\n');
-    const titulo = (lines[0] || '').replace(/</g,'&lt;');
-    const resto = lines.slice(1).join('\n').trim().replace(/</g,'&lt;').replace(/\n/g,'<br>');
-    const corpo = resto ? `<br>${resto}` : '';
+    const escaped = note.content.replace(/</g,'&lt;');
+    const firstSpace = escaped.indexOf(' ');
+    const titulo = firstSpace === -1 ? escaped : escaped.slice(0, firstSpace);
+    const resto = firstSpace === -1 ? '' : escaped.slice(firstSpace).replace(/\n/g,'<br>');
     return `<div class="note-item" data-note-item-id="${note.id}">
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
       <div class="note-item-body" style="flex:1;min-width:0;">
         <div class="note-item-preview" data-open-note="${note.id}">
-          <strong>${titulo}</strong>${corpo}
+          <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);margin-bottom:3px;">Anotação</div>
+          <strong>${titulo}</strong>${resto}
         </div>
         <div class="note-item-date">${dateStr}</div>
       </div>
@@ -2625,9 +2626,12 @@ async function renderCalNotes() {
     return `<div class="note-item">
       <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;"
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;background:#f9f8fc;border-left:3px solid var(--purple);border-radius:8px;padding:8px 10px;"
           onclick="openNoteModal(${note.id})"
-          title="Clique para editar">${note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+          title="Clique para editar">
+          <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);margin-bottom:3px;">Anotação</div>
+          ${(() => { const esc = note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>'); const sp = esc.search(/[\s<]/); const t = sp === -1 ? esc : esc.slice(0,sp); const r = sp === -1 ? '' : esc.slice(sp); return `<strong>${t}</strong>${r}`; })()}
+        </div>
         <div class="note-item-date">${dateStr}</div>
       </div>
     </div>`;
