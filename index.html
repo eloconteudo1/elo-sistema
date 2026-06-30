@@ -374,7 +374,7 @@
     /* Anotações — mesmo padrão visual de .sched-task */
     .note-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:.5px solid rgba(74,41,118,.07); }
     .note-item:last-child { border-bottom:none; }
-    .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
+    .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--green); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
     .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:pointer; background:#f9f8fc; border-left:3px solid var(--purple); border-radius:8px; padding:8px 10px; }
     .note-item-preview strong { font-weight:800; color:var(--deep); display:block; margin-bottom:1px; }
@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.14 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.15 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.14</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.15</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -2521,7 +2521,6 @@ function renderNotesList() {
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
       <div class="note-item-body" style="flex:1;min-width:0;">
         <div class="note-item-preview" data-open-note="${note.id}">
-          <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);margin-bottom:3px;">Anotação</div>
           <strong>${titulo}</strong>${resto}
         </div>
         <div class="note-item-date">${dateStr}</div>
@@ -2629,7 +2628,6 @@ async function renderCalNotes() {
         <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;background:#f9f8fc;border-left:3px solid var(--purple);border-radius:8px;padding:8px 10px;"
           onclick="openNoteModal(${note.id})"
           title="Clique para editar">
-          <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);margin-bottom:3px;">Anotação</div>
           ${(() => { const esc = note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>'); const sp = esc.search(/[\s<]/); const t = sp === -1 ? esc : esc.slice(0,sp); const r = sp === -1 ? '' : esc.slice(sp); return `<strong>${t}</strong>${r}`; })()}
         </div>
         <div class="note-item-date">${dateStr}</div>
