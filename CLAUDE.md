@@ -197,6 +197,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - conteudo.html: modal sem botão "Usar como base", apenas "Fechar"
 - Versão 3.6, data 29/06/2026
 
+**Sessão 9F — Favoritos: clientes internos no grupo geral**
+- Clientes internos marcados como favorito agora aparecem no grupo "Favoritos" junto com os externos favoritos
+- Removida condição `&& !c.is_internal` do filtro de favoritos em `renderClientList()`, `openMobileClientPicker()` e `filterMobileClients()`
+- Clientes internos NÃO favoritos continuam no grupo "Interno"
+- Versão 3.8, data 30/06/2026
+
 **Sessão 9E — Anotações modal + Financeiro editar/excluir**
 - Anotações redesenhadas: clicar na nota abre modal com textarea editável (`openNoteModal`, `saveNoteModal`)
 - Removidos: `note-item-full`, `note-expand-btn`, handler de expand, `editNoteInline` substituído pelo modal
@@ -304,6 +310,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9C | ~~Sessão 9C: Financeiro edição de valor + rodapé 3.5~~ | **Concluído** |
 | S9D | ~~Sessão 9D: Fix "ver +" anotações, edição inline, calendário texto completo, conteudo.html~~ | **Concluído** |
 | S9E | ~~Sessão 9E: Anotações modal + Financeiro editar/excluir custos e recebimentos~~ | **Concluído** |
+| S9F | ~~Sessão 9F: Clientes internos favoritos no grupo Favoritos geral~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

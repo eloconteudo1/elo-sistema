@@ -1284,7 +1284,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.7 · ELO Comunicação · Atualizado em 29/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.8 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1354,9 +1354,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.7</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.8</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">29/06/2026</span></span>
+    <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -2064,9 +2064,9 @@ function toggleClientDrop() {
 function openMobileClientPicker() {
   document.getElementById('mobile-client-sheet')?.remove();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
-  const favs     = alpha(T.clients.filter(c => c.is_favorite === true && !c.is_internal));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite === true));
   const externos = alpha(T.clients.filter(c => c.is_favorite !== true && !c.is_internal));
-  const internos = alpha(T.clients.filter(c => c.is_internal));
+  const internos = alpha(T.clients.filter(c => c.is_favorite !== true && c.is_internal));
   const renderGroup = (label, arr) => {
     if (!arr.length) return '';
     return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.4);padding:10px 20px 4px;">${label}</div>` +
@@ -2121,9 +2121,9 @@ function filterMobileClients() {
   const term = (document.getElementById('mobile-client-search')?.value||'').toLowerCase().trim();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
   const match = c => !term || normalizeStr(c.name).includes(normalizeStr(term));
-  const favs     = alpha(T.clients.filter(c => c.is_favorite === true && !c.is_internal && match(c)));
+  const favs     = alpha(T.clients.filter(c => c.is_favorite === true && match(c)));
   const externos = alpha(T.clients.filter(c => c.is_favorite !== true && !c.is_internal && match(c)));
-  const internos = alpha(T.clients.filter(c => c.is_internal && match(c)));
+  const internos = alpha(T.clients.filter(c => c.is_favorite !== true && c.is_internal && match(c)));
   const renderGroup = (label, arr) => {
     if (!arr.length) return '';
     return `<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(46,27,78,.4);padding:10px 20px 4px;">${label}</div>` +
@@ -2155,12 +2155,9 @@ function renderClientList() {
   const term = (searchEl ? searchEl.value : '').toLowerCase().trim();
   const alpha = arr => [...arr].sort((a,b) => a.name.localeCompare(b.name,'pt-BR'));
   const applySearch = arr => term ? arr.filter(c => normalizeStr(c.name).includes(normalizeStr(term))) : arr;
-  const internals = T.clients.filter(c => c.is_internal);
-  const externals = T.clients.filter(c => !c.is_internal);
-  const favs      = applySearch(alpha(externals.filter(c => c.is_favorite === true)));
-  const nonFavs   = applySearch(alpha(externals.filter(c => c.is_favorite !== true)));
-  const intFavs   = applySearch(alpha(internals.filter(c => c.is_favorite === true)));
-  const intNonFavs= applySearch(alpha(internals.filter(c => c.is_favorite !== true)));
+  const favs      = applySearch(alpha(T.clients.filter(c => c.is_favorite === true)));
+  const nonFavExt = applySearch(alpha(T.clients.filter(c => c.is_favorite !== true && !c.is_internal)));
+  const nonFavInt = applySearch(alpha(T.clients.filter(c => c.is_favorite !== true && c.is_internal)));
   const optHtml = (c, extraClass='') => {
     const minsToday = T.todayEntries.filter(e=>e.client_id===c.id&&e.duration_minutes!=null).reduce((s,e)=>s+(e.duration_minutes||0),0);
     const sel = T.selectedClientId===c.id;
@@ -2171,11 +2168,10 @@ function renderClientList() {
     </div>`;
   };
   let html = '';
-  if (favs.length)        { html += `<div class="client-group-label">Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
-  if (nonFavs.length)     { html += `<div class="client-group-label">Clientes</div>`;    nonFavs.forEach(c => html += optHtml(c,'')); }
-  if (intFavs.length)     { html += `<div class="client-group-label">Interno</div>`;  intFavs.forEach(c => html += optHtml(c,' fav-item')); }
-  if (intNonFavs.length)  { html += `<div class="client-group-label">Interno</div>`;     intNonFavs.forEach(c => html += optHtml(c,'')); }
-  if (!favs.length && !nonFavs.length && !intFavs.length && !intNonFavs.length) {
+  if (favs.length)      { html += `<div class="client-group-label">Favoritos</div>`; favs.forEach(c => html += optHtml(c,' fav-item')); }
+  if (nonFavExt.length) { html += `<div class="client-group-label">Clientes</div>`;  nonFavExt.forEach(c => html += optHtml(c,'')); }
+  if (nonFavInt.length) { html += `<div class="client-group-label">Interno</div>`;   nonFavInt.forEach(c => html += optHtml(c,'')); }
+  if (!favs.length && !nonFavExt.length && !nonFavInt.length) {
     html = `<div style="padding:20px 16px;text-align:center;font-size:13px;color:var(--text-dim);opacity:.6;">Nenhum cliente encontrado</div>`;
   }
   list.innerHTML = html;
