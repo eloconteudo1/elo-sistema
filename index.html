@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.17 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.18 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.17</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.18</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -4837,6 +4837,9 @@ async function repGenerate() {
   if (clientId) query = query.eq('client_id', Number(clientId));
   const { data: entries, error } = await query;
   if (error) { showToast('Erro ao carregar dados','err'); return; }
+  const { data: allClients } = await sb.from('clients').select('id,name,is_active');
+  const clientNameMap = {};
+  (allClients||[]).forEach(c => { clientNameMap[c.id] = c.is_active ? c.name : `${c.name} (inativo)`; });
   const { data: settings } = await sb.from('settings')
     .select('hourly_rate_min,hourly_rate_optimal').eq('id',1).single();
   const hourlyMin = settings?.hourly_rate_min ?? 0;
@@ -4856,7 +4859,7 @@ async function repGenerate() {
     return;
   }
   const sorted = Object.entries(byClient)
-    .map(([cid, data]) => ({ client: T.clients.find(c => c.id === Number(cid)), ...data }))
+    .map(([cid, data]) => ({ clientName: clientNameMap[Number(cid)] || 'Cliente desconhecido', client: T.clients.find(c => c.id === Number(cid)), ...data }))
     .sort((a,b) => b.mins - a.mins);
   const PALETTE = ['#C4725A','#4A2976','#2FB989','#E07A3A','#3B82F6','#BFA8D9','#C4487A','#1D9E75'];
   const fmtDate = s => s.split('-').reverse().join('/');
@@ -4892,7 +4895,7 @@ async function repGenerate() {
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;">`;
   sorted.forEach((item, idx) => {
-    const clientName = item.client?.name || 'Cliente desconhecido';
+    const clientName = item.clientName;
     const color = item.client?.color || PALETTE[idx % PALETTE.length];
     const pct = totalMins > 0 ? Math.round((item.mins / totalMins) * 100) : 0;
     const valueMin = hourlyMin > 0 ? fBRL((item.mins/60) * hourlyMin) : null;

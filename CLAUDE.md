@@ -332,6 +332,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S13 | ~~Sessão 13: Anotações — primeira palavra em negrito + card visual (Home e Calendário) + bolinha verde~~ | **Concluído** |
 | S10 | ~~Sessão 10: Performance Home — notes.limit(20) + scheduled_tasks com lte 60 dias + índices no Supabase~~ | **Concluído** |
 | S12D | ~~Sessão 12D: Motor de alarmes pessoais — beep AudioContext + notificação visual + checkPersonalReminders a cada 30s~~ | **Concluído** |
+| S12B | ~~Sessão 12B: Fix "Cliente desconhecido" no Relatório — busca todos os clientes (ativos + inativos) via clientNameMap~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
