@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.12 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.13 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.12</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.13</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -1410,7 +1410,7 @@ const T = {
   expandedCats: new Set(['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO']),
   elapsed: 0, timerInterval: null, isPaused: false,
   isRunning: false,
-  stopInFlight: false, startInFlight: false,
+  stopInFlight: false, startInFlight: false, actionInProgress: false,
 };
 
 // Category config (from TimerPage.tsx)
@@ -2322,16 +2322,17 @@ function renderTimerButtons() {
     const pauseIcon = T.isPaused ? '▶' : '⏸';
     const pauseLabel = T.isPaused ? 'Retomar' : 'Pausar';
     const pauseStyle = T.isPaused ? 'color:var(--coral)' : '';
+    const disabledStyle = T.actionInProgress ? 'opacity:.5;pointer-events:none;' : '';
     wrap.innerHTML = `
-      <button class="timer-btn-wrap" onclick="${T.isPaused?'resumeTimer()':'pauseTimer()'}">
+      <button class="timer-btn-wrap" onclick="${T.isPaused?'resumeTimer()':'pauseTimer()'}" style="${disabledStyle}">
         <div class="timer-btn-circle ${pauseClass}">${pauseIcon}</div>
         <span style="${pauseStyle}">${pauseLabel}</span>
       </button>
-      <button class="timer-btn-wrap" onclick="stopTimer()">
+      <button class="timer-btn-wrap" onclick="stopTimer()" style="${disabledStyle}">
         <div class="timer-btn-circle btn-stop" style="font-size:26px;">■</div>
         <span>Finalizar</span>
       </button>
-      <button class="timer-btn-wrap" onclick="cancelTimer()">
+      <button class="timer-btn-wrap" onclick="cancelTimer()" style="${disabledStyle}">
         <div class="timer-btn-circle btn-cancel" style="font-size:18px;">✕</div>
         <span>Cancelar</span>
       </button>`;
@@ -2446,25 +2447,28 @@ async function stopTimer() {
 }
 
 async function pauseTimer() {
-  if (!T.activeEntry || T.isPaused) return;
+  if (!T.activeEntry || T.isPaused || T.actionInProgress) return;
+  T.actionInProgress = true;
   const now = Date.now();
   const { error } = await sb.from('time_entries').update({ paused_at: now }).eq('id', T.activeEntry.id);
-  if (error) { showToast('Erro ao pausar','err'); return; }
+  if (error) { showToast('Erro ao pausar','err'); T.actionInProgress = false; return; }
   T.activeEntry.paused_at = now;
   T.isPaused = true;
   clearTimerInterval();
   renderTimerCenter();
   renderTimerButtons();
   showToast('Timer pausado','info');
+  T.actionInProgress = false;
 }
 
 async function resumeTimer() {
-  if (!T.activeEntry || !T.isPaused) return;
+  if (!T.activeEntry || !T.isPaused || T.actionInProgress) return;
+  T.actionInProgress = true;
   const now = Date.now();
   const addedPause = now - T.activeEntry.paused_at;
   const newPausedDuration = (T.activeEntry.paused_duration||0) + addedPause;
   const { error } = await sb.from('time_entries').update({ paused_at: null, paused_duration: newPausedDuration }).eq('id', T.activeEntry.id);
-  if (error) { showToast('Erro ao retomar','err'); return; }
+  if (error) { showToast('Erro ao retomar','err'); T.actionInProgress = false; return; }
   T.activeEntry.paused_at = null;
   T.activeEntry.paused_duration = newPausedDuration;
   T.isPaused = false;
@@ -2472,6 +2476,7 @@ async function resumeTimer() {
   renderTimerCenter();
   renderTimerButtons();
   showToast('Timer retomado!','ok');
+  T.actionInProgress = false;
 }
 
 async function cancelTimer() {
