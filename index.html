@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.16 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.17 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.16</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.17</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -1477,6 +1477,74 @@ function showToast(msg, type='ok') {
   document.getElementById('toast-container').appendChild(el);
   setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); }, 3500);
 }
+
+// ════════════════════════════════════════════════════════════════
+// ALARMES PESSOAIS — motor de disparo
+// ════════════════════════════════════════════════════════════════
+function playReminderBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+}
+function fireReminderNotification(rem) {
+  playReminderBeep();
+  showToast(`🔔 ${rem.title || 'Lembrete'}`, 'warn');
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(rem.title || 'Lembrete ELO', {
+      body: rem.description || 'Lembrete ELO',
+      icon: 'logo-elo.png',
+    });
+  }
+}
+function remGetLastFired(id) {
+  try { return JSON.parse(localStorage.getItem('elo_rem_lastfired')||'{}')[id] || 0; } catch(e) { return 0; }
+}
+function remSetLastFired(id, ts) {
+  try {
+    const obj = JSON.parse(localStorage.getItem('elo_rem_lastfired')||'{}');
+    obj[id] = ts;
+    localStorage.setItem('elo_rem_lastfired', JSON.stringify(obj));
+  } catch(e) {}
+}
+async function checkPersonalReminders() {
+  if (!appUser) return;
+  const { data: reminders } = await sb.from('reminders').select('*').eq('is_active', true);
+  if (!reminders) return;
+  const now = new Date();
+  const nowTs = now.getTime();
+  reminders.forEach(rem => {
+    const lastFired = remGetLastFired(rem.id);
+    if (rem.type === 'interval' && rem.interval_minutes) {
+      const intervalMs = rem.interval_minutes * 60000;
+      if (nowTs - lastFired >= intervalMs) {
+        fireReminderNotification(rem);
+        remSetLastFired(rem.id, nowTs);
+      }
+    }
+    if (rem.type === 'daily' && rem.daily_time) {
+      const [h, m] = rem.daily_time.split(':').map(Number);
+      const todayStr = now.toISOString().split('T')[0];
+      const lastFiredDate = lastFired ? new Date(lastFired).toISOString().split('T')[0] : null;
+      const targetMinutes = h * 60 + m;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      if (lastFiredDate !== todayStr && nowMinutes >= targetMinutes) {
+        fireReminderNotification(rem);
+        remSetLastFired(rem.id, nowTs);
+      }
+    }
+  });
+}
+setInterval(checkPersonalReminders, 30000);
 
 // ════════════════════════════════════════════════════════════════
 // CLOCK
@@ -1906,6 +1974,7 @@ async function showApp(au) {
   appUser = await getOrCreateUser(au);
   initHome();
   refreshTodayPill();
+  checkPersonalReminders();
 }
 function showLogin() {
   authUser = null; appUser = null;
