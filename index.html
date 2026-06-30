@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.10 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.11 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.10</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.11</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -1410,6 +1410,7 @@ const T = {
   expandedCats: new Set(['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO']),
   elapsed: 0, timerInterval: null, isPaused: false,
   isRunning: false,
+  stopInFlight: false, startInFlight: false,
 };
 
 // Category config (from TimerPage.tsx)
@@ -2392,42 +2393,56 @@ async function checkActiveEntry() {
 }
 
 async function startTimer() {
+  if (T.startInFlight) return;
   if (!T.selectedClientId) { showToast('Selecione um cliente','warn'); return; }
   if (!T.selectedTaskId) { showToast('Selecione uma tarefa','warn'); return; }
   if (!appUser) { showToast('Usuário não autenticado','err'); return; }
-  const desc = document.getElementById('desc-input').value.trim() || null;
-  const now = Date.now();
-  const { data, error } = await sb.from('time_entries').insert({
-    user_id: appUser.id, client_id: T.selectedClientId,
-    task_id: T.selectedTaskId, task_name: T.selectedTaskName,
-    start_time: now, paused_duration: 0, notes: desc,
-  }).select().single();
-  if (error) { showToast('Erro ao iniciar: '+error.message,'err'); return; }
-  T.activeEntry = data;
-  T.isRunning = true; T.isPaused = false; T.elapsed = 0;
-  startTick();
-  renderTimerCenter();
-  renderTimerButtons();
-  showToast('Timer iniciado!','ok');
+  T.startInFlight = true;
+  try {
+    const desc = document.getElementById('desc-input').value.trim() || null;
+    const now = Date.now();
+    const { data, error } = await sb.from('time_entries').insert({
+      user_id: appUser.id, client_id: T.selectedClientId,
+      task_id: T.selectedTaskId, task_name: T.selectedTaskName,
+      start_time: now, paused_duration: 0, notes: desc,
+    }).select().single();
+    if (error) { showToast('Erro ao iniciar: '+error.message,'err'); return; }
+    T.activeEntry = data;
+    T.isRunning = true; T.isPaused = false; T.elapsed = 0;
+    startTick();
+    renderTimerCenter();
+    renderTimerButtons();
+    showToast('Timer iniciado!','ok');
+  } finally {
+    T.startInFlight = false;
+  }
 }
 
 async function stopTimer() {
-  if (!T.activeEntry) return;
-  const now = Date.now();
-  const totalMs = now - T.activeEntry.start_time - (T.activeEntry.paused_duration||0);
-  const durationMinutes = Math.round(totalMs / 60000);
-  const { error } = await sb.from('time_entries').update({
-    end_time: now, duration_minutes: durationMinutes,
-  }).eq('id', T.activeEntry.id);
-  if (error) { showToast('Erro ao finalizar: '+error.message,'err'); return; }
-  clearTimerInterval();
-  T.isRunning = false; T.isPaused = false; T.elapsed = 0; T.activeEntry = null;
-  document.getElementById('desc-input').value = '';
-  updateTimerRing();
-  renderTimerCenter();
-  renderTimerButtons();
-  showToast(`Registrado: ${fMin(durationMinutes)}`,'ok');
-  await reloadTodayData();
+  if (!T.activeEntry || T.stopInFlight) return;
+  T.stopInFlight = true;
+  const stopBtn = document.querySelector('.timer-btn-wrap[onclick="stopTimer()"]');
+  if (stopBtn) { stopBtn.disabled = true; stopBtn.style.opacity = '.5'; stopBtn.style.pointerEvents = 'none'; }
+  try {
+    const now = Date.now();
+    const totalMs = now - T.activeEntry.start_time - (T.activeEntry.paused_duration||0);
+    const durationMinutes = Math.round(totalMs / 60000);
+    const entryId = T.activeEntry.id;
+    const { error } = await sb.from('time_entries').update({
+      end_time: now, duration_minutes: durationMinutes,
+    }).eq('id', entryId);
+    if (error) { showToast('Erro ao finalizar: '+error.message,'err'); return; }
+    clearTimerInterval();
+    T.isRunning = false; T.isPaused = false; T.elapsed = 0; T.activeEntry = null;
+    document.getElementById('desc-input').value = '';
+    updateTimerRing();
+    renderTimerCenter();
+    renderTimerButtons();
+    showToast(`Registrado: ${fMin(durationMinutes)}`,'ok');
+    await reloadTodayData();
+  } finally {
+    T.stopInFlight = false;
+  }
 }
 
 async function pauseTimer() {

@@ -197,6 +197,13 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - conteudo.html: modal sem botão "Usar como base", apenas "Fechar"
 - Versão 3.6, data 29/06/2026
 
+**Sessão 9G — Fix: cronômetro registrando múltiplas vezes**
+- `stopTimer()` e `startTimer()` agora usam trava (`T.stopInFlight`, `T.startInFlight`) para bloquear execução simultânea
+- Botão de stop fica visualmente desabilitado (`opacity:.5`, `pointer-events:none`) durante o processamento
+- `try/finally` garante liberação da trava mesmo em caso de erro
+- `entryId` capturado antes do `await` para evitar dependência em `T.activeEntry.id` após limpeza
+- Versão 3.11, data 30/06/2026
+
 **Sessão 9H — Relatório Mensal Completo**
 - Botão "Copiar relatório mensal completo" no header da aba Mês do Resultado
 - Função `genMonthlyReport()` busca `time_entries`, `settings`, `monthly_payments`, `cost_items` e `clients` em paralelo
@@ -318,6 +325,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9D | ~~Sessão 9D: Fix "ver +" anotações, edição inline, calendário texto completo, conteudo.html~~ | **Concluído** |
 | S9E | ~~Sessão 9E: Anotações modal + Financeiro editar/excluir custos e recebimentos~~ | **Concluído** |
 | S9F | ~~Sessão 9F: Clientes internos favoritos no grupo Favoritos geral~~ | **Concluído** |
+| S9G | ~~Sessão 9G: Fix cronômetro registrando múltiplas vezes — trava stopInFlight/startInFlight~~ | **Concluído** |
 | S9H | ~~Sessão 9H: Botão "Copiar relatório mensal completo" na aba Mês do Resultado~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
