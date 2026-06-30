@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.11 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.12 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.11</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.12</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -1810,8 +1810,8 @@ async function saveMobileReminder() {
   const dailyTime = document.getElementById('mni-rem-time')?.value || '08:00';
   const intervalMins = parseInt(document.getElementById('mni-rem-mins')?.value)||60;
   const payload = type === 'daily'
-    ? { type:'daily', daily_time:dailyTime, interval_minutes:null }
-    : { type:'interval', interval_minutes:intervalMins, daily_time:null };
+    ? { type:'daily', daily_time:dailyTime, interval_minutes:null, user_id: appUser.id, is_active:true }
+    : { type:'interval', interval_minutes:intervalMins, daily_time:null, user_id: appUser.id, is_active:true };
   const { error } = await sb.from('reminders').insert(payload);
   if (error) { showToast('Erro ao salvar','err'); return; }
   showToast('Lembrete salvo ✓','ok');
@@ -4101,7 +4101,7 @@ async function saveReminder() {
     CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,title,description,type,interval_minutes,daily_time} : r);
     showToast('Alarme atualizado!','ok');
   } else {
-    const { data, error } = await sb.from('reminders').insert({ title, description, type, interval_minutes, daily_time, is_active:true }).select().single();
+    const { data, error } = await sb.from('reminders').insert({ title, description, type, interval_minutes, daily_time, is_active:true, user_id: appUser.id }).select().single();
     if (error) { showToast('Erro: '+error.message,'err'); return; }
     CAL.reminders.push(data);
     showToast('Alarme criado!','ok');

@@ -327,6 +327,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9F | ~~Sessão 9F: Clientes internos favoritos no grupo Favoritos geral~~ | **Concluído** |
 | S9G | ~~Sessão 9G: Fix cronômetro registrando múltiplas vezes — trava stopInFlight/startInFlight~~ | **Concluído** |
 | S9H | ~~Sessão 9H: Botão "Copiar relatório mensal completo" na aba Mês do Resultado~~ | **Concluído** |
+| S12A | ~~Sessão 12A: Fix alarmes pessoais — user_id adicionado no insert (desktop e mobile)~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
