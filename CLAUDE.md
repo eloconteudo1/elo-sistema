@@ -197,6 +197,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - conteudo.html: modal sem botão "Usar como base", apenas "Fechar"
 - Versão 3.6, data 29/06/2026
 
+**Sessão 9E — Anotações modal + Financeiro editar/excluir**
+- Anotações redesenhadas: clicar na nota abre modal com textarea editável (`openNoteModal`, `saveNoteModal`)
+- Removidos: `note-item-full`, `note-expand-btn`, handler de expand, `editNoteInline` substituído pelo modal
+- Espelho do Calendário: `onclick="openNoteModal"` em vez de `editNoteInline`
+- Financeiro: botão × em todos os recebimentos (não só manuais); `finDeletePayment` aceita `clientName`
+- Custos: botão ✏ adicionado (`openEditCostModal`, `saveEditCost`) — edita descrição e valor
+- `finDeleteCost` mantido com `openConfirmModal`
+- Versão 3.7, data 29/06/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -294,6 +303,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9B | ~~Sessão 9B: Bug alerta calendário + edição de eventos~~ | **Concluído** |
 | S9C | ~~Sessão 9C: Financeiro edição de valor + rodapé 3.5~~ | **Concluído** |
 | S9D | ~~Sessão 9D: Fix "ver +" anotações, edição inline, calendário texto completo, conteudo.html~~ | **Concluído** |
+| S9E | ~~Sessão 9E: Anotações modal + Financeiro editar/excluir custos e recebimentos~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

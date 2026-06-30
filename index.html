@@ -376,14 +376,10 @@
     .note-item:last-child { border-bottom:none; }
     .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--lavender); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
-    .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:default; }
+    .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:pointer; }
     .note-item-preview strong { font-weight:800; color:var(--deep); display:block; margin-bottom:1px; }
-    .note-item-full { display:none; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; }
-    .note-item-full strong { font-weight:800; color:var(--deep); display:block; margin-bottom:2px; }
-    .note-item-footer { display:flex; align-items:center; justify-content:space-between; margin-top:3px; }
+    .note-item-preview:hover { opacity:.8; }
     .note-item-date { font-size:10px; color:var(--text-dim); opacity:.65; }
-    .note-expand-btn { background:none; border:none; cursor:pointer; font-family:inherit; font-size:10px; font-weight:700; color:var(--coral); padding:0; line-height:1; }
-    .note-expand-btn:hover { opacity:.75; }
     .note-item-body { flex:1; min-width:0; }
     .cal-note-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; white-space:normal; line-height:1.5; word-break:break-word; }
     .cal-note-text:hover { color:var(--purple); }
@@ -1288,7 +1284,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.6 · ELO Comunicação · Atualizado em 29/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.7 · ELO Comunicação · Atualizado em 29/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1358,7 +1354,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.6</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.7</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">29/06/2026</span></span>
   </footer>
@@ -1974,18 +1970,11 @@ async function initHome() {
   if (notesList && !notesList._delegated) {
     notesList._delegated = true;
     notesList.addEventListener('click', async function(ev) {
-      // Expandir / colapsar nota
-      const expandBtn = ev.target.closest('[data-expand-note]');
-      if (expandBtn) {
-        const id = expandBtn.dataset.expandNote;
-        const preview = document.getElementById(`note-preview-${id}`);
-        const full    = document.getElementById(`note-full-${id}`);
-        if (!preview || !full) return;
-        const isExpanded = full.dataset.expanded === '1';
-        preview.style.display = isExpanded ? '' : 'none';
-        full.style.display    = isExpanded ? 'none' : 'block';
-        full.dataset.expanded = isExpanded ? '0' : '1';
-        expandBtn.textContent = isExpanded ? 'ver +' : 'ver menos';
+      // Abrir modal da nota
+      const openBtn = ev.target.closest('[data-open-note]');
+      if (openBtn) {
+        const id = Number(openBtn.dataset.openNote);
+        openNoteModal(id);
         return;
       }
       // Concluir (bolinha)
@@ -1997,17 +1986,6 @@ async function initHome() {
         await new Promise(r => setTimeout(r, 200));
         const { error } = await sb.from('notes').delete().eq('id', id);
         if (error) { showToast('Erro ao concluir nota','err'); return; }
-        T.notes = T.notes.filter(n => n.id !== id);
-        renderNotesList();
-        if (document.getElementById('cal-notes-list')) renderCalNotes();
-        return;
-      }
-      // Deletar (×) — compatibilidade com data-note-id antigo
-      const delBtn = ev.target.closest('[data-note-id]');
-      if (delBtn) {
-        const id = Number(delBtn.dataset.noteId);
-        const { error } = await sb.from('notes').delete().eq('id', id);
-        if (error) { showToast('Erro ao excluir nota','err'); return; }
         T.notes = T.notes.filter(n => n.id !== id);
         renderNotesList();
         if (document.getElementById('cal-notes-list')) renderCalNotes();
@@ -2518,26 +2496,61 @@ function renderNotesList() {
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     const lines = note.content.split('\n');
     const titulo = (lines[0] || '').replace(/</g,'&lt;');
-    const resto  = lines.slice(1).join('\n').trim().replace(/</g,'&lt;').replace(/\n/g,'<br>');
-    const corpo  = resto ? `<br>${resto}` : '';
+    const resto = lines.slice(1).join('\n').trim().replace(/</g,'&lt;').replace(/\n/g,'<br>');
+    const corpo = resto ? `<br>${resto}` : '';
     return `<div class="note-item" data-note-item-id="${note.id}">
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
-      <div class="note-item-body">
-        <div id="note-preview-${note.id}" class="note-item-preview"
-          onclick="editNoteInline(this,${note.id})" title="Clique para editar" style="cursor:text;">
+      <div class="note-item-body" style="flex:1;min-width:0;">
+        <div class="note-item-preview" data-open-note="${note.id}">
           <strong>${titulo}</strong>${corpo}
         </div>
-        <div id="note-full-${note.id}" class="note-item-full"
-          onclick="editNoteInline(this,${note.id})" title="Clique para editar" style="cursor:text;">
-          <strong>${titulo}</strong>${corpo}
-        </div>
-        <div class="note-item-footer">
-          <span class="note-item-date">${dateStr}</span>
-          <button class="note-expand-btn" data-expand-note="${note.id}">ver +</button>
-        </div>
+        <div class="note-item-date">${dateStr}</div>
       </div>
     </div>`;
   }).join('');
+}
+
+function openNoteModal(id) {
+  const note = T.notes.find(n => n.id === id);
+  if (!note) return;
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:480px;">
+      <div class="modal-header">
+        <span class="modal-title">Anotação</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <textarea id="note-modal-text"
+          class="field-input"
+          style="min-height:140px;resize:vertical;font-size:14px;line-height:1.6;font-family:inherit;"
+          placeholder="Escreva sua anotação...">${note.content.replace(/</g,'&lt;')}</textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Fechar</button>
+        <button class="btn-primary" onclick="saveNoteModal(${id})">Salvar</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => {
+    const ta = document.getElementById('note-modal-text');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 50);
+}
+async function saveNoteModal(id) {
+  const ta = document.getElementById('note-modal-text');
+  if (!ta) return;
+  const content = ta.value.trim();
+  if (!content) { showToast('A nota não pode ficar vazia','warn'); return; }
+  const { error } = await sb.from('notes').update({ content }).eq('id', id);
+  if (error) { showToast('Erro ao salvar','err'); return; }
+  const idx = T.notes.findIndex(n => n.id === id);
+  if (idx !== -1) T.notes[idx].content = content;
+  closeModal();
+  renderNotesList();
+  if (document.getElementById('cal-notes-list')) renderCalNotes();
+  showToast('Nota atualizada ✓','ok');
 }
 
 function editNoteInline(el, id) {
@@ -2593,7 +2606,9 @@ async function renderCalNotes() {
     return `<div class="note-item">
       <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
       <div style="flex:1;min-width:0;">
-        <div class="cal-note-text" onclick="editNoteInline(this,${note.id})" title="Clique para editar">${note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;"
+          onclick="openNoteModal(${note.id})"
+          title="Clique para editar">${note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
         <div class="note-item-date">${dateStr}</div>
       </div>
     </div>`;
@@ -4253,9 +4268,9 @@ function renderFinanceiro() {
         const action = isPaid
           ? `<button onclick="finMarkPayment(${p.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Desmarcar</button>`
           : `<button onclick="finMarkPayment(${p.id},true)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Marcar Pago</button>`;
-        const del = p.is_manual
-          ? `<button onclick="finDeletePayment(${p.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:15px;opacity:.4;margin-left:2px;vertical-align:middle;">🗑</button>`
-          : '';
+        const del = `<button onclick="finDeletePayment(${p.id},'${finClientName(p).replace(/'/g,"\\'")}')"
+          style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.4;line-height:1;padding:2px;"
+          title="Excluir">×</button>`;
         const avulso = p.is_manual
           ? `<span style="font-size:9px;background:#e8f5e9;color:#2e7d32;border-radius:6px;padding:1px 5px;font-weight:700;margin-right:5px;white-space:nowrap;">AVULSO</span>`
           : '';
@@ -4299,7 +4314,12 @@ function renderFinanceiro() {
           <td style="${TDnw}text-align:center;">
             <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
               ${toggleBtn}
-              <button onclick="finDeleteCost(${c.id},'${c.description.replace(/'/g,"\\'")}') " style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.35;">×</button>
+              <button onclick="openEditCostModal(${c.id},'${c.description.replace(/'/g,"\\'")}',${c.amount})"
+                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;opacity:.5;line-height:1;padding:2px 4px;"
+                title="Editar">✏</button>
+              <button onclick="finDeleteCost(${c.id},'${c.description.replace(/'/g,"\\'")}') "
+                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.35;line-height:1;padding:2px 4px;"
+                title="Excluir">×</button>
             </div>
           </td>
         </tr>`;
@@ -4490,14 +4510,18 @@ async function finToggleCost(id, isPaid) {
   showToast(isPaid ? 'Custo marcado pago ✓' : 'Desmarcado','ok');
 }
 
-async function finDeletePayment(id) {
-  openConfirmModal('Excluir recebimento?', 'Este registro será removido permanentemente.', async () => {
-    const { error } = await sb.from('monthly_payments').delete().eq('id', id);
-    if (error) { showToast('Erro: '+error.message,'err'); return; }
-    FIN.payments = FIN.payments.filter(p => p.id !== id);
-    renderFinanceiro();
-    showToast('Removido','warn');
-  });
+async function finDeletePayment(id, clientName) {
+  openConfirmModal(
+    'Excluir recebimento',
+    `Excluir o recebimento de ${clientName || 'este cliente'}? Esta ação não pode ser desfeita.`,
+    async () => {
+      const { error } = await sb.from('monthly_payments').delete().eq('id', id);
+      if (error) { showToast('Erro ao excluir','err'); return; }
+      FIN.payments = FIN.payments.filter(p => p.id !== id);
+      showToast('Recebimento excluído','ok');
+      renderFinanceiro();
+    }
+  );
 }
 
 function openEditPaymentModal(id, currentAmount) {
@@ -4535,6 +4559,48 @@ async function savePaymentAmount(id) {
   if (idx !== -1) FIN.payments[idx].amount = val;
   closeModal();
   showToast('Valor atualizado ✓', 'ok');
+  renderFinanceiro();
+}
+
+function openEditCostModal(id, description, amount) {
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:360px;">
+      <div class="modal-header">
+        <span class="modal-title">Editar custo</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Descrição</label>
+        <input id="edit-cost-desc" class="field-input"
+          value="${description.replace(/"/g,'&quot;')}" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Valor (R$)</label>
+        <input id="edit-cost-amount" class="field-input" type="number"
+          min="0" step="0.01" value="${Number(amount).toFixed(2)}"
+          style="font-size:18px;font-weight:700;text-align:center;" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveEditCost(${id})">Salvar</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => document.getElementById('edit-cost-desc')?.focus(), 50);
+}
+async function saveEditCost(id) {
+  const desc = document.getElementById('edit-cost-desc')?.value.trim();
+  const val  = parseFloat(document.getElementById('edit-cost-amount')?.value);
+  if (!desc) { showToast('Informe a descrição','warn'); return; }
+  if (isNaN(val) || val < 0) { showToast('Valor inválido','warn'); return; }
+  const { error } = await sb.from('cost_items').update({ description: desc, amount: val }).eq('id', id);
+  if (error) { showToast('Erro ao salvar','err'); return; }
+  const idx = FIN.costs.findIndex(c => c.id === id);
+  if (idx !== -1) { FIN.costs[idx].description = desc; FIN.costs[idx].amount = val; }
+  closeModal();
+  showToast('Custo atualizado ✓','ok');
   renderFinanceiro();
 }
 
