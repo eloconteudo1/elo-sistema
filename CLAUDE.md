@@ -197,6 +197,13 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - conteudo.html: modal sem botão "Usar como base", apenas "Fechar"
 - Versão 3.6, data 29/06/2026
 
+**Sessão 9H — Relatório Mensal Completo**
+- Botão "Copiar relatório mensal completo" no header da aba Mês do Resultado
+- Função `genMonthlyReport()` busca `time_entries`, `settings`, `monthly_payments`, `cost_items` e `clients` em paralelo
+- Gera texto com 9 seções: Produtividade, Comparativo vs mês anterior, Valor real da hora, Tempo por cliente, Média de foco/dia, Tempo por tarefa, Dados da receita, Meta, Recebimento aberto/vencido
+- Copia para clipboard com fallback em modal/textarea
+- Versão 3.10, data 30/06/2026
+
 **Sessão 9F — Favoritos: clientes internos no grupo geral**
 - Clientes internos marcados como favorito agora aparecem no grupo "Favoritos" junto com os externos favoritos
 - Removida condição `&& !c.is_internal` do filtro de favoritos em `renderClientList()`, `openMobileClientPicker()` e `filterMobileClients()`
@@ -311,6 +318,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9D | ~~Sessão 9D: Fix "ver +" anotações, edição inline, calendário texto completo, conteudo.html~~ | **Concluído** |
 | S9E | ~~Sessão 9E: Anotações modal + Financeiro editar/excluir custos e recebimentos~~ | **Concluído** |
 | S9F | ~~Sessão 9F: Clientes internos favoritos no grupo Favoritos geral~~ | **Concluído** |
+| S9H | ~~Sessão 9H: Botão "Copiar relatório mensal completo" na aba Mês do Resultado~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

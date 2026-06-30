@@ -720,7 +720,10 @@
             <div id="res-custo-alerts-list" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
           </div>
           <!-- Label mês -->
-          <div id="res-mes-label-header" style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div id="res-mes-label-header" style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);"></div>
+            <button onclick="genMonthlyReport()" style="padding:8px 16px;border-radius:10px;border:1.5px solid rgba(74,41,118,.2);background:none;font-family:inherit;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;">Copiar relatório mensal completo</button>
+          </div>
           <!-- KPIs mês -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;" id="res-kpis-mes"></div>
           <!-- Comparativo mês anterior -->
@@ -1284,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.8 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.10 · ELO Comunicação · Atualizado em 30/06/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1354,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.8</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.10</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">30/06/2026</span></span>
   </footer>
@@ -5228,6 +5231,167 @@ async function resRenderMes() {
     .filter(c => false); // desativado por ora — sem custo/hora configurado
   const alertBox = document.getElementById('res-custo-alerts');
   alertBox.style.display = alerts.length ? '' : 'none';
+}
+
+async function genMonthlyReport() {
+  showToast('Gerando relatório...', 'ok');
+  const startTs = new Date(resYear, resMonth-1, 1).getTime();
+  const endTs   = new Date(resYear, resMonth, 1).getTime();
+  const prevMonth = resMonth === 1 ? 12 : resMonth - 1;
+  const prevYear  = resMonth === 1 ? resYear - 1 : resYear;
+  const prevStartTs = new Date(prevYear, prevMonth-1, 1).getTime();
+  const prevEndTs   = new Date(prevYear, prevMonth, 1).getTime();
+  const [entriesRes, settingsRes, paymentsRes, prevEntriesRes, prevPaymentsRes, costsRes] = await Promise.all([
+    sb.from('time_entries').select('*, clients(name)').gte('start_time', startTs).lt('start_time', endTs),
+    sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal,revenue_goal').eq('id',1).single(),
+    sb.from('monthly_payments').select('amount,is_paid,due_day,client_id,is_manual').eq('month', resMonth).eq('year', resYear),
+    sb.from('time_entries').select('duration_minutes,start_time').gte('start_time', prevStartTs).lt('start_time', prevEndTs),
+    sb.from('monthly_payments').select('amount,is_paid').eq('month', prevMonth).eq('year', prevYear),
+    sb.from('cost_items').select('amount,is_paid').eq('month', resMonth).eq('year', resYear),
+  ]);
+  const entries = (entriesRes.data||[]).filter(e => e.duration_minutes > 0);
+  const goalMins  = settingsRes.data?.daily_goal_minutes ?? 480;
+  const hourlyMin = settingsRes.data?.hourly_rate_min ?? 0;
+  const hourlyOpt = settingsRes.data?.hourly_rate_optimal ?? 0;
+  const revenueGoal = settingsRes.data?.revenue_goal ?? 0;
+  const totalMins = entries.reduce((s,e) => s + e.duration_minutes, 0);
+  const totalHoras = totalMins / 60;
+  const payments = (paymentsRes.data||[]);
+  const receitaRecebida = payments.filter(p => p.is_paid).reduce((s,p) => s + Number(p.amount||0), 0);
+  const receitaPrevista = payments.reduce((s,p) => s + Number(p.amount||0), 0);
+  const receitaAberto   = receitaPrevista - receitaRecebida;
+  const todayNum = new Date().getDate();
+  const isCurrentMonth = resMonth === new Date().getMonth()+1 && resYear === new Date().getFullYear();
+  const isPastMonth = resYear < new Date().getFullYear() || (resYear === new Date().getFullYear() && resMonth < new Date().getMonth()+1);
+  const vencidos = payments.filter(p => {
+    if (p.is_paid) return false;
+    return isPastMonth || (isCurrentMonth && p.due_day && p.due_day < todayNum);
+  });
+  const valorVencido = vencidos.reduce((s,p) => s + Number(p.amount||0), 0);
+  const abertosNaoVencidos = payments.filter(p => !p.is_paid && !vencidos.includes(p));
+  const valorAbertoOk = abertosNaoVencidos.reduce((s,p) => s + Number(p.amount||0), 0);
+  const costs = (costsRes.data||[]);
+  const totalCustos = costs.reduce((s,c) => s + Number(c.amount||0), 0);
+  const activeDaySet = new Set(entries.map(e => { const d=new Date(e.start_time); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }));
+  const activeDays = activeDaySet.size;
+  const mediaFocoDia = activeDays > 0 ? totalMins / activeDays : 0;
+  const prevEntries = (prevEntriesRes.data||[]).filter(e => e.duration_minutes > 0);
+  const prevTotalMins = prevEntries.reduce((s,e) => s + e.duration_minutes, 0);
+  const prevRecebida = (prevPaymentsRes.data||[]).filter(p=>p.is_paid).reduce((s,p)=>s+Number(p.amount||0),0);
+  const prevPrevista = (prevPaymentsRes.data||[]).reduce((s,p)=>s+Number(p.amount||0),0);
+  const prevActiveDays = new Set(prevEntries.map(e=>{const d=new Date(e.start_time);return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;})).size;
+  const fM = m => { const h=Math.floor(m/60),mn=Math.round(m%60); return h>0?`${h}h ${mn}m`:`${mn}m`; };
+  const fR = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
+  const pctDelta = (curr, prev) => {
+    if (prev === 0 && curr === 0) return 'sem variação';
+    if (prev === 0) return 'novo (sem comparação anterior)';
+    const pct = Math.round(((curr-prev)/prev)*100);
+    return `${pct > 0 ? '+' : ''}${pct}%`;
+  };
+  const byClient = {};
+  for (const e of entries) {
+    const name = e.clients?.name ?? '(sem cliente)';
+    byClient[name] = (byClient[name]??0) + e.duration_minutes;
+  }
+  const clientList = Object.entries(byClient).sort((a,b)=>b[1]-a[1]);
+  const byTask = {};
+  for (const e of entries) byTask[e.task_name] = (byTask[e.task_name]??0) + e.duration_minutes;
+  const taskList = Object.entries(byTask).sort((a,b)=>b[1]-a[1]);
+  const horaRecebida = totalHoras > 0 && receitaRecebida > 0 ? receitaRecebida / totalHoras : 0;
+  const horaPrevista  = totalHoras > 0 && receitaPrevista > 0 ? receitaPrevista / totalHoras : 0;
+  let statusHora = 'AGUARDANDO';
+  if (horaRecebida >= hourlyOpt && hourlyOpt > 0) statusHora = 'ÓTIMO';
+  else if (horaRecebida >= hourlyMin && hourlyMin > 0) statusHora = 'COBRINDO';
+  else if (horaRecebida > 0) statusHora = 'PREJUÍZO';
+  const mesLabel = `${MONTHS_PT[resMonth-1]}/${resYear}`;
+  const revenueGoalPct = revenueGoal > 0 ? Math.round((receitaPrevista/revenueGoal)*100) : null;
+  if (!FIN.clients || !FIN.clients.length) {
+    const { data } = await sb.from('clients').select('id,name').eq('is_active',true);
+    FIN.clients = data || [];
+  }
+  let txt = `RELATÓRIO MENSAL — ${mesLabel}\n`;
+  txt += `Gerado em ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  txt += `1. PRODUTIVIDADE DO MÊS\n`;
+  txt += `Total trabalhado: ${fM(totalMins)}\n`;
+  txt += `Dias ativos: ${activeDays}\n\n`;
+  txt += `2. COMPARATIVO DO MÊS (vs ${MONTHS_PT[prevMonth-1]}/${prevYear})\n`;
+  txt += `Horas trabalhadas: ${fM(totalMins)} (mês anterior: ${fM(prevTotalMins)}, variação ${pctDelta(totalMins,prevTotalMins)})\n`;
+  txt += `Dias ativos: ${activeDays}d (mês anterior: ${prevActiveDays}d, variação ${pctDelta(activeDays,prevActiveDays)})\n`;
+  txt += `Receita recebida: ${fR(receitaRecebida)} (mês anterior: ${fR(prevRecebida)}, variação ${pctDelta(receitaRecebida,prevRecebida)})\n`;
+  txt += `Receita prevista: ${fR(receitaPrevista)} (mês anterior: ${fR(prevPrevista)}, variação ${pctDelta(receitaPrevista,prevPrevista)})\n\n`;
+  txt += `3. VALOR REAL DA HORA\n`;
+  txt += `Status: ${statusHora}\n`;
+  txt += `Recebido por hora: ${horaRecebida>0?fR(horaRecebida):'—'}\n`;
+  txt += `Previsto por hora: ${horaPrevista>0?fR(horaPrevista):'—'}\n`;
+  txt += `Hora mínima configurada: ${hourlyMin>0?fR(hourlyMin):'—'}\n`;
+  txt += `Hora ótima configurada: ${hourlyOpt>0?fR(hourlyOpt):'—'}\n\n`;
+  txt += `4. TEMPO POR CLIENTE\n`;
+  if (clientList.length) {
+    clientList.forEach(([name, mins]) => {
+      const pct = totalMins>0 ? Math.round((mins/totalMins)*100) : 0;
+      txt += `${name}: ${fM(mins)} (${pct}%)\n`;
+    });
+  } else {
+    txt += `Sem registros no período.\n`;
+  }
+  txt += `\n`;
+  txt += `5. MÉDIA DE FOCO POR DIA\n`;
+  txt += `Meta diária configurada: ${fM(goalMins)}\n`;
+  txt += `Média real por dia ativo: ${fM(Math.round(mediaFocoDia))}\n\n`;
+  txt += `6. TEMPO POR TIPO DE TAREFA\n`;
+  if (taskList.length) {
+    taskList.forEach(([name, mins]) => {
+      const pct = totalMins>0 ? Math.round((mins/totalMins)*100) : 0;
+      txt += `${name}: ${fM(mins)} (${pct}%)\n`;
+    });
+  } else {
+    txt += `Sem registros no período.\n`;
+  }
+  txt += `\n`;
+  txt += `7. DADOS DA RECEITA\n`;
+  txt += `Receita prevista total: ${fR(receitaPrevista)}\n`;
+  txt += `Receita recebida: ${fR(receitaRecebida)}\n`;
+  txt += `Receita em aberto: ${fR(receitaAberto)}\n`;
+  txt += `Custos do mês: ${fR(totalCustos)}\n`;
+  txt += `Resultado (recebido - custos): ${fR(receitaRecebida - totalCustos)}\n\n`;
+  txt += `8. META\n`;
+  if (revenueGoal > 0) {
+    txt += `Meta de receita: ${fR(revenueGoal)}\n`;
+    txt += `Atingido: ${revenueGoalPct}% (${fR(receitaPrevista)} de ${fR(revenueGoal)})\n`;
+  } else {
+    txt += `Nenhuma meta de receita configurada.\n`;
+  }
+  txt += `\n`;
+  txt += `9. RECEBIMENTO EM ABERTO / VENCIDO\n`;
+  txt += `Em aberto (dentro do prazo): ${fR(valorAbertoOk)} (${abertosNaoVencidos.length} recebimento(s))\n`;
+  txt += `Vencido (fora do prazo, não pago): ${fR(valorVencido)} (${vencidos.length} recebimento(s))\n`;
+  if (vencidos.length) {
+    txt += `Detalhe dos vencidos:\n`;
+    for (const p of vencidos) {
+      const client = FIN.clients?.find(c => c.id === p.client_id);
+      txt += `  - ${client?.name || (p.is_manual?'Avulso':'Cliente desconhecido')}: ${fR(p.amount)}\n`;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(txt);
+    showToast('Relatório mensal copiado! Cole no Assistente de tarefas.', 'ok');
+  } catch {
+    const mc = document.getElementById('modal-container');
+    mc.className = 'open';
+    mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px;">
+        <div class="modal-header">
+          <span class="modal-title">Relatório mensal — ${mesLabel}</span>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Selecione tudo e copie (Ctrl+A, Ctrl+C):</p>
+        <textarea style="width:100%;height:340px;font-family:monospace;font-size:11px;border:var(--border);border-radius:8px;padding:10px;resize:none;white-space:pre-wrap;" readonly>${txt}</textarea>
+        <div class="modal-footer">
+          <button class="btn-primary" onclick="closeModal()">Fechar</button>
+        </div>
+      </div>
+    </div>`;
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
