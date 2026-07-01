@@ -4482,7 +4482,7 @@ async function saveReminder() {
     CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,...payload} : r);
     showToast('Alarme atualizado!','ok');
   } else {
-    const { data, error } = await sb.from('reminders').insert({ ...payload, is_active:true }).select().single();
+    const { data, error } = await sb.from('reminders').insert({ ...payload, is_active:true, user_id: appUser.id }).select().single();
     if (error) { showToast('Erro: '+error.message,'err'); return; }
     CAL.reminders.push(data);
     showToast('Alarme criado!','ok');
