@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.19 · ELO Comunicação · Atualizado em 30/06/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.20 · ELO Comunicação · Atualizado em 01/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,9 +1357,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.19</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.20</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">30/06/2026</span></span>
+    <span>Atualizado em <span id="build-date">01/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1569,6 +1569,7 @@ function navigateTo(page) {
   document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
   const bnavBtn = document.querySelector(`#bottom-nav [data-bnav="${page}"]`);
   if (bnavBtn) bnavBtn.classList.add('active');
+  if (page === 'home') startGlobalTimerTick();
   // Init pages on first visit
   if (page === 'resultado'  && appUser) initResultado();
   if (page === 'clientes'   && appUser) initClientes();
@@ -1973,6 +1974,7 @@ async function showApp(au) {
   document.getElementById('avatar-email-label').textContent = au.email||'';
   appUser = await getOrCreateUser(au);
   initHome();
+  startGlobalTimerTick();
   refreshTodayPill();
   checkPersonalReminders();
 }
@@ -2426,8 +2428,8 @@ function clearTimerInterval() {
   if (T.timerInterval) { clearInterval(T.timerInterval); T.timerInterval = null; }
 }
 
-function startTick() {
-  clearTimerInterval();
+function startGlobalTimerTick() {
+  if (T.timerInterval) return;
   T.timerInterval = setInterval(() => {
     if (T.activeEntry && !T.isPaused) {
       const e = T.activeEntry;
@@ -2435,6 +2437,10 @@ function startTick() {
     }
     updateTimerRing();
   }, 1000);
+}
+
+function startTick() {
+  startGlobalTimerTick();
 }
 
 // ════════════════════════════════════════════════════════════════
