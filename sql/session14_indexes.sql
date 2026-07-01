@@ -1,4 +1,4 @@
--- Sessão 14 — Índices de performance
+-- Sessão 14 — Índices de performance (corrigido)
 -- Aplicar no Supabase SQL Editor: https://supabase.com/dashboard/project/vatkfkdnflbdfomglvme/sql/new
 
 -- 1. time_entries: buscas por usuário + data (Resultado, relatório mensal)
@@ -13,13 +13,13 @@ ON public.time_entries(client_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_user_date
 ON public.scheduled_tasks(user_id, scheduled_date);
 
--- 4. appointments: Calendário + mobile Agenda
-CREATE INDEX IF NOT EXISTS idx_appointments_user_scheduled
-ON public.appointments(user_id, scheduled_at DESC);
+-- 4. appointments: Calendário + mobile Agenda (sem user_id — tabela single-tenant)
+CREATE INDEX IF NOT EXISTS idx_appointments_scheduled
+ON public.appointments(scheduled_at DESC);
 
--- 5. clients: seletor de clientes ativos
-CREATE INDEX IF NOT EXISTS idx_clients_user_active
-ON public.clients(user_id, is_active);
+-- 5. clients: seletor de clientes ativos (sem user_id — tabela single-tenant)
+CREATE INDEX IF NOT EXISTS idx_clients_active_name
+ON public.clients(is_active, is_internal, is_favorite, name);
 
 -- 6. monthly_payments: Financeiro por período
 CREATE INDEX IF NOT EXISTS idx_monthly_payments_client_period
