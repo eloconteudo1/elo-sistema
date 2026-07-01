@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.21 · ELO Comunicação · Atualizado em 01/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.22 · ELO Comunicação · Atualizado em 01/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.21</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.22</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">01/07/2026</span></span>
   </footer>
@@ -2474,50 +2474,71 @@ async function startTimer() {
   if (!T.selectedTaskId) { showToast('Selecione uma tarefa','warn'); return; }
   if (!appUser) { showToast('Usuário não autenticado','err'); return; }
   T.startInFlight = true;
+
+  const btn = document.querySelector('.timer-btn-wrap[onclick="startTimer()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  const desc = document.getElementById('desc-input').value.trim() || null;
+  const now = Date.now();
+
+  // Otimista: timer aparece imediatamente antes do banco responder
+  T.isRunning = true; T.isPaused = false; T.elapsed = 0;
+  T.activeEntry = { id: null, start_time: now, paused_duration: 0 };
+  startGlobalTimerTick();
+  renderTimerCenter();
+  renderTimerButtons();
+
   try {
-    const desc = document.getElementById('desc-input').value.trim() || null;
-    const now = Date.now();
     const { data, error } = await sb.from('time_entries').insert({
       user_id: appUser.id, client_id: T.selectedClientId,
       task_id: T.selectedTaskId, task_name: T.selectedTaskName,
       start_time: now, paused_duration: 0, notes: desc,
     }).select().single();
-    if (error) { showToast('Erro ao iniciar: '+error.message,'err'); return; }
+    if (error) throw new Error(error.message);
     T.activeEntry = data;
-    T.isRunning = true; T.isPaused = false; T.elapsed = 0;
-    startTick();
+    showToast('Timer iniciado!','ok');
+  } catch (err) {
+    T.isRunning = false; T.activeEntry = null; T.elapsed = 0;
     renderTimerCenter();
     renderTimerButtons();
-    showToast('Timer iniciado!','ok');
+    showToast('Erro ao iniciar: '+err.message,'err');
   } finally {
     T.startInFlight = false;
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   }
 }
 
 async function stopTimer() {
-  if (!T.activeEntry || T.stopInFlight) return;
+  if (!T.activeEntry || !T.activeEntry.id || T.stopInFlight) return;
   T.stopInFlight = true;
   const stopBtn = document.querySelector('.timer-btn-wrap[onclick="stopTimer()"]');
   if (stopBtn) { stopBtn.disabled = true; stopBtn.style.opacity = '.5'; stopBtn.style.pointerEvents = 'none'; }
+
+  const now = Date.now();
+  const totalMs = now - T.activeEntry.start_time - (T.activeEntry.paused_duration||0);
+  const durationMinutes = Math.round(totalMs / 60000);
+  const entryId = T.activeEntry.id;
+
+  // Otimista: para visualmente antes do banco responder
+  clearTimerInterval();
+  T.isRunning = false; T.isPaused = false; T.elapsed = 0; T.activeEntry = null;
+  document.getElementById('desc-input').value = '';
+  updateTimerRing();
+  renderTimerCenter();
+  renderTimerButtons();
+
   try {
-    const now = Date.now();
-    const totalMs = now - T.activeEntry.start_time - (T.activeEntry.paused_duration||0);
-    const durationMinutes = Math.round(totalMs / 60000);
-    const entryId = T.activeEntry.id;
     const { error } = await sb.from('time_entries').update({
       end_time: now, duration_minutes: durationMinutes,
     }).eq('id', entryId);
-    if (error) { showToast('Erro ao finalizar: '+error.message,'err'); return; }
-    clearTimerInterval();
-    T.isRunning = false; T.isPaused = false; T.elapsed = 0; T.activeEntry = null;
-    document.getElementById('desc-input').value = '';
-    updateTimerRing();
-    renderTimerCenter();
-    renderTimerButtons();
+    if (error) throw new Error(error.message);
     showToast(`Registrado: ${fMin(durationMinutes)}`,'ok');
     await reloadTodayData();
+  } catch (err) {
+    showToast('Erro ao finalizar: '+err.message,'err');
   } finally {
     T.stopInFlight = false;
+    if (stopBtn) { stopBtn.disabled = false; stopBtn.style.opacity = ''; stopBtn.style.pointerEvents = ''; }
   }
 }
 
