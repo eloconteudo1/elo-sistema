@@ -226,6 +226,26 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - `finDeleteCost` mantido com `openConfirmModal`
 - Versão 3.7, data 29/06/2026
 
+**Sessão 15 — Alarmes pessoais: 3 tipos + notificação em destaque**
+- SQL: `ALTER TABLE reminders ADD COLUMN IF NOT EXISTS once_at bigint` + `ALTER TABLE reminders ADD COLUMN IF NOT EXISTS daily_times jsonb`
+- Tipo "Uma vez": campo `datetime-local` (data + hora) → `once_at` em ms epoch, sem recorrência
+- Tipo "Todo dia": múltiplos horários com + Adicionar / × Remover (coluna `daily_times` array JSON), suporta legado `daily_time` string
+- Tipo "A cada X min": sem alteração (coluna `interval_minutes` existente)
+- Modal: 3 botões tipo, cada um com seu painel (rem-interval-row / rem-daily-row / rem-once-row), overflow-y:auto para mobile
+- `setRemType(type)` refatorizado: loop forEach em 3 botões, ativa apenas o ativo
+- Funções auxiliares: `renderDailyTimes(times)`, `updateDailyTime(idx, val)`, `addDailyTime()`, `removeDailyTime(idx)`, `getDailyTimes()`
+- `saveReminder()` coleta `daily_times` do DOM, converte `once_at` para ms epoch, zera `daily_time` legada (null)
+- `renderCalAlerts()`: linha `detail` expandida para 3 tipos, mostra `times.join(', ')` para diários e `DD/MM às HH:MM` para únicos
+- Banner de alarme: HTML fixo no topo (após `<body>`), gradiente coral, emoji 🔔 com shake, botão OK, barra de progresso 8s
+- Estilos keyframes: `elo-alarm-slide` (translateY -100% → 0) e `elo-alarm-shake` (rotate ±15°)
+- Funções: `showAlarmBanner(title, desc)`, `dismissAlarmBanner()`, `playAlarmSound()` (7 bipes Web Audio API, freq 880/1100Hz, vol 0.7)
+- Ticker `checkAlarms()`: roda a cada 30s, `_firedAlarms` Set evita repetição (chave "id-HH:MM" / "id-once")
+  - Interval: localStorage `elo_rem_last_{id}` compara tempo decorrido vs `interval_minutes`
+  - Daily: verifica se `currentTime === t` e não disparou hoje (chave "id-HH:MM-dateString")
+  - Once: dispara se | agora - once_at | ≤ 60s e não disparou (chave "id-once")
+- `startAlarmTicker()` chamado uma vez em `loadCalData()` via `window._alarmTickerStarted`
+- Versão 3.23, data 01/07/2026
+
 **Dropdown de clientes (Sessão 4)**
 - Campo de busca `#client-search` fixo no topo do dropdown; foca automaticamente ao abrir; limpa ao fechar
 - Filtragem em tempo real: cada tecla re-renderiza a lista
@@ -334,6 +354,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S12D | ~~Sessão 12D: Motor de alarmes pessoais — beep AudioContext + notificação visual + checkPersonalReminders a cada 30s~~ | **Concluído** |
 | S12B | ~~Sessão 12B: Fix "Cliente desconhecido" no Relatório — busca todos os clientes (ativos + inativos) via clientNameMap~~ | **Concluído** |
 | S9I | ~~Sessão 9I: Relatório por cliente — allClientsMap via .in(clientIds) + indicador (inativo) no card~~ | **Concluído** |
+| S15 | ~~Sessão 15: Alarmes com tipo 'uma vez', múltiplos horários diários e banner em destaque~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
