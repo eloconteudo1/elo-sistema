@@ -1287,7 +1287,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.20 · ELO Comunicação · Atualizado em 01/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.21 · ELO Comunicação · Atualizado em 01/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1357,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.20</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.21</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">01/07/2026</span></span>
   </footer>
@@ -3204,6 +3204,11 @@ const PLANS = ['Gestão Total','Gestão Plus','Essencial','Básico','Avulso','Ou
 const PAY_METHODS = ['PIX','Boleto','Cartão de Crédito','Transferência'];
 
 async function initClientes() {
+  const TTL = 2 * 60 * 1000;
+  if (C._lastLoad && Date.now() - C._lastLoad < TTL) {
+    renderClientGrid();
+    return;
+  }
   await loadClientesData();
   renderClientGrid();
 }
@@ -3211,11 +3216,12 @@ async function initClientes() {
 async function loadClientesData() {
   const now = new Date();
   const [cl, pm] = await Promise.all([
-    sb.from('clients').select('*').order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
+    sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
     sb.from('monthly_payments').select('*').eq('month', now.getMonth()+1).eq('year', now.getFullYear()),
   ]);
   C.clients = cl.data || [];
   C.payments = pm.data || [];
+  C._lastLoad = Date.now();
 }
 
 function setClientFilter(f) {
@@ -4226,7 +4232,15 @@ function fBRL(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',
 
 async function initFinanceiro() {
   renderFinMonthLabel();
+  const cacheKey = `${FIN.month}-${FIN.year}`;
+  const TTL = 2 * 60 * 1000;
+  if (FIN._cacheKey === cacheKey && FIN._lastLoad && Date.now() - FIN._lastLoad < TTL) {
+    renderFinanceiro();
+    return;
+  }
   await loadFinData();
+  FIN._lastLoad = Date.now();
+  FIN._cacheKey = cacheKey;
   renderFinanceiro();
 }
 
