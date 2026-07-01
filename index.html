@@ -397,6 +397,41 @@
 </head>
 <body>
 
+<!-- Banner de alarme em destaque -->
+<div id="elo-alarm-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
+  background:linear-gradient(135deg,var(--coral),#a3503a);
+  color:#fff;padding:0;box-shadow:0 8px 32px rgba(0,0,0,.35);animation:elo-alarm-slide 0.4s ease;">
+  <div style="max-width:700px;margin:0 auto;padding:20px 28px;display:flex;align-items:center;gap:18px;">
+    <div style="font-size:36px;flex-shrink:0;animation:elo-alarm-shake 0.5s infinite;">🔔</div>
+    <div style="flex:1;">
+      <div id="elo-alarm-title" style="font-size:17px;font-weight:900;margin-bottom:4px;"></div>
+      <div id="elo-alarm-desc" style="font-size:13px;opacity:.85;"></div>
+    </div>
+    <button onclick="dismissAlarmBanner()"
+      style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;
+             padding:10px 20px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+             flex-shrink:0;transition:background .2s;"
+      onmouseover="this.style.background='rgba(255,255,255,.35)'"
+      onmouseout="this.style.background='rgba(255,255,255,.2)'">
+      OK
+    </button>
+  </div>
+  <div id="elo-alarm-progress" style="height:4px;background:rgba(255,255,255,.3);position:relative;">
+    <div id="elo-alarm-progress-bar" style="height:100%;background:#fff;width:100%;transition:width 8s linear;"></div>
+  </div>
+</div>
+<style>
+@keyframes elo-alarm-slide {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes elo-alarm-shake {
+  0%,100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(15deg); }
+}
+</style>
+
 <!-- ── Loading ── -->
 <div id="loading-screen">
   <div class="spinner"></div>
@@ -933,7 +968,7 @@
 
       <!-- Modal lembrete -->
       <div id="rem-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:20px;padding:28px 32px;width:440px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.2);" onclick="event.stopPropagation()">
+        <div style="background:#fff;border-radius:20px;padding:28px 32px;width:460px;max-width:92vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);" onclick="event.stopPropagation()">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
             <h2 id="rem-modal-title" style="font-size:16px;font-weight:800;color:var(--deep);margin:0;">Novo Alarme Pessoal</h2>
             <button onclick="closeReminderModal()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#aaa;">×</button>
@@ -941,17 +976,21 @@
           <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
               <label class="elo-modal-label">Título *</label>
-              <input id="rem-title" class="elo-input" placeholder="Ex: Beber água, Levantar e alongar..." />
+              <input id="rem-title" class="elo-input" placeholder="Ex: Ver WhatsApp, Beber água..." />
             </div>
             <div>
               <label class="elo-modal-label">Tipo de Recorrência</label>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <button id="rem-type-interval" onclick="setRemType('interval')"
-                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:none;background:var(--purple);color:#fff;font-family:inherit;font-size:12px;">A cada X minutos</button>
+                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:none;background:var(--purple);color:#fff;font-family:inherit;font-size:11px;">A cada X min</button>
                 <button id="rem-type-daily" onclick="setRemType('daily')"
-                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);font-family:inherit;font-size:12px;">Todo dia (horário fixo)</button>
+                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);font-family:inherit;font-size:11px;">Todo dia</button>
+                <button id="rem-type-once" onclick="setRemType('once')"
+                  style="padding:9px 0;border-radius:8px;cursor:pointer;font-weight:700;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);font-family:inherit;font-size:11px;">Uma vez</button>
               </div>
             </div>
+
+            <!-- Intervalo -->
             <div id="rem-interval-row">
               <label class="elo-modal-label">Intervalo</label>
               <select id="rem-interval" class="elo-select" style="width:100%;">
@@ -962,16 +1001,26 @@
                 <option value="60">A cada 1 hora</option>
                 <option value="90">A cada 1h30</option>
                 <option value="120">A cada 2 horas</option>
-                <option value="180">A cada 3 horas</option>
               </select>
             </div>
+
+            <!-- Todo dia: múltiplos horários -->
             <div id="rem-daily-row" style="display:none;">
-              <label class="elo-modal-label">Horário diário</label>
-              <input id="rem-daily-time" type="time" class="elo-input" value="08:00" />
+              <label class="elo-modal-label">Horários diários</label>
+              <div id="rem-daily-times-list"></div>
+              <button onclick="addDailyTime()"
+                style="margin-top:4px;padding:7px 16px;border-radius:8px;border:1.5px dashed rgba(74,41,118,.25);background:transparent;color:var(--purple);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;">+ Adicionar horário</button>
             </div>
+
+            <!-- Uma vez: data + hora -->
+            <div id="rem-once-row" style="display:none;">
+              <label class="elo-modal-label">Data e horário</label>
+              <input id="rem-once-at" type="datetime-local" class="elo-input" style="width:100%;" />
+            </div>
+
             <div>
               <label class="elo-modal-label">Observação (opcional)</label>
-              <textarea id="rem-desc" class="elo-input" style="min-height:56px;resize:vertical;" placeholder="Detalhes..."></textarea>
+              <textarea id="rem-desc" class="elo-input" rows="2" style="resize:vertical;" placeholder="Detalhes..."></textarea>
             </div>
           </div>
           <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end;">
@@ -1287,7 +1336,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.22 · ELO Comunicação · Atualizado em 01/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.23 · ELO Comunicação · Atualizado em 01/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1357,7 +1406,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.22</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.23</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">01/07/2026</span></span>
   </footer>
@@ -3744,6 +3793,12 @@ async function loadCalData() {
     const day = d.getDate();
     CAL.hoursByDay[day] = (CAL.hoursByDay[day] || 0) + e.duration_minutes;
   }
+
+  // Iniciar ticker de alarmes (apenas uma vez)
+  if (!window._alarmTickerStarted) {
+    window._alarmTickerStarted = true;
+    startAlarmTicker();
+  }
 }
 
 function setCalTab(tab) {
@@ -4101,6 +4156,119 @@ async function saveCalEvent() {
   renderCalSidebar();
 }
 
+// ── Alarm Banner ─────────────────────────────────────────────────
+let _alarmBannerTimeout = null;
+let _alarmAudio = null;
+
+function showAlarmBanner(title, desc) {
+  const banner = document.getElementById('elo-alarm-banner');
+  if (!banner) return;
+  document.getElementById('elo-alarm-title').textContent = title;
+  document.getElementById('elo-alarm-desc').textContent = desc || '';
+  banner.style.display = 'block';
+
+  // Barra de progresso: reseta e inicia
+  const bar = document.getElementById('elo-alarm-progress-bar');
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(()=>{ bar.style.transition='width 8s linear'; bar.style.width='0%'; }, 50); }
+
+  // Auto-dismiss após 8s
+  clearTimeout(_alarmBannerTimeout);
+  _alarmBannerTimeout = setTimeout(dismissAlarmBanner, 8000);
+
+  // Som
+  playAlarmSound();
+
+  // Notificação do sistema (se permitida)
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    try { new Notification('⏰ ' + title, { body: desc || '', icon: 'logo-elo.png' }); } catch(e) {}
+  }
+}
+
+function dismissAlarmBanner() {
+  const banner = document.getElementById('elo-alarm-banner');
+  if (banner) banner.style.display = 'none';
+  clearTimeout(_alarmBannerTimeout);
+  if (_alarmAudio) { _alarmAudio.pause(); _alarmAudio = null; }
+}
+
+function playAlarmSound() {
+  try {
+    if (_alarmAudio) { _alarmAudio.pause(); _alarmAudio = null; }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(freq, start, dur) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + start + 0.02);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    }
+    // Sequência de bipes mais alta
+    beep(880, 0,    0.18);
+    beep(880, 0.22, 0.18);
+    beep(880, 0.44, 0.18);
+    beep(1100, 0.7, 0.35);
+    beep(880, 1.15, 0.18);
+    beep(880, 1.37, 0.18);
+    beep(1100, 1.6, 0.40);
+  } catch(e) { console.warn('Audio não disponível:', e); }
+}
+
+// ── Ticker de alarmes (verifica a cada 30s) ──────────────────────
+const _firedAlarms = new Set(); // "id-HH:MM" ou "id-once"
+
+function startAlarmTicker() {
+  checkAlarms();
+  setInterval(checkAlarms, 30000);
+}
+
+function checkAlarms() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const currentMs = now.getTime();
+
+  (CAL.reminders || []).forEach(rem => {
+    if (!rem.is_active) return;
+
+    if (rem.type === 'interval') {
+      // Interval: verificar via localStorage timestamp
+      const key = `elo_rem_last_${rem.id}`;
+      const last = Number(localStorage.getItem(key) || 0);
+      const diffMin = (currentMs - last) / 60000;
+      if (diffMin >= rem.interval_minutes) {
+        localStorage.setItem(key, currentMs);
+        showAlarmBanner(rem.title, rem.description || `Intervalo de ${rem.interval_minutes} minutos`);
+      }
+
+    } else if (rem.type === 'daily') {
+      const times = rem.daily_times || (rem.daily_time ? [rem.daily_time] : []);
+      times.forEach(t => {
+        const fireKey = `${rem.id}-${t}`;
+        const todayKey = `${fireKey}-${now.toDateString()}`;
+        if (currentTime === t && !_firedAlarms.has(todayKey)) {
+          _firedAlarms.add(todayKey);
+          showAlarmBanner(rem.title, rem.description || `Horário diário: ${t}`);
+        }
+      });
+
+    } else if (rem.type === 'once') {
+      if (!rem.once_at) return;
+      const fireKey = `${rem.id}-once`;
+      const diffSec = Math.abs(currentMs - rem.once_at) / 1000;
+      if (diffSec <= 60 && !_firedAlarms.has(fireKey)) {
+        _firedAlarms.add(fireKey);
+        const d = new Date(rem.once_at);
+        showAlarmBanner(rem.title, rem.description || `Alarme: ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+      }
+    }
+  });
+}
+
 // ── Alertas ──────────────────────────────────────────
 function calEnableNotif() {
   if (!('Notification' in window)) { showToast('Seu navegador não suporta notificações.','err'); return; }
@@ -4135,7 +4303,25 @@ function renderCalAlerts() {
     : CAL.reminders.map(rem => {
       const emojis = {'água':'💧','levantar':'🧘','alongar':'🧘','postura':'🪑','coma':'🍎','lanche':'🍎','whatsapp':'💬'};
       const emoji = Object.entries(emojis).find(([k])=>rem.title.toLowerCase().includes(k))?.[1] || '🔔';
-      const detail = rem.type === 'interval' ? `A cada ${rem.interval_minutes} min` : `Todo dia às ${rem.daily_time}`;
+      let detail;
+      if (rem.type === 'interval') {
+        detail = `A cada ${rem.interval_minutes} min`;
+      } else if (rem.type === 'daily') {
+        const times = rem.daily_times || (rem.daily_time ? [rem.daily_time] : []);
+        detail = times.length > 0
+          ? `Todo dia às ${times.join(', ')}`
+          : `Todo dia`;
+      } else if (rem.type === 'once') {
+        if (rem.once_at) {
+          const d = new Date(rem.once_at);
+          const pad = n => String(n).padStart(2,'0');
+          detail = `${pad(d.getDate())}/${pad(d.getMonth()+1)} às ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } else {
+          detail = 'Horário único';
+        }
+      } else {
+        detail = '';
+      }
       const op = rem.is_active ? '1' : '0.55';
       const toggleBg = rem.is_active ? 'var(--coral)' : 'rgba(0,0,0,.15)';
       const knobLeft = rem.is_active ? '23px' : '3px';
@@ -4169,14 +4355,22 @@ function setRemType(type) {
   CAL.remType = type;
   document.getElementById('rem-interval-row').style.display = type === 'interval' ? '' : 'none';
   document.getElementById('rem-daily-row').style.display = type === 'daily' ? '' : 'none';
+  document.getElementById('rem-once-row').style.display = type === 'once' ? '' : 'none';
   const btnI = document.getElementById('rem-type-interval');
   const btnD = document.getElementById('rem-type-daily');
-  btnI.style.background = type === 'interval' ? 'var(--purple)' : 'transparent';
-  btnI.style.color = type === 'interval' ? '#fff' : 'var(--text-dim)';
-  btnI.style.border = type === 'interval' ? 'none' : '1.5px solid rgba(46,27,78,.15)';
-  btnD.style.background = type === 'daily' ? 'var(--purple)' : 'transparent';
-  btnD.style.color = type === 'daily' ? '#fff' : 'var(--text-dim)';
-  btnD.style.border = type === 'daily' ? 'none' : '1.5px solid rgba(46,27,78,.15)';
+  const btnO = document.getElementById('rem-type-once');
+  [btnI, btnD, btnO].forEach(b => {
+    if (!b) return;
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text-dim)';
+    b.style.border = '1.5px solid rgba(46,27,78,.15)';
+  });
+  const active = type === 'interval' ? btnI : type === 'daily' ? btnD : btnO;
+  if (active) {
+    active.style.background = 'var(--purple)';
+    active.style.color = '#fff';
+    active.style.border = 'none';
+  }
 }
 
 function openReminderModal(id) {
@@ -4186,10 +4380,70 @@ function openReminderModal(id) {
   document.getElementById('rem-title').value = rem?.title || '';
   document.getElementById('rem-desc').value = rem?.description || '';
   document.getElementById('rem-interval').value = rem?.interval_minutes || 30;
-  document.getElementById('rem-daily-time').value = rem?.daily_time || '08:00';
+
+  // Once: converter ms epoch para datetime-local string
+  if (rem?.once_at) {
+    const d = new Date(rem.once_at);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('rem-once-at').value =
+      `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } else {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('rem-once-at').value =
+      `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T09:00`;
+  }
+
+  // Daily times: carregar array ou default
+  const times = rem?.daily_times || ['08:00'];
+  renderDailyTimes(times);
+
   setRemType(rem?.type || 'interval');
   document.getElementById('rem-modal').style.display = 'flex';
   setTimeout(()=>document.getElementById('rem-title').focus(),50);
+}
+
+function renderDailyTimes(times) {
+  const container = document.getElementById('rem-daily-times-list');
+  if (!container) return;
+  container.innerHTML = times.map((t, i) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;" data-idx="${i}">
+      <input type="time" value="${t}" class="elo-input rem-time-input"
+        style="width:120px;padding:8px 12px;"
+        onchange="updateDailyTime(${i}, this.value)" />
+      ${times.length > 1
+        ? `<button onclick="removeDailyTime(${i})"
+            style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--coral);padding:0 4px;line-height:1;">×</button>`
+        : ''}
+    </div>
+  `).join('');
+}
+
+function updateDailyTime(idx, val) {
+  const inputs = document.querySelectorAll('.rem-time-input');
+  CAL._remDailyTimes = CAL._remDailyTimes || [];
+  inputs.forEach((inp, i) => { CAL._remDailyTimes[i] = inp.value; });
+}
+
+function addDailyTime() {
+  const inputs = document.querySelectorAll('.rem-time-input');
+  const current = Array.from(inputs).map(inp => inp.value);
+  current.push('09:00');
+  CAL._remDailyTimes = current;
+  renderDailyTimes(current);
+}
+
+function removeDailyTime(idx) {
+  const inputs = document.querySelectorAll('.rem-time-input');
+  const current = Array.from(inputs).map(inp => inp.value);
+  current.splice(idx, 1);
+  CAL._remDailyTimes = current;
+  renderDailyTimes(current);
+}
+
+function getDailyTimes() {
+  const inputs = document.querySelectorAll('.rem-time-input');
+  return Array.from(inputs).map(inp => inp.value).filter(Boolean);
 }
 function closeReminderModal() {
   document.getElementById('rem-modal').style.display = 'none';
@@ -4200,17 +4454,35 @@ async function saveReminder() {
   const title = document.getElementById('rem-title').value.trim();
   if (!title) { showToast('Preencha o título','err'); return; }
   const type = CAL.remType;
-  const interval_minutes = type === 'interval' ? Number(document.getElementById('rem-interval').value) : null;
-  const daily_time = type === 'daily' ? document.getElementById('rem-daily-time').value : null;
   const description = document.getElementById('rem-desc').value.trim() || null;
 
+  const interval_minutes = type === 'interval' ? Number(document.getElementById('rem-interval').value) : null;
+
+  // daily_times: coletar horários do DOM
+  const daily_times = type === 'daily' ? getDailyTimes() : null;
+  if (type === 'daily' && (!daily_times || daily_times.length === 0)) {
+    showToast('Adicione ao menos um horário','err'); return;
+  }
+
+  // once_at: converter datetime-local para ms epoch
+  let once_at = null;
+  if (type === 'once') {
+    const val = document.getElementById('rem-once-at').value;
+    if (!val) { showToast('Informe a data e horário','err'); return; }
+    once_at = new Date(val).getTime();
+    if (isNaN(once_at)) { showToast('Data inválida','err'); return; }
+  }
+
+  // Manter daily_time como null (coluna legada)
+  const payload = { title, description, type, interval_minutes, daily_times, once_at, daily_time: null };
+
   if (CAL.editingRemId) {
-    const { error } = await sb.from('reminders').update({ title, description, type, interval_minutes, daily_time }).eq('id', CAL.editingRemId);
+    const { error } = await sb.from('reminders').update(payload).eq('id', CAL.editingRemId);
     if (error) { showToast('Erro: '+error.message,'err'); return; }
-    CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,title,description,type,interval_minutes,daily_time} : r);
+    CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,...payload} : r);
     showToast('Alarme atualizado!','ok');
   } else {
-    const { data, error } = await sb.from('reminders').insert({ title, description, type, interval_minutes, daily_time, is_active:true, user_id: appUser.id }).select().single();
+    const { data, error } = await sb.from('reminders').insert({ ...payload, is_active:true }).select().single();
     if (error) { showToast('Erro: '+error.message,'err'); return; }
     CAL.reminders.push(data);
     showToast('Alarme criado!','ok');
