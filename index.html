@@ -1336,7 +1336,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.23 · ELO Comunicação · Atualizado em 01/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.24 · ELO Comunicação · Atualizado em 02/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1406,9 +1406,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.23</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.24</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">01/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">02/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1441,6 +1441,10 @@
 const SUPABASE_URL = 'https://vatkfkdnflbdfomglvme.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhdGtma2RuZmxiZGZvbWdsdm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDIzMDUsImV4cCI6MjA5NzcxODMwNX0.DhcxD1Z9HERL4128bKrIIZ8KajcYK5hny8zLxBwHmGM';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
 
 // ════════════════════════════════════════════════════════════════
 // GLOBALS
@@ -1522,7 +1526,7 @@ function showToast(msg, type='ok') {
   const icons = {ok:'✓',err:'✕',warn:'⚠',info:'ℹ'};
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  el.innerHTML = `<span style="font-size:16px;flex-shrink:0;">${icons[type]||'✓'}</span><span>${msg}</span>`;
+  el.innerHTML = `<span style="font-size:16px;flex-shrink:0;">${icons[type]||'✓'}</span><span>${esc(msg)}</span>`;
   document.getElementById('toast-container').appendChild(el);
   setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); }, 3500);
 }
@@ -1708,8 +1712,8 @@ async function renderMobileAgenda() {
       const ds = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
       const client = T.clients.find(c=>c.id===a.client_id);
       html += `<div style="${rowS}"><span style="font-size:20px;">${a.is_done?'✅':'🗓'}</span>
-        <div><div style="${titleS}">${a.title}</div>
-        <div style="${subS}">${ds}${client?' · '+client.name:''}</div></div></div>`;
+        <div><div style="${titleS}">${esc(a.title)}</div>
+        <div style="${subS}">${ds}${client?' · '+esc(client.name):''}</div></div></div>`;
     });
   } else {
     html += `<div style="font-size:13px;color:var(--text-dim);padding:8px 0;">Nenhum compromisso próximo.</div>`;
@@ -1762,7 +1766,7 @@ async function renderMobileAgenda() {
         const daysStr = a.daysOverdue > 0 ? `venceu há ${a.daysOverdue} dia${a.daysOverdue>1?'s':''}` : 'venceu hoje';
         const amtStr = a.amount ? ` · ${fBRL2(a.amount)}` : '';
         html += `<div style="${rowS}padding:8px 10px;background:rgba(220,38,38,.06);border-radius:10px;border-left:3px solid #DC2626;margin-bottom:4px;">
-          <div><div style="${titleS}color:#DC2626;">${a.clientName}</div>
+          <div><div style="${titleS}color:#DC2626;">${esc(a.clientName)}</div>
           <div style="font-size:11px;color:#DC2626;opacity:.8;font-weight:600;margin-top:2px;">${daysStr}${amtStr}</div></div></div>`;
       });
     }
@@ -1772,7 +1776,7 @@ async function renderMobileAgenda() {
         const daysStr = a.daysLeft === 0 ? 'vence hoje' : a.daysLeft === 1 ? 'vence amanhã' : `vence em ${a.daysLeft} dias`;
         const amtStr = a.amount ? ` · ${fBRL2(a.amount)}` : '';
         html += `<div style="${rowS}padding:8px 10px;background:rgba(234,88,12,.06);border-radius:10px;border-left:3px solid #EA580C;margin-bottom:4px;">
-          <div><div style="${titleS}color:#EA580C;">${a.clientName}</div>
+          <div><div style="${titleS}color:#EA580C;">${esc(a.clientName)}</div>
           <div style="font-size:11px;color:#EA580C;opacity:.8;font-weight:600;margin-top:2px;">${daysStr}${amtStr}</div></div></div>`;
       });
     }
@@ -1789,7 +1793,7 @@ function openMobileNewItem() {
   const sheet = document.createElement('div');
   sheet.id = 'mobile-new-item-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;z-index:400;';
-  const clientOptions = T.clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const clientOptions = T.clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   const today = todayStr();
   const inputS = `width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(74,41,118,.15);font-family:inherit;font-size:14px;color:var(--deep);outline:none;background:var(--bg);box-sizing:border-box;margin-bottom:10px;display:block;`;
   const labelS = `display:block;font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;`;
@@ -2199,7 +2203,7 @@ function openMobileClientPicker() {
                border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;
                background:${T.selectedClientId===c.id?'rgba(196,114,90,.07)':'#fff'};">
         <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
-        <span style="font-size:15px;font-weight:${T.selectedClientId===c.id?'700':'500'};color:var(--deep);flex:1;">${c.name}</span>
+        <span style="font-size:15px;font-weight:${T.selectedClientId===c.id?'700':'500'};color:var(--deep);flex:1;">${esc(c.name)}</span>
         ${T.selectedClientId===c.id?'<span style="color:var(--coral);font-weight:700;">✓</span>':''}
       </div>`).join('');
   };
@@ -2255,7 +2259,7 @@ function filterMobileClients() {
         style="display:flex;align-items:center;gap:12px;padding:14px 20px;
                border-bottom:.5px solid rgba(74,41,118,.07);cursor:pointer;">
         <div style="width:10px;height:10px;border-radius:50%;background:${c.color||'rgba(46,27,78,.15)'};flex-shrink:0;"></div>
-        <span style="font-size:15px;font-weight:500;color:var(--deep);">${c.name}</span>
+        <span style="font-size:15px;font-weight:500;color:var(--deep);">${esc(c.name)}</span>
       </div>`).join('');
   };
   const html = renderGroup('Favoritos', favs) + renderGroup('Clientes', externos) + renderGroup('Interno', internos);
@@ -2349,7 +2353,7 @@ function renderTaskTree() {
   const mkTaskBtn = (t, icon) => `
     <button class="task-btn${T.selectedTaskId===t.id?' selected':''}" onclick="selectTask(${t.id},'${t.name.replace(/'/g,"\\'")}')">
       <div class="task-icon">${icon}</div>
-      ${t.name}
+      ${esc(t.name)}
     </button>`;
   let html = '';
   if (favTasks.length) {
@@ -2370,7 +2374,7 @@ function renderTaskTree() {
     html += `<div>
       <div class="cat-header" onclick="toggleCat('${cat}')">
         <div class="cat-dot" style="background:${cfg.color};"></div>
-        ${cat}
+        ${esc(cat)}
         <span class="cat-toggle">${expanded?'▲':'▼'}</span>
       </div>
       ${expanded ? catTasks.map(t => mkTaskBtn(t, cfg.icon)).join('') : ''}
@@ -2658,7 +2662,7 @@ function renderNotesList() {
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const escaped = note.content.replace(/</g,'&lt;');
+    const escaped = esc(note.content);
     const firstSpace = escaped.indexOf(' ');
     const titulo = firstSpace === -1 ? escaped : escaped.slice(0, firstSpace);
     const resto = firstSpace === -1 ? '' : escaped.slice(firstSpace).replace(/\n/g,'<br>');
@@ -2689,7 +2693,7 @@ function openNoteModal(id) {
         <textarea id="note-modal-text"
           class="field-input"
           style="min-height:140px;resize:vertical;font-size:14px;line-height:1.6;font-family:inherit;"
-          placeholder="Escreva sua anotação...">${note.content.replace(/</g,'&lt;')}</textarea>
+          placeholder="Escreva sua anotação...">${esc(note.content)}</textarea>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeModal()">Fechar</button>
@@ -2773,7 +2777,7 @@ async function renderCalNotes() {
         <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;background:#f9f8fc;border-left:3px solid var(--purple);border-radius:8px;padding:8px 10px;"
           onclick="openNoteModal(${note.id})"
           title="Clique para editar">
-          ${(() => { const esc = note.content.replace(/</g,'&lt;').replace(/\n/g,'<br>'); const sp = esc.search(/[\s<]/); const t = sp === -1 ? esc : esc.slice(0,sp); const r = sp === -1 ? '' : esc.slice(sp); return `<strong>${t}</strong>${r}`; })()}
+          ${(() => { const escaped = esc(note.content).replace(/\n/g,'<br>'); const sp = escaped.search(/[\s<]/); const t = sp === -1 ? escaped : escaped.slice(0,sp); const r = sp === -1 ? '' : escaped.slice(sp); return `<strong>${t}</strong>${r}`; })()}
         </div>
         <div class="note-item-date">${dateStr}</div>
       </div>
@@ -2830,14 +2834,14 @@ function openManualEntryModal(editId) {
         <label class="field-label">Cliente *</label>
         <select class="field-input" id="me-client" style="cursor:pointer;">
           <option value="">Selecionar cliente</option>
-          ${T.clients.map(c=>`<option value="${c.id}"${c.id===selClient?' selected':''}>${c.name}</option>`).join('')}
+          ${T.clients.map(c=>`<option value="${c.id}"${c.id===selClient?' selected':''}>${esc(c.name)}</option>`).join('')}
         </select>
       </div>
       <div class="field-group">
         <label class="field-label">Tarefa *</label>
         <select class="field-input" id="me-task" style="cursor:pointer;">
           <option value="">Selecionar tarefa</option>
-          ${T.tasks.map(t=>`<option value="${t.id}"${t.id===selTask?' selected':''}>${t.name}</option>`).join('')}
+          ${T.tasks.map(t=>`<option value="${t.id}"${t.id===selTask?' selected':''}>${esc(t.name)}</option>`).join('')}
         </select>
       </div>
       <div class="field-group">
@@ -2950,8 +2954,8 @@ function renderTodayActivities() {
     return `<div class="activity-row">
       <div class="activity-avatar" style="background:${PALETTE[i%PALETTE.length]};">${initials}</div>
       <div>
-        <div style="font-weight:800;font-size:14px;color:var(--text);">${c?.name||'—'}</div>
-        <div style="color:var(--text-dim);font-size:12px;margin-top:2px;">${e.task_name}${e.notes?` · ${e.notes}`:''}</div>
+        <div style="font-weight:800;font-size:14px;color:var(--text);">${esc(c?.name||'—')}</div>
+        <div style="color:var(--text-dim);font-size:12px;margin-top:2px;">${esc(e.task_name)}${e.notes?` · ${esc(e.notes)}`:''}</div>
       </div>
       <div style="color:var(--text-dim);font-size:12px;">${time}</div>
       <div style="font-weight:800;font-size:14px;color:var(--coral);">${fMin(e.duration_minutes||0)}</div>
@@ -2978,8 +2982,8 @@ function renderTodayActivities() {
     const c = T.clients.find(cl=>cl.id===e.client_id);
     const countBadge = e._count > 1 ? `<span style="font-size:10px;background:rgba(124,111,205,.15);color:var(--purple);padding:1px 6px;border-radius:8px;font-weight:700;">${e._count}x</span>` : '';
     return `<div class="recent-entry" onclick="repeatEntry(${e.client_id},${e.task_id||0},'${(e.task_name||'').replace(/'/g,"\\'")}')">
-      <span style="color:var(--purple);font-weight:700;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c?.name||'—'}</span>
-      <span style="flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.task_name||''}</span>
+      <span style="color:var(--purple);font-weight:700;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(c?.name||'—')}</span>
+      <span style="flex:1;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.task_name||'')}</span>
       ${countBadge}
       <span style="font-size:12px;color:var(--green);font-weight:700;">${fMin(e.duration_minutes)}</span>
       <button class="repeat-btn" onclick="event.stopPropagation();repeatEntry(${e.client_id},${e.task_id||0},'${(e.task_name||'').replace(/'/g,"\\'")}')">Repetir</button>
@@ -3066,9 +3070,9 @@ function renderScheduledTasks() {
     return `<div class="sched-task">
       <button class="priority-circle" style="border-color:${pc};" onclick="${onComplete}" title="Marcar como feito"></button>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${icon} ${t.title}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${icon} ${esc(t.title)}</div>
         ${t.date_str?`<div style="font-size:11px;color:var(--text-dim);margin-top:1px;">${t.date_str}${t.time_str?` às ${t.time_str}`:''}</div>`:''}
-        ${clientName?`<div style="font-size:11px;color:var(--text-dim);">${clientName}</div>`:''}
+        ${clientName?`<div style="font-size:11px;color:var(--text-dim);">${esc(clientName)}</div>`:''}
       </div>
       <button class="del-btn" onclick="${onDelete}">×</button>
     </div>`;
@@ -3122,7 +3126,7 @@ function renderFinancialCard() {
     html += vencidos.map(a => `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:700;color:#DC2626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:12px;font-weight:700;color:#DC2626;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.clientName)}</div>
           <div style="font-size:10px;color:#DC2626;opacity:.8;">Venceu dia ${a.dueDay}</div>
         </div>
         <span style="font-size:12px;font-weight:800;color:#DC2626;white-space:nowrap;">${fBRL(a.amount)}</span>
@@ -3134,7 +3138,7 @@ function renderFinancialCard() {
     html += hoje.map(a => `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.clientName)}</div>
           <div style="font-size:10px;color:var(--text-dim);">Vence hoje</div>
         </div>
         <span style="font-size:12px;font-weight:800;color:var(--green);white-space:nowrap;">${fBRL(a.amount)}</span>
@@ -3146,7 +3150,7 @@ function renderFinancialCard() {
     html += proximos.map(a => `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.clientName}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.clientName)}</div>
           <div style="font-size:10px;color:var(--text-dim);">Dia ${a.dueDay} · ${a.daysLeft}d</div>
         </div>
         <span style="font-size:12px;font-weight:800;color:var(--orange);white-space:nowrap;">${fBRL(a.amount)}</span>
@@ -3229,7 +3233,7 @@ function openTaskModal() {
         <label class="field-label">Cliente (opcional)</label>
         <select class="field-input" id="mt-client" style="cursor:pointer;">
           <option value="">Nenhum cliente vinculado</option>
-          ${T.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+          ${T.clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}
         </select>
       </div>
       <div class="field-group">
@@ -3386,7 +3390,7 @@ function renderClientGrid() {
         if (c.photos_link) expandedHtml += `<a href="${c.photos_link}" target="_blank" style="font-size:12px;font-weight:700;color:var(--purple);background:rgba(74,41,118,.08);padding:5px 12px;border-radius:10px;text-decoration:none;">📷 Photos</a>`;
         expandedHtml += `</div>`;
       }
-      if (c.notes) expandedHtml += `<div><div class="cl-detail-label">Observações</div><div style="font-size:13px;color:var(--text-dim);line-height:1.5;">${c.notes}</div></div>`;
+      if (c.notes) expandedHtml += `<div><div class="cl-detail-label">Observações</div><div style="font-size:13px;color:var(--text-dim);line-height:1.5;">${esc(c.notes)}</div></div>`;
       if (c.birthday) expandedHtml += `<div><div class="cl-detail-label">Aniversário</div><div class="cl-detail-val">🎂 ${c.birthday}</div></div>`;
       expandedHtml += `</div>`;
     }
@@ -3394,8 +3398,8 @@ function renderClientGrid() {
     return `<div class="cl-card" style="border-left:4px solid ${borderColor};">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
         <div style="flex:1;cursor:pointer;" onclick="toggleClientExpand(${c.id})">
-          <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:2px;">${c.name}</div>
-          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${c.specialty}</div>` : ''}
+          <div style="font-weight:800;font-size:14px;color:var(--deep);margin-bottom:2px;">${esc(c.name)}</div>
+          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${esc(c.specialty)}</div>` : ''}
         </div>
         <div class="cl-card-actions">
           <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})" title="Editar">✏️</button>
@@ -3423,8 +3427,8 @@ function renderClientGrid() {
     return `<div class="cl-card" style="padding:14px 16px;border-left:3px solid var(--purple);">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-weight:800;font-size:13px;color:var(--deep);">${c.name}</div>
-          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${c.specialty}</div>` : ''}
+          <div style="font-weight:800;font-size:13px;color:var(--deep);">${esc(c.name)}</div>
+          ${c.specialty ? `<div style="font-size:11px;color:var(--text-dim);font-weight:600;">${esc(c.specialty)}</div>` : ''}
         </div>
         <div class="cl-card-actions">
           <button class="cl-card-icon-btn" onclick="openClientModal(${c.id})">✏️</button>
@@ -3593,12 +3597,12 @@ function renderClientTabContent() {
     html = `
       <div class="field-group">
         <label class="field-label">Nome *</label>
-        <input class="field-input" id="cf-name" placeholder="Ex: Dra. Carolina Ziliotto" value="${v('name')}" />
+        <input class="field-input" id="cf-name" placeholder="Ex: Dra. Carolina Ziliotto" value="${esc(v('name'))}" />
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field-group">
           <label class="field-label">Especialidade</label>
-          <input class="field-input" id="cf-specialty" placeholder="Ex: Endocrinologia" value="${v('specialty')}" />
+          <input class="field-input" id="cf-specialty" placeholder="Ex: Endocrinologia" value="${esc(v('specialty'))}" />
         </div>
         <div class="field-group">
           <label class="field-label">Plano</label>
@@ -3611,36 +3615,36 @@ function renderClientTabContent() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field-group">
           <label class="field-label">CRM</label>
-          <input class="field-input" id="cf-crm" placeholder="Ex: 12345-PR" value="${v('crm')}" />
+          <input class="field-input" id="cf-crm" placeholder="Ex: 12345-PR" value="${esc(v('crm'))}" />
         </div>
         <div class="field-group">
           <label class="field-label">RQE</label>
-          <input class="field-input" id="cf-rqe" placeholder="Ex: 67890" value="${v('rqe')}" />
+          <input class="field-input" id="cf-rqe" placeholder="Ex: 67890" value="${esc(v('rqe'))}" />
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field-group">
           <label class="field-label">Aniversário (DD/MM)</label>
-          <input class="field-input" id="cf-birthday" placeholder="Ex: 15/03" value="${v('birthday')}" />
+          <input class="field-input" id="cf-birthday" placeholder="Ex: 15/03" value="${esc(v('birthday'))}" />
         </div>
         <div class="field-group">
           <label class="field-label">Início do contrato</label>
-          <input class="field-input" id="cf-contract-start" placeholder="Ex: 01/01/2024" value="${v('contract_start')}" />
+          <input class="field-input" id="cf-contract-start" placeholder="Ex: 01/01/2024" value="${esc(v('contract_start'))}" />
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field-group">
           <label class="field-label">Telefone</label>
-          <input class="field-input" id="cf-phone" placeholder="(44) 99999-9999" value="${v('phone')}" />
+          <input class="field-input" id="cf-phone" placeholder="(44) 99999-9999" value="${esc(v('phone'))}" />
         </div>
         <div class="field-group">
           <label class="field-label">WhatsApp</label>
-          <input class="field-input" id="cf-whatsapp" placeholder="(44) 99999-9999" value="${v('whatsapp')}" />
+          <input class="field-input" id="cf-whatsapp" placeholder="(44) 99999-9999" value="${esc(v('whatsapp'))}" />
         </div>
       </div>
       <div class="field-group">
         <label class="field-label">Observações / Combinado</label>
-        <textarea class="field-input" id="cf-notes" rows="3" placeholder="Informações adicionais, combinados, etc..." style="resize:vertical;">${v('notes')}</textarea>
+        <textarea class="field-input" id="cf-notes" rows="3" placeholder="Informações adicionais, combinados, etc..." style="resize:vertical;">${esc(v('notes'))}</textarea>
       </div>
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-dim);font-weight:600;margin-top:4px;">
         <input type="checkbox" id="cf-internal" ${d.is_internal?'checked':''} style="width:16px;height:16px;cursor:pointer;" />
@@ -3673,21 +3677,21 @@ function renderClientTabContent() {
     html = `
       <div class="field-group">
         <label class="field-label">Instagram — Login</label>
-        <input class="field-input" id="cf-ig-login" placeholder="@usuario ou e-mail" value="${v('instagram_login')}" />
+        <input class="field-input" id="cf-ig-login" placeholder="@usuario ou e-mail" value="${esc(v('instagram_login'))}" />
       </div>
       <div class="field-group">
         <label class="field-label">Instagram — Senha</label>
-        <input class="field-input" type="password" id="cf-ig-pass" placeholder="••••••••" value="${v('instagram_password')}" />
+        <input class="field-input" type="password" id="cf-ig-pass" placeholder="••••••••" value="${esc(v('instagram_password'))}" />
       </div>`;
   } else if (_clientModalTab === 'links') {
     html = `
       <div class="field-group">
         <label class="field-label">Link do Drive</label>
-        <input class="field-input" id="cf-drive" type="url" placeholder="https://drive.google.com/..." value="${v('drive_link')}" />
+        <input class="field-input" id="cf-drive" type="url" placeholder="https://drive.google.com/..." value="${esc(v('drive_link'))}" />
       </div>
       <div class="field-group">
         <label class="field-label">Link das Fotos</label>
-        <input class="field-input" id="cf-photos" type="url" placeholder="https://..." value="${v('photos_link')}" />
+        <input class="field-input" id="cf-photos" type="url" placeholder="https://..." value="${esc(v('photos_link'))}" />
       </div>`;
   }
   document.getElementById('client-tab-content').innerHTML = html;
@@ -4010,7 +4014,7 @@ function openCalModal(day) {
   // Populate client select
   const sel = document.getElementById('cme-client');
   sel.innerHTML = '<option value="">— selecione —</option>' +
-    (T.clients||[]).filter(c=>c.is_active && !c.is_internal).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    (T.clients||[]).filter(c=>c.is_active && !c.is_internal).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
 
   setCalModalTab('compromisso');
   const modal = document.getElementById('cal-modal');
@@ -4064,7 +4068,7 @@ function openCalEditModal(id, type) {
 
   const sel = document.getElementById('cme-client');
   sel.innerHTML = '<option value="">— selecione —</option>' +
-    (T.clients||[]).map(c => `<option value="${c.id}"${c.id === item.client_id ? ' selected' : ''}>${c.name}</option>`).join('');
+    (T.clients||[]).map(c => `<option value="${c.id}"${c.id === item.client_id ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
 
   setCalModalTab(type === 'appointment' ? 'compromisso' : 'tarefa');
 
@@ -4328,8 +4332,8 @@ function renderCalAlerts() {
       return `<div class="cal-alert-card" style="opacity:${op};">
         <div style="font-size:20px;">${emoji}</div>
         <div style="flex:1;">
-          <div style="font-weight:700;font-size:14px;color:var(--deep);">${rem.title}</div>
-          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${detail}</div>
+          <div style="font-weight:700;font-size:14px;color:var(--deep);">${esc(rem.title)}</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${esc(detail)}</div>
         </div>
         <button onclick="toggleReminder(${rem.id},${!rem.is_active})" class="cal-toggle" style="background:${toggleBg};">
           <div class="cal-toggle-knob" style="left:${knobLeft};"></div>
@@ -4680,7 +4684,7 @@ function renderFinanceiro() {
         const rowBg = isVencido ? 'background:rgba(220,38,38,.05);' : '';
         const amtStyle = isVencido ? 'color:#DC2626;' : '';
         return `<tr style="${rowBg}">
-          <td style="${TDbase}">${avulso}${finClientName(p)}</td>
+          <td style="${TDbase}">${avulso}${esc(finClientName(p))}</td>
           <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(p.amount))}</td>
           <td style="${TDnw}text-align:center;">${finClientDueDay(p)}</td>
           <td style="${TDnw}text-align:center;">${status}</td>
@@ -4710,7 +4714,7 @@ function renderFinanceiro() {
           ? `<button onclick="finToggleCost(${c.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Desmarcar</button>`
           : `<button onclick="finToggleCost(${c.id},true)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Marcar Pago</button>`;
         return `<tr>
-          <td style="${TDbase}">${c.description}</td>
+          <td style="${TDbase}">${esc(c.description)}</td>
           <td style="${TDbase}color:var(--text-dim);">${c.category||'—'}</td>
           <td style="${TDnw}text-align:right;font-weight:700;">${fBRL(Number(c.amount))}</td>
           <td style="${TDnw}text-align:center;">${status}</td>
@@ -4778,7 +4782,7 @@ function renderFinanceiro() {
   elCusAbertos.style.display = cusAbertos.length ? '' : 'none';
   document.getElementById('fin-side-custos-list').innerHTML = cusAbertos.map(c =>
     `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
-      <span style="color:var(--deep);font-weight:600;">${c.description}</span>
+      <span style="color:var(--deep);font-weight:600;">${esc(c.description)}</span>
       <span style="color:var(--coral);font-weight:800;">${fBRL(Number(c.amount))}</span>
     </div>`).join('');
 
@@ -5106,7 +5110,7 @@ function repInit() {
     [...T.clients]
       .filter(c => !c.is_internal)
       .sort((a,b) => a.name.localeCompare(b.name,'pt-BR'))
-      .map(c => `<option value="${c.id}" ${c.id==current?'selected':''}>${c.name}</option>`)
+      .map(c => `<option value="${c.id}" ${c.id==current?'selected':''}>${esc(c.name)}</option>`)
       .join('');
   if (!document.getElementById('rep-date-start').value) {
     repSetPeriod('month');
@@ -5226,7 +5230,7 @@ async function repGenerate() {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-            <span style="font-size:15px;font-weight:800;color:var(--deep);">${clientName}${inactiveTag}</span>
+            <span style="font-size:15px;font-weight:800;color:var(--deep);">${esc(clientName)}${inactiveTag}</span>
           </div>
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <span style="font-size:20px;font-weight:900;color:${color};">${resFmin(item.mins)}</span>
@@ -5243,7 +5247,7 @@ async function repGenerate() {
             const tPct = item.mins > 0 ? Math.round((tMins/item.mins)*100) : 0;
             return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;
                               border-bottom:${ti < tasksSorted.length-1 ? '.5px solid rgba(74,41,118,.07)' : 'none'};">
-              <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);">${tName}</span>
+              <span style="flex:1;font-size:12px;font-weight:600;color:var(--text);">${esc(tName)}</span>
               <span style="font-size:12px;font-weight:700;color:var(--deep);min-width:60px;text-align:right;">${resFmin(tMins)}</span>
               <span style="font-size:11px;color:var(--text-dim);min-width:32px;text-align:right;">${tPct}%</span>
               <div style="width:60px;height:4px;background:rgba(46,27,78,.07);border-radius:2px;overflow:hidden;">
@@ -5447,8 +5451,8 @@ async function resRenderHoje() {
         return `<div style="display:grid;grid-template-columns:${col};gap:10px;align-items:center;min-height:44px;border-bottom:1px solid rgba(74,41,118,.07);">
           <div style="width:8px;height:8px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};"></div>
           <div>
-            <div style="font-weight:800;font-size:13px;color:var(--deep);">${x.clientName}</div>
-            <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${x.taskName}</div>
+            <div style="font-weight:800;font-size:13px;color:var(--deep);">${esc(x.clientName)}</div>
+            <div style="color:var(--text-dim);font-size:12px;margin-top:1px;">${esc(x.taskName)}</div>
           </div>
           <div style="font-weight:800;font-size:13px;color:var(--coral);text-align:right;">${resFmin(x.mins)}</div>
           ${showCost ? custoHtml : ''}
@@ -5839,7 +5843,7 @@ async function cfgRenderCats() {
   }
   el.innerHTML = _cfgCats.map(c => `
     <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(74,41,118,.07);border:var(--border);border-radius:20px;padding:5px 12px;">
-      <span style="font-size:12px;font-weight:700;color:var(--deep);">${c.name}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--deep);">${esc(c.name)}</span>
       <button onclick="cfgOpenCatModal(${c.id},'${c.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0 2px;" title="Editar">✏️</button>
       <button onclick="cfgDeleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-dim);padding:0 2px;" title="Excluir">🗑</button>
     </div>`).join('');
@@ -5855,7 +5859,7 @@ function cfgOpenCatModal(id, name) {
       <div style="display:flex;flex-direction:column;gap:14px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Nome *</label>
-          <input id="ccm-name" class="elo-input" placeholder="Ex: Estratégia" value="${name||''}" autofocus>
+          <input id="ccm-name" class="elo-input" placeholder="Ex: Estratégia" value="${esc(name||'')}" autofocus>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
           <button class="elo-btn-outline" onclick="document.getElementById('cfg-cat-modal').remove()">Cancelar</button>
@@ -5924,7 +5928,7 @@ async function cfgRenderTasks() {
     html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">⭐ Favoritas</div><div style="display:flex;flex-direction:column;gap:6px">${favs.map(cfgTaskRowHTML).join('')}</div></div>`;
   }
   for (const [cat, list] of Object.entries(bycat)) {
-    html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">${cat}</div><div style="display:flex;flex-direction:column;gap:6px">${list.map(cfgTaskRowHTML).join('')}</div></div>`;
+    html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">${esc(cat)}</div><div style="display:flex;flex-direction:column;gap:6px">${list.map(cfgTaskRowHTML).join('')}</div></div>`;
   }
   html += '</div>';
   el.innerHTML = html;
@@ -5933,8 +5937,8 @@ async function cfgRenderTasks() {
 function cfgTaskRowHTML(t) {
   return `<div class="cfg-task-row">
     <button onclick="cfgToggleFav(${t.id},${!t.is_favorite})" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;color:${t.is_favorite?'var(--coral)':'var(--text-dim)'};flex-shrink:0" title="${t.is_favorite?'Remover favorito':'Adicionar favorito'}">${t.is_favorite?'⭐':'☆'}</button>
-    <div style="flex:1;font-weight:700;font-size:13px;color:var(--deep)">${t.name}</div>
-    <span style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,41,118,.08);color:var(--purple)">${t.category}</span>
+    <div style="flex:1;font-weight:700;font-size:13px;color:var(--deep)">${esc(t.name)}</div>
+    <span style="padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,41,118,.08);color:var(--purple)">${esc(t.category)}</span>
     <button onclick="cfgOpenTaskModal(${t.id})" style="padding:4px 8px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:8px" title="Editar">✏️</button>
     <button onclick="cfgDeleteTask(${t.id},'${t.name.replace(/'/g,"\\'")}')" style="padding:4px 8px;background:none;border:none;cursor:pointer;font-size:13px;border-radius:8px" title="Remover">🗑</button>
   </div>`;
@@ -5971,12 +5975,12 @@ function cfgOpenTaskModal(id) {
       <div style="display:flex;flex-direction:column;gap:14px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Nome da tarefa *</label>
-          <input id="ctm-name" class="elo-input" placeholder="Ex: Criação de carrossel" value="${t?.name||''}" autofocus>
+          <input id="ctm-name" class="elo-input" placeholder="Ex: Criação de carrossel" value="${esc(t?.name||'')}" autofocus>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categoria</label>
           <select id="ctm-cat" class="elo-select" style="width:100%">
-            ${cats.map(c=>`<option value="${c}"${currentCat===c?' selected':''}>${c}</option>`).join('')}
+            ${cats.map(c=>`<option value="${c}"${currentCat===c?' selected':''}>${esc(c)}</option>`).join('')}
           </select>
         </div>
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim)">

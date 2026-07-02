@@ -355,6 +355,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S12B | ~~Sessão 12B: Fix "Cliente desconhecido" no Relatório — busca todos os clientes (ativos + inativos) via clientNameMap~~ | **Concluído** |
 | S9I | ~~Sessão 9I: Relatório por cliente — allClientsMap via .in(clientIds) + indicador (inativo) no card~~ | **Concluído** |
 | S15 | ~~Sessão 15: Alarmes com tipo 'uma vez', múltiplos horários diários e banner em destaque~~ | **Concluído** |
+| S16 | ~~Sessão 16: XSS protection — função esc() + aplicada em todos os pontos de interpolação innerHTML~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
