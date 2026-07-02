@@ -264,13 +264,21 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ### Calendário
 
-- Grade mensal 7 colunas com chips de eventos
-- Cada célula mostra horas trabalhadas no dia (chip verde ⏱)
-- Sidebar: lista do dia selecionado, resumo do mês, painel de anotações `#cal-notes-panel`
-- Modal de evento: abas Compromisso / Tarefa, cliente, horário, alerta
-- Aba Alertas: CRUD de alarmes pessoais (intervalo ou horário diário)
-- Legenda removida (Sessão 3)
-- **Bug conhecido:** clientes no modal usam `T.clients` (não `C.clients`)
+- Grade mensal 7 colunas com chips de eventos (título apenas, sem hora)
+- Dia atual com fundo coral suave (`rgba(196,114,90,.08)`)
+- Sidebar: lista do dia selecionado + painel de anotações `#cal-notes-panel` com botão "+ Nova anotação" — **sem Resumo do Mês**
+- **Modal unificado `#novo-registro-modal`**: 4 abas — Compromisso / Tarefa / Notificações / Anotação
+  - Abertura via `openNovoRegistro(tab, day)`, fechamento via `closeNovoRegistro()`
+  - Abas CSS: `.nrm-tab` / `.nrm-tab.active`
+  - Salvar: `saveNovoRegistro()` → delega para `_nrmSaveAppt()`, `_nrmSaveTask()`, `_nrmSaveNota()`
+  - Edição de evento existente: `openCalEditModal(id, type)` preenche o modal e seta `_nrmEditingApptId` / `_nrmEditingTaskId`
+  - Edição de anotação: `openNoteEditModal(id)` → aba Anotação com conteúdo pré-preenchido
+- Aba Notificações: CRUD de alarmes (nome, ícone, 3 tipos) via `renderNrmRemList()`, `saveNrmReminder()`, `editNrmReminder()`, `deleteNrmReminder()`, `toggleNrmReminder()`
+- Aba Alertas: botão "+ Novo alarme" chama `openNovoRegistro('notif')`
+- Menu items convertidos para `<a href="#page">` para suportar "Abrir em nova aba"
+- Alarmes: 2 bipes, banner 5s
+- SQL adicional: `ALTER TABLE reminders ADD COLUMN IF NOT EXISTS name text; ALTER TABLE reminders ADD COLUMN IF NOT EXISTS icon text;`
+- Versão 3.25, data 02/07/2026
 
 ### Clientes
 
@@ -356,6 +364,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S9I | ~~Sessão 9I: Relatório por cliente — allClientsMap via .in(clientIds) + indicador (inativo) no card~~ | **Concluído** |
 | S15 | ~~Sessão 15: Alarmes com tipo 'uma vez', múltiplos horários diários e banner em destaque~~ | **Concluído** |
 | S16 | ~~Sessão 16: XSS protection — função esc() + aplicada em todos os pontos de interpolação innerHTML~~ | **Concluído** |
+| S17 | ~~Sessão 17: Refatoração Calendário — modal unificado, visual da grade, sidebar sem Resumo do Mês, 2 bipes, banner 5s, menu como `<a>`~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
