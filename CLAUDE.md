@@ -336,6 +336,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão 19 — Helper `db()` + Bugs Home/Calendário/Alarmes (V3.27)**
+- Helper `async function db(queryFn, errorMsg)` adicionado após `esc()` — try/catch + `showToast` automático em erro
+- Migradas 16 chamadas Supabase para `db()`: `loadHomeData`, `reloadTodayData`, `checkActiveEntry`, `pauseTimer`, `resumeTimer`, `cancelTimer`, `deleteEntry`, `saveNote`, `saveNoteModal`, `completeTask`, `deleteTask`, `completeAppt`, `deleteAppt`, listeners de anotações (Home e Calendário)
+- Removido card **"Alerta Pausa"** (`#alert-card`) do HTML e função `renderAlertCard()` do JS
+- Corrigido listener duplicado em `renderCalNotes()`: substituído `{ once: true }` por guard permanente `_delegated`
+- Adicionado botão × excluir nos cards de evento da sidebar do Calendário (`deleteAppt` / `deleteTask`)
+- SQL Supabase: `ALTER TABLE reminders DROP/ADD CONSTRAINT reminders_type_check` para aceitar `type = 'once'`
+- Versão 3.27, data 03/07/2026
+
 ---
 
 ## 8. O que ainda falta implementar
@@ -366,6 +375,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S16 | ~~Sessão 16: XSS protection — função esc() + aplicada nos campos de texto livre principais (Home, calendário, anotações, listas)~~ | **Concluído** |
 | S17 | ~~Sessão 17: Refatoração Calendário — modal unificado, visual da grade, sidebar sem Resumo do Mês, 2 bipes, banner 5s, menu como `<a>`~~ | **Concluído** |
 | S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
+| S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
