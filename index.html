@@ -4788,7 +4788,7 @@ async function loadFinData() {
     }));
     const ins = await db(
       () => sb.from('monthly_payments')
-        .upsert(toInsert, { onConflict: 'client_id,month,year', ignoreDuplicates: true })
+        .insert(toInsert)
         .select(),
       'Erro ao gerar recebimentos'
     );
