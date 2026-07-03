@@ -686,13 +686,6 @@
             <div id="sched-done-count" style="display:none;font-size:11px;color:#aaa;margin-top:8px;"></div>
           </div>
 
-          <!-- Alerta Pausa -->
-          <div id="alert-card" class="alert-card-normal">
-            <div class="sec-label" style="color:var(--coral);margin-bottom:14px;">Alerta Pausa</div>
-            <div id="alert-list">
-              <div style="font-size:13px;color:var(--text-dim);padding:4px 0;">Tudo certo por enquanto ✓</div>
-            </div>
-          </div>
 
           <!-- Financeiro -->
           <div id="fin-card" style="display:none;" class="fin-card">
@@ -1370,7 +1363,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.26 · ELO Comunicação · Atualizado em 02/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.27 · ELO Comunicação · Atualizado em 03/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1440,9 +1433,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.26</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.27</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">02/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">03/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1478,6 +1471,20 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, m =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function db(queryFn, errorMsg) {
+  try {
+    const result = await queryFn();
+    if (result.error) {
+      showToast((errorMsg || 'Erro') + ': ' + result.error.message, 'err');
+      return { data: null, error: result.error };
+    }
+    return result;
+  } catch (e) {
+    showToast((errorMsg || 'Erro inesperado') + ': ' + e.message, 'err');
+    return { data: null, error: e };
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2144,8 +2151,8 @@ async function initHome() {
         const row = checkBtn.closest('.note-item');
         if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
         await new Promise(r => setTimeout(r, 200));
-        const { error } = await sb.from('notes').delete().eq('id', id);
-        if (error) { showToast('Erro ao concluir nota','err'); return; }
+        const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir nota');
+        if (error) { if (row) row.style.opacity='1'; return; }
         T.notes = T.notes.filter(n => n.id !== id);
         renderNotesList();
         if (document.getElementById('cal-notes-list')) renderCalNotes();
@@ -2161,14 +2168,14 @@ async function loadHomeData() {
   const futureTs = todayTs + 60 * 86400000;
 
   const [cl, tk, te, st, pa, sg, ap, no] = await Promise.all([
-    sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
-    sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}),
-    sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}),
-    sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).lte('scheduled_date', new Date(Date.now()+60*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}),
-    sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false),
-    sb.from('settings').select('*').eq('id',1).single(),
-    sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'),
-    sb.from('notes').select('*').order('created_at',{ascending:false}).limit(20),
+    db(() => sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar clientes'),
+    db(() => sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar tarefas'),
+    db(() => sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}), 'Erro ao carregar atividades'),
+    db(() => sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).lte('scheduled_date', new Date(Date.now()+60*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}), 'Erro ao carregar agenda'),
+    db(() => sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false), 'Erro ao carregar financeiro'),
+    db(() => sb.from('settings').select('*').eq('id',1).single(), 'Erro ao carregar configurações'),
+    db(() => sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'), 'Erro ao carregar compromissos'),
+    db(() => sb.from('notes').select('*').order('created_at',{ascending:false}).limit(20), 'Erro ao carregar anotações'),
   ]);
   T.clients = cl.data||[];
   if (sg.data) T.settings = { ...T.settings, ...sg.data };
@@ -2533,8 +2540,8 @@ function startTick() {
 // ════════════════════════════════════════════════════════════════
 async function checkActiveEntry() {
   if (!appUser) return;
-  const { data } = await sb.from('time_entries').select('*')
-    .eq('user_id', appUser.id).is('end_time', null).maybeSingle();
+  const { data } = await db(() => sb.from('time_entries').select('*')
+    .eq('user_id', appUser.id).is('end_time', null).maybeSingle(), 'Erro ao verificar timer ativo');
   if (data) {
     T.activeEntry = data;
     T.isRunning = true;
@@ -2631,8 +2638,8 @@ async function pauseTimer() {
   if (!T.activeEntry || T.isPaused || T.actionInProgress) return;
   T.actionInProgress = true;
   const now = Date.now();
-  const { error } = await sb.from('time_entries').update({ paused_at: now }).eq('id', T.activeEntry.id);
-  if (error) { showToast('Erro ao pausar','err'); T.actionInProgress = false; return; }
+  const { error } = await db(() => sb.from('time_entries').update({ paused_at: now }).eq('id', T.activeEntry.id), 'Erro ao pausar');
+  if (error) { T.actionInProgress = false; return; }
   T.activeEntry.paused_at = now;
   T.isPaused = true;
   clearTimerInterval();
@@ -2648,8 +2655,8 @@ async function resumeTimer() {
   const now = Date.now();
   const addedPause = now - T.activeEntry.paused_at;
   const newPausedDuration = (T.activeEntry.paused_duration||0) + addedPause;
-  const { error } = await sb.from('time_entries').update({ paused_at: null, paused_duration: newPausedDuration }).eq('id', T.activeEntry.id);
-  if (error) { showToast('Erro ao retomar','err'); T.actionInProgress = false; return; }
+  const { error } = await db(() => sb.from('time_entries').update({ paused_at: null, paused_duration: newPausedDuration }).eq('id', T.activeEntry.id), 'Erro ao retomar');
+  if (error) { T.actionInProgress = false; return; }
   T.activeEntry.paused_at = null;
   T.activeEntry.paused_duration = newPausedDuration;
   T.isPaused = false;
@@ -2663,8 +2670,8 @@ async function resumeTimer() {
 async function cancelTimer() {
   if (!T.activeEntry) return;
   openConfirmModal('Cancelar sessão?', 'Este registro será descartado permanentemente.', async () => {
-    const { error } = await sb.from('time_entries').delete().eq('id', T.activeEntry.id);
-    if (error) { showToast('Erro ao cancelar','err'); return; }
+    const { error } = await db(() => sb.from('time_entries').delete().eq('id', T.activeEntry.id), 'Erro ao cancelar');
+    if (error) return;
     clearTimerInterval();
     T.isRunning=false; T.isPaused=false; T.elapsed=0; T.activeEntry=null;
     document.getElementById('desc-input').value='';
@@ -2677,8 +2684,8 @@ async function cancelTimer() {
 
 async function deleteEntry(id) {
   openConfirmModal('Remover registro?', 'Este registro de tempo será excluído.', async () => {
-    const { error } = await sb.from('time_entries').delete().eq('id', id);
-    if (error) { showToast('Erro ao remover','err'); return; }
+    const { error } = await db(() => sb.from('time_entries').delete().eq('id', id), 'Erro ao remover registro');
+    if (error) return;
     showToast('Registro removido','ok');
     await reloadTodayData();
   });
@@ -2743,8 +2750,8 @@ async function saveNoteModal(id) {
   if (!ta) return;
   const content = ta.value.trim();
   if (!content) { showToast('A nota não pode ficar vazia','warn'); return; }
-  const { error } = await sb.from('notes').update({ content }).eq('id', id);
-  if (error) { showToast('Erro ao salvar','err'); return; }
+  const { error } = await db(() => sb.from('notes').update({ content }).eq('id', id), 'Erro ao salvar nota');
+  if (error) return;
   const idx = T.notes.findIndex(n => n.id === id);
   if (idx !== -1) T.notes[idx].content = content;
   closeModal();
@@ -2782,8 +2789,8 @@ async function saveNote() {
   if (!input) return;
   const content = input.value.trim();
   if (!content) { showToast('Digite algo antes de salvar','warn'); return; }
-  const { data, error } = await sb.from('notes').insert({ content }).select().single();
-  if (error) { showToast('Erro ao salvar nota','err'); return; }
+  const { data, error } = await db(() => sb.from('notes').insert({ content }).select().single(), 'Erro ao salvar nota');
+  if (error) return;
   T.notes.unshift(data);
   input.value = '';
   renderNotesList();
@@ -2815,31 +2822,34 @@ async function renderCalNotes() {
       </div>
     </div>`;
   }).join('');
-  list.addEventListener('click', async function handler(ev) {
-    const btn = ev.target.closest('[data-cal-complete]');
-    if (btn) {
-      const id = Number(btn.dataset.calComplete);
-      const row = btn.closest('.note-item');
-      if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
-      await new Promise(r => setTimeout(r, 200));
-      const { error } = await sb.from('notes').delete().eq('id', id);
-      if (error) { showToast('Erro ao concluir nota','err'); return; }
-      if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
-      renderNotesList();
-      renderCalNotes();
-      return;
-    }
-    // compatibilidade com data-cal-note-id antigo
-    const old = ev.target.closest('[data-cal-note-id]');
-    if (old) {
-      const id = Number(old.dataset.calNoteId);
-      const { error } = await sb.from('notes').delete().eq('id', id);
-      if (error) { showToast('Erro ao excluir nota','err'); return; }
-      if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
-      renderNotesList();
-      renderCalNotes();
-    }
-  }, { once: true });
+  if (!list._delegated) {
+    list._delegated = true;
+    list.addEventListener('click', async function(ev) {
+      const btn = ev.target.closest('[data-cal-complete]');
+      if (btn) {
+        const id = Number(btn.dataset.calComplete);
+        const row = btn.closest('.note-item');
+        if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
+        await new Promise(r => setTimeout(r, 200));
+        const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir nota');
+        if (error) { if (row) row.style.opacity='1'; return; }
+        if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        renderCalNotes();
+        return;
+      }
+      // compatibilidade legada
+      const old = ev.target.closest('[data-cal-note-id]');
+      if (old) {
+        const id = Number(old.dataset.calNoteId);
+        const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao excluir nota');
+        if (error) return;
+        if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+        renderNotesList();
+        renderCalNotes();
+      }
+    });
+  }
 }
 
 function openManualEntryModal(editId) {
@@ -2953,8 +2963,8 @@ async function repeatEntry(clientId, taskId, taskName) {
 }
 
 async function reloadTodayData() {
-  const { data } = await sb.from('time_entries').select('*')
-    .gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false});
+  const { data } = await db(() => sb.from('time_entries').select('*')
+    .gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}), 'Erro ao recarregar atividades');
   T.todayEntries = data||[];
   renderTodayActivities();
   renderRightSidebar();
@@ -3044,9 +3054,6 @@ function renderRightSidebar() {
   // Scheduled tasks
   renderScheduledTasks();
 
-  // Alerts
-  renderAlertCard();
-
   // Financial
   renderFinancialCard();
 }
@@ -3116,34 +3123,6 @@ function renderScheduledTasks() {
   } else doneEl.style.display='none';
 }
 
-function renderAlertCard() {
-  const today = todayStr();
-  const urgent = T.scheduledTasks.filter(t=>!t.is_done&&t.priority==='alta'&&t.scheduled_date===today);
-  const overdue = T.scheduledTasks.filter(t=>{
-    if (t.is_done||!t.scheduled_date) return false;
-    const td = new Date(dbDateToTs(t.scheduled_date));
-    const now = new Date(); now.setHours(0,0,0,0);
-    return td < now;
-  });
-  const alerts = [...overdue,...urgent].slice(0,4);
-  const card = document.getElementById('alert-card');
-  card.className = alerts.length>0 ? 'alert-card-urgent' : 'alert-card-normal';
-
-  if (alerts.length===0) {
-    document.getElementById('alert-list').innerHTML = `<div style="font-size:13px;color:var(--text-dim);padding:4px 0;">Tudo certo por enquanto ✓</div>`;
-    return;
-  }
-  document.getElementById('alert-list').innerHTML = alerts.map(t=>{
-    const isOv = overdue.some(x=>x.id===t.id);
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:.5px solid rgba(224,122,95,.15);">
-      <span style="font-size:14px;flex-shrink:0;">${isOv?'⚠️':'🔴'}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
-        ${t.scheduled_date?`<div style="font-size:10px;color:${isOv?'#DC2626':'var(--text-dim)'};">${isOv?'⏰ Atrasada: ':''}${dbDateToDisplay(t.scheduled_date)}${t.scheduled_time?` às ${t.scheduled_time}`:''}</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
 
 function renderFinancialCard() {
   const vencidos = T.paymentAlerts.filter(a => a.type === 'vencido');
@@ -3195,8 +3174,8 @@ function renderFinancialCard() {
 // SCHEDULED TASKS — CRUD
 // ════════════════════════════════════════════════════════════════
 async function completeTask(id) {
-  const { error } = await sb.from('scheduled_tasks').update({ is_done:true }).eq('id',id);
-  if (error) { showToast('Erro ao concluir tarefa','err'); return; }
+  const { error } = await db(() => sb.from('scheduled_tasks').update({ is_done:true }).eq('id',id), 'Erro ao concluir tarefa');
+  if (error) return;
   T.scheduledTasks = T.scheduledTasks.map(t=>t.id===id?{...t,is_done:true}:t);
   renderRightSidebar();
   showToast('Tarefa concluída ✓','ok');
@@ -3204,8 +3183,8 @@ async function completeTask(id) {
 
 async function deleteTask(id) {
   openConfirmModal('Excluir tarefa?', 'Esta tarefa será removida permanentemente.', async () => {
-    const { error } = await sb.from('scheduled_tasks').delete().eq('id',id);
-    if (error) { showToast('Erro ao excluir','err'); return; }
+    const { error } = await db(() => sb.from('scheduled_tasks').delete().eq('id',id), 'Erro ao excluir tarefa');
+    if (error) return;
     T.scheduledTasks = T.scheduledTasks.filter(t=>t.id!==id);
     renderRightSidebar();
     showToast('Tarefa excluída','ok');
@@ -3213,8 +3192,8 @@ async function deleteTask(id) {
 }
 
 async function completeAppt(id) {
-  const { error } = await sb.from('appointments').update({ is_done:true }).eq('id',id);
-  if (error) { showToast('Erro','err'); return; }
+  const { error } = await db(() => sb.from('appointments').update({ is_done:true }).eq('id',id), 'Erro ao concluir compromisso');
+  if (error) return;
   T.appointments = T.appointments.map(a=>a.id===id?{...a,is_done:true}:a);
   renderRightSidebar();
   showToast('Compromisso concluído ✓','ok');
@@ -3222,8 +3201,8 @@ async function completeAppt(id) {
 
 async function deleteAppt(id) {
   openConfirmModal('Excluir compromisso?', 'Este compromisso será removido permanentemente.', async () => {
-    const { error } = await sb.from('appointments').delete().eq('id',id);
-    if (error) { showToast('Erro ao excluir','err'); return; }
+    const { error } = await db(() => sb.from('appointments').delete().eq('id',id), 'Erro ao excluir compromisso');
+    if (error) return;
     T.appointments = T.appointments.filter(a=>a.id!==id);
     renderRightSidebar();
     showToast('Compromisso excluído','ok');
@@ -3968,11 +3947,18 @@ function renderCalSidebar() {
           const dec = ev.isDone ? 'line-through' : 'none';
           const op = ev.isDone ? '0.5' : '1';
           const timeHtml = ev.time ? `<div style="font-size:11px;color:#888;margin-top:2px;">🕐 ${ev.time}</div>` : '';
+          const onDelete = ev.type === 'appointment'
+            ? `deleteAppt(${ev.id})`
+            : `deleteTask(${ev.id})`;
           return `<div style="padding:10px 14px;border-radius:10px;background:${bg};border-left:3px solid ${col};opacity:${op};">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
               <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${col};">${lbl}${done}</div>
-              <button onclick="openCalEditModal(${ev.id},'${ev.type}')"
-                style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 2px;opacity:.6;line-height:1;" title="Editar">✏</button>
+              <div style="display:flex;gap:4px;">
+                <button onclick="openCalEditModal(${ev.id},'${ev.type}')"
+                  style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 2px;opacity:.6;line-height:1;" title="Editar">✏</button>
+                <button onclick="${onDelete}"
+                  style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:14px;padding:0 2px;opacity:.7;line-height:1;" title="Excluir">×</button>
+              </div>
             </div>
             <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${esc(ev.title)}</div>
             ${timeHtml}
