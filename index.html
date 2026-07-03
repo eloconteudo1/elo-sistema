@@ -1104,7 +1104,7 @@
       </div>
 
       <!-- KPIs -->
-      <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;"></div>
+      <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;"></div>
 
       <!-- Grid principal -->
       <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start;">
@@ -1177,12 +1177,15 @@
             </div>
             <!-- Form novo custo -->
             <div id="fin-new-cost-form" style="display:none;background:rgba(46,24,71,.04);border:var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto auto;gap:8px;align-items:end;">
                 <div><label class="field-label">Descrição</label><input class="field-input" id="fnc-desc" placeholder="Ex: Salário Andrey" /></div>
                 <div><label class="field-label">Valor (R$)</label><input class="field-input" id="fnc-amount" type="number" placeholder="1600.00" /></div>
                 <div><label class="field-label">Categoria</label><input class="field-input" id="fnc-cat" placeholder="Ex: Pessoal, Impostos..." /></div>
                 <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px;">
                   <input type="checkbox" id="fnc-paid" /><label for="fnc-paid" style="font-size:12px;font-weight:700;color:var(--text-dim);cursor:pointer;">Pago</label>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px;">
+                  <input type="checkbox" id="fnc-recurring" /><label for="fnc-recurring" style="font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;">Fixo (recorrente)</label>
                 </div>
                 <button onclick="saveNewCost()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--coral);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">Salvar</button>
               </div>
@@ -1363,7 +1366,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.27 · ELO Comunicação · Atualizado em 03/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.27b · ELO Comunicação · Atualizado em 03/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1433,7 +1436,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.27</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.27b</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">03/07/2026</span></span>
   </footer>
@@ -4760,10 +4763,10 @@ function finNavMes(dir) {
 
 async function loadFinData() {
   const [pm, ci, cl, sg] = await Promise.all([
-    sb.from('monthly_payments').select('*').eq('month', FIN.month).eq('year', FIN.year).order('client_id'),
-    sb.from('cost_items').select('*').eq('month', FIN.month).eq('year', FIN.year).order('id'),
-    sb.from('clients').select('id,name,due_day,contract_value,payment_method,color').eq('is_active', true).eq('is_internal', false),
-    sb.from('settings').select('revenue_goal,hourly_rate,daily_goal_minutes').eq('id',1).single(),
+    db(() => sb.from('monthly_payments').select('*').eq('month', FIN.month).eq('year', FIN.year).order('client_id'), 'Erro ao carregar pagamentos'),
+    db(() => sb.from('cost_items').select('*').eq('month', FIN.month).eq('year', FIN.year).order('id'), 'Erro ao carregar custos'),
+    db(() => sb.from('clients').select('id,name,due_day,contract_value,payment_method,color').eq('is_active', true).eq('is_internal', false), 'Erro ao carregar clientes'),
+    db(() => sb.from('settings').select('revenue_goal,hourly_rate,daily_goal_minutes').eq('id',1).single(), 'Erro ao carregar configurações'),
   ]);
   FIN.payments = pm.data || [];
   FIN.costs    = ci.data || [];
@@ -4774,7 +4777,6 @@ async function loadFinData() {
   }
 
   // Auto-gera entradas mensais para clientes que ainda não têm registro no mês
-  // Usa upsert com ignoreDuplicates para evitar duplicação em chamadas repetidas
   const existingClientIds = new Set(FIN.payments.filter(p => !p.is_manual).map(p => p.client_id));
   const missing = FIN.clients.filter(c => !existingClientIds.has(c.id) && Number(c.contract_value) > 0);
   if (missing.length > 0) {
@@ -4782,17 +4784,46 @@ async function loadFinData() {
       client_id: c.id, month: FIN.month, year: FIN.year,
       amount: c.contract_value, is_paid: false, is_manual: false,
       due_day: c.due_day, payment_method: c.payment_method,
+      status: 'ABERTO',
     }));
-    const { data: inserted } = await sb.from('monthly_payments')
-      .upsert(toInsert, { onConflict: 'client_id,month,year', ignoreDuplicates: true })
-      .select();
-    if (inserted && inserted.length > 0) FIN.payments = [...FIN.payments, ...inserted];
+    const ins = await db(
+      () => sb.from('monthly_payments')
+        .upsert(toInsert, { onConflict: 'client_id,month,year', ignoreDuplicates: true })
+        .select(),
+      'Erro ao gerar recebimentos'
+    );
+    if (ins.data && ins.data.length > 0) FIN.payments = [...FIN.payments, ...ins.data];
   }
+
+  // Auto-marca VENCIDO no banco
+  const now = new Date();
+  const todayNum = now.getDate();
+  const isCurrentMonth = FIN.month === now.getMonth()+1 && FIN.year === now.getFullYear();
+  const isPastMonth = FIN.year < now.getFullYear() || (FIN.year === now.getFullYear() && FIN.month < now.getMonth()+1);
+  const toVencido = FIN.payments.filter(p => {
+    if (p.is_paid || p.status === 'PERDIDO' || p.status === 'VENCIDO') return false;
+    const dueDay = p.due_day || (FIN.clients.find(c => c.id === p.client_id)?.due_day ?? null);
+    return isPastMonth || (isCurrentMonth && dueDay && dueDay < todayNum);
+  });
+  if (toVencido.length > 0) {
+    const ids = toVencido.map(p => p.id);
+    await db(
+      () => sb.from('monthly_payments').update({ status: 'VENCIDO' }).in('id', ids),
+      'Erro ao marcar vencidos'
+    );
+    FIN.payments = FIN.payments.map(p =>
+      ids.includes(p.id) ? { ...p, status: 'VENCIDO' } : p
+    );
+  }
+
   // Ordenar por due_day
   FIN.payments.sort((a,b) => {
-    const da = a.due_day ?? 99, db = b.due_day ?? 99;
-    return da - db;
+    const da = a.due_day ?? 99, db2 = b.due_day ?? 99;
+    return da - db2;
   });
+
+  // Copiar custos recorrentes do mês anterior se mês atual não tiver nenhum
+  await autoCarryRecurringCosts();
 }
 
 function finClientName(p) {
@@ -4808,12 +4839,13 @@ function finClientDueDay(p) {
 
 function renderFinanceiro() {
   const payments = FIN.payments.filter(p =>
-    p.is_manual || T.clients.find(c => c.id === p.client_id)
+    p.is_manual || FIN.clients.find(c => c.id === p.client_id)
   );
   const costs    = FIN.costs;
 
-  const totalReceita   = payments.reduce((s,p) => s + Number(p.amount), 0);
-  const totalRecebido  = payments.filter(p => p.is_paid).reduce((s,p) => s + Number(p.amount), 0);
+  const totalReceita   = payments.filter(p => (p.status||'ABERTO') !== 'PERDIDO').reduce((s,p) => s + Number(p.amount), 0);
+  const totalRecebido  = payments.filter(p => (p.status||'ABERTO') === 'PAGO').reduce((s,p) => s + Number(p.amount), 0);
+  const totalPerdido   = payments.filter(p => (p.status||'ABERTO') === 'PERDIDO').reduce((s,p) => s + Number(p.amount), 0);
   const totalAberto    = totalReceita - totalRecebido;
   const totalCustos    = costs.reduce((s,c) => s + Number(c.amount), 0);
   const custosPagos    = costs.filter(c => c.is_paid).reduce((s,c) => s + Number(c.amount), 0);
@@ -4829,6 +4861,7 @@ function renderFinanceiro() {
     { label:'Resultado',  val: fBRL(resultado),     color: resultado>=0?'#2FB989':'#E83E78', sub: null },
     { label:'Recebido',   val: fBRL(totalRecebido), color:'#2FB989',       sub: null },
     { label:'Em aberto',  val: fBRL(totalAberto),   color:'#E07A3A',       sub: null },
+    { label:'Perdido',    val: fBRL(totalPerdido),  color:'#999',          sub: null },
   ];
   document.getElementById('fin-kpis').innerHTML = kpis.map(k => `
     <div style="background:white;border:var(--border);border-radius:14px;padding:14px 16px;">
@@ -4869,33 +4902,48 @@ function renderFinanceiro() {
   document.getElementById('fin-payments-tbody').innerHTML = payments.length === 0
     ? `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum recebimento cadastrado.</td></tr>`
     : payments.map(p => {
-        const isPaid = p.is_paid;
-        const dueDay = p.due_day || (FIN.clients.find(c=>c.id===p.client_id)?.due_day ?? null);
-        const isVencido = !isPaid && (isPastMonth || (isCurrentMonth && dueDay && dueDay < todayNum));
-        const status = isPaid
+        const pStatus = p.status || (p.is_paid ? 'PAGO' : 'ABERTO');
+        const isPaid    = pStatus === 'PAGO';
+        const isVencido = pStatus === 'VENCIDO';
+        const isPerdido = pStatus === 'PERDIDO';
+
+        const statusBadge = isPaid
           ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#D5F5E3;color:#0F6E56;white-space:nowrap;">PAGO</span>`
           : isVencido
           ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FDECEA;color:#A32D2D;white-space:nowrap;">VENCIDO</span>`
+          : isPerdido
+          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#F0F0F0;color:#666;white-space:nowrap;">PERDIDO</span>`
           : `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FAEEDA;color:#854F0B;white-space:nowrap;">ABERTO</span>`;
-        const action = isPaid
-          ? `<button onclick="finMarkPayment(${p.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Desmarcar</button>`
-          : `<button onclick="finMarkPayment(${p.id},true)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Marcar Pago</button>`;
-        const del = `<button onclick="finDeletePayment(${p.id},'${finClientName(p).replace(/'/g,"\\'")}')"
+
+        const mainBtn = isPaid
+          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'ABERTO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Desmarcar</button>`
+          : isPerdido
+          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'ABERTO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(46,185,137,.4);background:transparent;color:#2FB989;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Reativar</button>`
+          : `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'PAGO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Marcar Pago</button>`;
+
+        const perdidoBtn = (!isPaid && !isPerdido)
+          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'PERDIDO')" style="padding:4px 8px;border-radius:16px;border:1px solid rgba(100,100,100,.2);background:transparent;color:var(--text-dim);font-size:10px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Perdido</button>`
+          : '';
+
+        const del = `<button onclick="finDeletePayment(${p.id},'${esc(finClientName(p)).replace(/'/g,"\\'")}')"
           style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.4;line-height:1;padding:2px;"
           title="Excluir">×</button>`;
+
         const avulso = p.is_manual
           ? `<span style="font-size:9px;background:#e8f5e9;color:#2e7d32;border-radius:6px;padding:1px 5px;font-weight:700;margin-right:5px;white-space:nowrap;">AVULSO</span>`
           : '';
-        const rowBg = isVencido ? 'background:rgba(220,38,38,.05);' : '';
-        const amtStyle = isVencido ? 'color:#DC2626;' : '';
+        const rowBg   = isVencido ? 'background:rgba(220,38,38,.05);' : isPerdido ? 'background:rgba(100,100,100,.04);' : '';
+        const amtStyle = isVencido ? 'color:#DC2626;' : isPerdido ? 'color:var(--text-dim);text-decoration:line-through;' : '';
+
         return `<tr style="${rowBg}">
           <td style="${TDbase}">${avulso}${esc(finClientName(p))}</td>
           <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(p.amount))}</td>
           <td style="${TDnw}text-align:center;">${finClientDueDay(p)}</td>
-          <td style="${TDnw}text-align:center;">${status}</td>
+          <td style="${TDnw}text-align:center;">${statusBadge}</td>
           <td style="${TDnw}text-align:center;">
             <div style="display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
-              ${action}
+              ${mainBtn}
+              ${perdidoBtn}
               <button onclick="openEditPaymentModal(${p.id},${p.amount})"
                 style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px;opacity:.5;line-height:1;"
                 title="Editar valor">✏</button>
@@ -4915,11 +4963,14 @@ function renderFinanceiro() {
         const status = isPaid
           ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#D5F5E3;color:#0F6E56;">PAGO</span>`
           : `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FAEEDA;color:#854F0B;">ABERTO</span>`;
+        const fixoBadge = c.is_recurring
+          ? `<span style="font-size:9px;background:#EDE8F5;color:#4A2976;border-radius:6px;padding:1px 5px;font-weight:800;margin-left:5px;white-space:nowrap;">FIXO</span>`
+          : '';
         const toggleBtn = isPaid
           ? `<button onclick="finToggleCost(${c.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Desmarcar</button>`
           : `<button onclick="finToggleCost(${c.id},true)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Marcar Pago</button>`;
         return `<tr>
-          <td style="${TDbase}">${esc(c.description)}</td>
+          <td style="${TDbase}">${esc(c.description)}${fixoBadge}</td>
           <td style="${TDbase}color:var(--text-dim);">${c.category||'—'}</td>
           <td style="${TDnw}text-align:right;font-weight:700;">${fBRL(Number(c.amount))}</td>
           <td style="${TDnw}text-align:center;">${status}</td>
@@ -5059,13 +5110,17 @@ async function saveNewPayment() {
   const method = document.getElementById('fnp-method').value||null;
   const isPaid = document.getElementById('fnp-paid').checked;
   if (!name || !amount) { showToast('Preencha nome e valor','warn'); return; }
-  const { data, error } = await sb.from('monthly_payments').insert({
-    client_id: 0, month: FIN.month, year: FIN.year,
-    amount, is_paid: isPaid, client_name: name,
-    is_manual: true, due_day: due, payment_method: method,
-    paid_at: isPaid ? Date.now() : null,
-  }).select().single();
-  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  const { data, error } = await db(
+    () => sb.from('monthly_payments').insert({
+      client_id: 0, month: FIN.month, year: FIN.year,
+      amount, is_paid: isPaid, client_name: name,
+      is_manual: true, due_day: due, payment_method: method,
+      paid_at: isPaid ? Date.now() : null,
+      status: isPaid ? 'PAGO' : 'ABERTO',
+    }).select().single(),
+    'Erro ao adicionar recebimento'
+  );
+  if (error) return;
   FIN.payments.push(data);
   document.getElementById('fnp-name').value='';
   document.getElementById('fnp-amount').value='';
@@ -5078,36 +5133,46 @@ async function saveNewPayment() {
 }
 
 async function saveNewCost() {
-  const desc   = document.getElementById('fnc-desc').value.trim();
-  const amount = parseFloat(document.getElementById('fnc-amount').value||'0');
-  const cat    = document.getElementById('fnc-cat').value.trim()||null;
-  const isPaid = document.getElementById('fnc-paid').checked;
+  const desc      = document.getElementById('fnc-desc').value.trim();
+  const amount    = parseFloat(document.getElementById('fnc-amount').value||'0');
+  const cat       = document.getElementById('fnc-cat').value.trim()||null;
+  const isPaid    = document.getElementById('fnc-paid').checked;
+  const recurring = document.getElementById('fnc-recurring')?.checked || false;
   if (!desc || !amount) { showToast('Preencha descrição e valor','warn'); return; }
-  const { data, error } = await sb.from('cost_items').insert({
-    user_id: appUser.id, month: FIN.month, year: FIN.year,
-    description: desc, amount, category: cat, is_paid: isPaid,
-  }).select().single();
-  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  const { data, error } = await db(
+    () => sb.from('cost_items').insert({
+      user_id: appUser.id, month: FIN.month, year: FIN.year,
+      description: desc, amount, category: cat, is_paid: isPaid,
+      is_recurring: recurring,
+    }).select().single(),
+    'Erro ao adicionar custo'
+  );
+  if (error) return;
   FIN.costs.push(data);
   document.getElementById('fnc-desc').value='';
   document.getElementById('fnc-amount').value='';
   document.getElementById('fnc-cat').value='';
   document.getElementById('fnc-paid').checked=false;
+  if (document.getElementById('fnc-recurring')) document.getElementById('fnc-recurring').checked=false;
   finToggleNewCost();
   renderFinanceiro();
   showToast('Custo adicionado ✓','ok');
 }
 
 async function finMarkPayment(id, isPaid) {
-  const { error } = await sb.from('monthly_payments').update({
-    is_paid: isPaid, paid_at: isPaid ? Date.now() : null,
-  }).eq('id', id);
-  if (error) { showToast('Erro: '+error.message,'err'); return; }
-  FIN.payments = FIN.payments.map(p => p.id===id ? {...p, is_paid: isPaid} : p);
-  // Sync com aba Clientes se for pagamento de cliente
+  const newStatus = isPaid ? 'PAGO' : 'ABERTO';
+  const { error } = await db(
+    () => sb.from('monthly_payments').update({
+      is_paid: isPaid,
+      paid_at: isPaid ? Date.now() : null,
+      status: newStatus,
+    }).eq('id', id),
+    'Erro ao atualizar pagamento'
+  );
+  if (error) return;
+  FIN.payments = FIN.payments.map(p => p.id===id ? {...p, is_paid: isPaid, status: newStatus} : p);
   const pay = FIN.payments.find(p => p.id===id);
   if (pay && !pay.is_manual) {
-    C.payments = C.payments.map(p => p.id===id ? {...p, is_paid: isPaid} : p);
     if (document.getElementById('page-clientes').classList.contains('active')) renderClientGrid();
   }
   renderFinanceiro();
@@ -5115,11 +5180,37 @@ async function finMarkPayment(id, isPaid) {
 }
 
 async function finToggleCost(id, isPaid) {
-  const { error } = await sb.from('cost_items').update({ is_paid: isPaid }).eq('id', id);
-  if (error) { showToast('Erro: '+error.message,'err'); return; }
+  const { error } = await db(
+    () => sb.from('cost_items').update({ is_paid: isPaid }).eq('id', id),
+    'Erro ao atualizar custo'
+  );
+  if (error) return;
   FIN.costs = FIN.costs.map(c => c.id===id ? {...c, is_paid: isPaid} : c);
   renderFinanceiro();
   showToast(isPaid ? 'Custo marcado pago ✓' : 'Desmarcado','ok');
+}
+
+async function finSetStatus(id, status) {
+  const isPaid = status === 'PAGO';
+  const { error } = await db(
+    () => sb.from('monthly_payments').update({
+      status,
+      is_paid: isPaid,
+      paid_at: isPaid ? Date.now() : null,
+    }).eq('id', id),
+    'Erro ao atualizar status'
+  );
+  if (error) return;
+  FIN.payments = FIN.payments.map(p =>
+    p.id === id ? { ...p, status, is_paid: isPaid } : p
+  );
+  renderFinanceiro();
+  showToast(
+    status === 'PAGO'    ? 'Marcado como pago ✓'  :
+    status === 'PERDIDO' ? 'Marcado como perdido'  :
+    status === 'ABERTO'  ? 'Reativado como aberto' :
+                           'Status atualizado', 'ok'
+  );
 }
 
 async function finDeletePayment(id, clientName) {
@@ -5127,8 +5218,11 @@ async function finDeletePayment(id, clientName) {
     'Excluir recebimento',
     `Excluir o recebimento de ${clientName || 'este cliente'}? Esta ação não pode ser desfeita.`,
     async () => {
-      const { error } = await sb.from('monthly_payments').delete().eq('id', id);
-      if (error) { showToast('Erro ao excluir','err'); return; }
+      const { error } = await db(
+        () => sb.from('monthly_payments').delete().eq('id', id),
+        'Erro ao excluir recebimento'
+      );
+      if (error) return;
       FIN.payments = FIN.payments.filter(p => p.id !== id);
       showToast('Recebimento excluído','ok');
       renderFinanceiro();
@@ -5165,8 +5259,11 @@ function openEditPaymentModal(id, currentAmount) {
 async function savePaymentAmount(id) {
   const val = parseFloat(document.getElementById('edit-pay-amount')?.value);
   if (isNaN(val) || val < 0) { showToast('Valor inválido', 'warn'); return; }
-  const { error } = await sb.from('monthly_payments').update({ amount: val }).eq('id', id);
-  if (error) { showToast('Erro ao salvar', 'err'); return; }
+  const { error } = await db(
+    () => sb.from('monthly_payments').update({ amount: val }).eq('id', id),
+    'Erro ao salvar valor'
+  );
+  if (error) return;
   const idx = FIN.payments.findIndex(p => p.id === id);
   if (idx !== -1) FIN.payments[idx].amount = val;
   closeModal();
@@ -5207,8 +5304,11 @@ async function saveEditCost(id) {
   const val  = parseFloat(document.getElementById('edit-cost-amount')?.value);
   if (!desc) { showToast('Informe a descrição','warn'); return; }
   if (isNaN(val) || val < 0) { showToast('Valor inválido','warn'); return; }
-  const { error } = await sb.from('cost_items').update({ description: desc, amount: val }).eq('id', id);
-  if (error) { showToast('Erro ao salvar','err'); return; }
+  const { error } = await db(
+    () => sb.from('cost_items').update({ description: desc, amount: val }).eq('id', id),
+    'Erro ao salvar custo'
+  );
+  if (error) return;
   const idx = FIN.costs.findIndex(c => c.id === id);
   if (idx !== -1) { FIN.costs[idx].description = desc; FIN.costs[idx].amount = val; }
   closeModal();
@@ -5218,12 +5318,52 @@ async function saveEditCost(id) {
 
 async function finDeleteCost(id, desc) {
   openConfirmModal(`Excluir "${desc}"?`, 'Este custo será removido permanentemente.', async () => {
-    const { error } = await sb.from('cost_items').delete().eq('id', id);
-    if (error) { showToast('Erro: '+error.message,'err'); return; }
+    const { error } = await db(
+      () => sb.from('cost_items').delete().eq('id', id),
+      'Erro ao excluir custo'
+    );
+    if (error) return;
     FIN.costs = FIN.costs.filter(c => c.id !== id);
     renderFinanceiro();
     showToast('Removido','warn');
   });
+}
+
+async function autoCarryRecurringCosts() {
+  if (FIN.costs.length > 0) return;
+
+  let prevMonth = FIN.month - 1, prevYear = FIN.year;
+  if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+
+  const { data: prevCosts } = await db(
+    () => sb.from('cost_items')
+      .select('*')
+      .eq('month', prevMonth)
+      .eq('year', prevYear)
+      .eq('is_recurring', true),
+    'Erro ao carregar custos recorrentes'
+  );
+  if (!prevCosts || prevCosts.length === 0) return;
+
+  const toInsert = prevCosts.map(c => ({
+    user_id: c.user_id,
+    month: FIN.month,
+    year: FIN.year,
+    description: c.description,
+    amount: c.amount,
+    category: c.category,
+    is_paid: false,
+    is_recurring: true,
+  }));
+
+  const { data: inserted } = await db(
+    () => sb.from('cost_items').insert(toInsert).select(),
+    'Erro ao copiar custos recorrentes'
+  );
+  if (inserted && inserted.length > 0) {
+    FIN.costs = [...FIN.costs, ...inserted];
+    showToast(`${inserted.length} custo(s) fixo(s) copiado(s) do mês anterior`, 'ok');
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
