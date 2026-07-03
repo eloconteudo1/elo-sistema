@@ -1370,7 +1370,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.25 · ELO Comunicação · Atualizado em 02/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.26 · ELO Comunicação · Atualizado em 02/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1440,7 +1440,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.25</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.26</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">02/07/2026</span></span>
   </footer>
@@ -1763,7 +1763,7 @@ async function renderMobileAgenda() {
       const client = T.clients.find(c=>c.id===t.client_id);
       html += `<div style="${rowS}">
         <span style="width:10px;height:10px;border-radius:50%;background:${prioColor[t.priority||'media']};flex-shrink:0;margin-top:4px;display:inline-block;"></span>
-        <div><div style="${titleS}">${t.title}</div>
+        <div><div style="${titleS}">${esc(t.title)}</div>
         <div style="${subS}">${t.scheduled_date||''}${client?' · '+client.name:''}</div></div></div>`;
     });
   } else {
@@ -3138,7 +3138,7 @@ function renderAlertCard() {
     return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:.5px solid rgba(224,122,95,.15);">
       <span style="font-size:14px;flex-shrink:0;">${isOv?'⚠️':'🔴'}</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.title}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
         ${t.scheduled_date?`<div style="font-size:10px;color:${isOv?'#DC2626':'var(--text-dim)'};">${isOv?'⏰ Atrasada: ':''}${dbDateToDisplay(t.scheduled_date)}${t.scheduled_time?` às ${t.scheduled_time}`:''}</div>`:''}
       </div>
     </div>`;
@@ -3810,10 +3810,12 @@ async function loadCalData() {
   const now = new Date(CAL.year, CAL.month, 1);
   const monthStart = new Date(CAL.year, CAL.month, 1).getTime();
   const monthEnd = new Date(CAL.year, CAL.month+1, 0, 23, 59, 59, 999).getTime();
+  const calMonthStartStr = `${CAL.year}-${String(CAL.month+1).padStart(2,'0')}-01`;
+  const calMonthEndStr   = `${CAL.year}-${String(CAL.month+1).padStart(2,'0')}-31`;
 
   const [apptRes, taskRes, remRes, teRes] = await Promise.all([
     sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'),
-    sb.from('scheduled_tasks').select('*').order('created_at', {ascending:false}),
+    sb.from('scheduled_tasks').select('*').gte('scheduled_date', calMonthStartStr).lte('scheduled_date', calMonthEndStr).order('scheduled_date', {ascending:true}),
     sb.from('reminders').select('*').order('id'),
     sb.from('time_entries').select('start_time,duration_minutes').gte('start_time', monthStart).lte('start_time', monthEnd),
   ]);
@@ -3972,7 +3974,7 @@ function renderCalSidebar() {
               <button onclick="openCalEditModal(${ev.id},'${ev.type}')"
                 style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 2px;opacity:.6;line-height:1;" title="Editar">✏</button>
             </div>
-            <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${ev.title}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${esc(ev.title)}</div>
             ${timeHtml}
           </div>`;
         }).join('') + `</div>`;
@@ -4537,7 +4539,7 @@ function renderCalAlerts() {
     { icon:'💬', bg:'rgba(37,211,102,.12)', title:'Checar WhatsApp', content:`<div style="font-size:12px;color:#888;margin-top:4px;">Configure via Alarmes Pessoais abaixo</div>` },
   ].map(s => `<div class="cal-alert-card">
     <div class="cal-alert-icon" style="background:${s.bg};">${s.icon}</div>
-    <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:var(--deep);">${s.title}</div>${s.content}</div>
+    <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:var(--deep);">${esc(s.title)}</div>${s.content}</div>
   </div>`).join('');
   document.getElementById('cal-alert-settings').innerHTML = settHtml;
 
@@ -5628,7 +5630,7 @@ async function resRenderHoje() {
   document.getElementById('res-legend-hoje').innerHTML = clientArr.length
     ? clientArr.slice(0,8).map((x,i) => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <div style="width:10px;height:10px;border-radius:50%;background:${RES_PALETTE[i%RES_PALETTE.length]};flex-shrink:0;"></div>
-        <span style="font-size:12px;color:var(--deep);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${x.name}</span>
+        <span style="font-size:12px;color:var(--deep);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(x.name)}</span>
         <span style="font-size:12px;font-weight:700;color:var(--text-dim);">${resFmin(x.mins)}</span>
         <span style="font-size:11px;color:var(--coral);font-weight:600;">${totalMins>0?Math.round((x.mins/totalMins)*100):0}%</span>
       </div>`).join('')
@@ -6367,7 +6369,7 @@ function cfgPreviewClientes(input) {
     pre.style.display = 'flex';
     document.getElementById('imp-cli-info').textContent = `${_impCliRows.length} cliente(s) encontrado(s)`;
     document.getElementById('imp-cli-rows').innerHTML = _impCliRows.slice(0,8).map(r=>
-      `<div style="padding:6px 10px;border-bottom:1px solid rgba(0,0,0,.06)">${r.nome||r.name||'?'} · ${r.especialidade||''} · R$ ${r.valor||0}</div>`
+      `<div style="padding:6px 10px;border-bottom:1px solid rgba(0,0,0,.06)">${esc(r.nome||r.name||'?')} · ${esc(r.especialidade||'')} · R$ ${r.valor||0}</div>`
     ).join('') + (_impCliRows.length>8?`<div style="padding:6px 10px;color:var(--text-dim)">... e mais ${_impCliRows.length-8}</div>`:'');
   };
   reader.readAsText(file, 'UTF-8');

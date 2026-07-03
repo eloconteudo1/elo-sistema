@@ -363,8 +363,9 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S12B | ~~Sessão 12B: Fix "Cliente desconhecido" no Relatório — busca todos os clientes (ativos + inativos) via clientNameMap~~ | **Concluído** |
 | S9I | ~~Sessão 9I: Relatório por cliente — allClientsMap via .in(clientIds) + indicador (inativo) no card~~ | **Concluído** |
 | S15 | ~~Sessão 15: Alarmes com tipo 'uma vez', múltiplos horários diários e banner em destaque~~ | **Concluído** |
-| S16 | ~~Sessão 16: XSS protection — função esc() + aplicada em todos os pontos de interpolação innerHTML~~ | **Concluído** |
+| S16 | ~~Sessão 16: XSS protection — função esc() + aplicada nos campos de texto livre principais (Home, calendário, anotações, listas)~~ | **Concluído** |
 | S17 | ~~Sessão 17: Refatoração Calendário — modal unificado, visual da grade, sidebar sem Resumo do Mês, 2 bipes, banner 5s, menu como `<a>`~~ | **Concluído** |
+| S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
