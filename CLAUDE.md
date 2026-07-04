@@ -336,6 +336,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão 20 — `db()` no restante do `index.html` + `conteudo.html` + fixa CDN (V3.28)**
+- Migradas as ~54 chamadas Supabase restantes do `index.html` para `db()` (alarmes, timer, notes, clientes, pagamentos, modal Novo Registro, Resultado, Config, backup/import) — nenhuma chamada `sb.from` crua restante
+- Adicionado helper `db()` (mesmo padrão do `index.html`) ao `conteudo.html`; migradas as 9 chamadas (clientes, `content_notes`, KPIs via `Promise.all`, especialidades, busca paginada via query builder, editar/excluir post)
+- Toasts manuais duplicados removidos onde o `db()` já cobre o erro; fluxo de `if (error) return` preservado
+- CDN do `@supabase/supabase-js` fixado na versão exata `2.110.0` (antes flutuava em `@2`) nos dois arquivos
+- Escopo fora: chamadas `sb.auth.*` (signUp, signInWithPassword, signOut, getSession) não foram tocadas — mantêm tratamento de erro próprio
+- Versão 3.28, data 04/07/2026
+
 **Sessão 19b — Financeiro: status, custos recorrentes, fix FIN.clients (V3.27b)**
 - Fix bug: `renderFinanceiro` usava `T.clients` em vez de `FIN.clients`
 - `loadFinData` migrado para `db()` + auto-marca VENCIDO no banco + chama `autoCarryRecurringCosts()`
