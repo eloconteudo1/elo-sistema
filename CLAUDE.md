@@ -372,6 +372,13 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Mobile: `#atencao-grid` empilha em 1 coluna via `@media (max-width:768px)`
 - Versão 3.28, data 04/07/2026
 
+**Sessão S-DESVIO-FIX — /desviei e /voltei com design final (V3.29)**
+- `/desviei`: encerra timer ativo via `stopTimer()`, salva contexto (client_id, task_id, task_name), busca cliente interno ELO + tarefa "Tempo Perdido" em runtime, inicia novo timer via `startTimer()` com desc "Desvio"
+- `/voltei`: encerra timer de "Tempo Perdido" via `stopTimer()`, captura duração, restaura seleção da tarefa anterior (sem iniciar automaticamente), chama `handleIACommand('voltei')`, exibe mensagem com tempo perdido e tarefa anterior
+- SQL: `INSERT INTO tasks (name, category) ... 'Tempo Perdido', 'Gestão ELO'` com `WHERE NOT EXISTS` (rodar no painel Supabase)
+- Guards: `T.startInFlight`, `T.stopInFlight`, `T.actionInProgress` verificados antes de agir
+- Versão 3.29, data 04/07/2026
+
 ---
 
 ## 8. O que ainda falta implementar
@@ -405,6 +412,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
 | SA | ~~Sessão S-ASSISTENTE: Painel Assistente ELO na coluna direita da Home — mock + comandos~~ | **Concluído** |
+| SDF | ~~Sessão S-DESVIO-FIX: /desviei e /voltei com stopTimer + startTimer reais + tarefa Tempo Perdido~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

@@ -1345,7 +1345,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.28 · ELO Comunicação · Atualizado em 04/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.29 · ELO Comunicação · Atualizado em 04/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1415,7 +1415,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.28</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.29</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">04/07/2026</span></span>
   </footer>
@@ -3224,34 +3224,82 @@ function openAgendaResumo() {
 }
 
 // ── Comando /desviei ──
-function handleDesvieiCommand() {
+async function handleDesvieiCommand() {
+  if (T.startInFlight || T.stopInFlight || T.actionInProgress) {
+    showAssistantMessage('Aguarde, o cronômetro está processando outra ação.');
+    return;
+  }
+
   if (T.activeEntry) {
-    T._desvioContextoAnterior = { ...T.activeEntry };
-    // Pausa o cronômetro atual em vez de finalizar, para não perder o registro
-    if (!T.isPaused) pauseTimer();
+    T._desvioContextoAnterior = {
+      client_id: T.activeEntry.client_id,
+      task_id: T.activeEntry.task_id,
+      task_name: T.activeEntry.task_name
+    };
+    await stopTimer();
   } else {
     T._desvioContextoAnterior = null;
   }
-  console.log('[Assistente ELO] Desvio iniciado — contexto anterior:', T._desvioContextoAnterior);
-  showAssistantMessage('Desvio registrado. Use /voltei quando retomar.');
+
+  const eloClient = T.clients.find(c => c.is_internal === true);
+  const tempoPerdidoTask = T.tasks.find(t => t.name === 'Tempo Perdido');
+
+  if (!eloClient || !tempoPerdidoTask) {
+    showAssistantMessage('Não encontrei o cliente ELO ou a tarefa "Tempo Perdido". Verifique Config > Tarefas.');
+    return;
+  }
+
+  T.selectedClientId = eloClient.id;
+  T.selectedTaskId = tempoPerdidoTask.id;
+  T.selectedTaskName = 'Tempo Perdido';
+  const descInput = document.getElementById('desc-input');
+  if (descInput) descInput.value = 'Desvio';
+
+  await startTimer();
+
+  showAssistantMessage('Desvio iniciado. Estou contando como Tempo Perdido.');
 }
 
 // ── Comando /voltei ──
-function handleVolteiCommand() {
+async function handleVolteiCommand() {
+  if (T.startInFlight || T.stopInFlight || T.actionInProgress) {
+    showAssistantMessage('Aguarde, o cronômetro está processando outra ação.');
+    return;
+  }
+
+  let tempoPerdidoMin = null;
+
+  if (T.activeEntry && T.activeEntry.task_name === 'Tempo Perdido') {
+    const inicio = T.activeEntry.start_time;
+    const pausado = T.activeEntry.paused_duration || 0;
+    tempoPerdidoMin = Math.round((Date.now() - inicio - pausado) / 60000);
+    await stopTimer();
+  }
+
+  if (T._desvioContextoAnterior) {
+    T.selectedClientId = T._desvioContextoAnterior.client_id;
+    T.selectedTaskId = T._desvioContextoAnterior.task_id;
+    T.selectedTaskName = T._desvioContextoAnterior.task_name;
+    updateClientBtn();
+    renderTaskTree();
+  }
+
   const contexto = {
     hora_atual: new Date().toISOString(),
     tarefa_anterior: T._desvioContextoAnterior || null,
+    tempo_perdido_min: tempoPerdidoMin,
     para_hoje_restante: getParaHojeData(),
     atencao: getAtencaoData()
   };
   console.log('[Assistente ELO] handleVolteiCommand — pacote de contexto:', contexto);
 
-  if (T._desvioContextoAnterior && T.activeEntry && T.isPaused) {
-    resumeTimer();
-    showAssistantMessage('Bem-vinda de volta! Timer retomado.');
-  } else {
-    showAssistantMessage('Bem-vinda de volta! Selecione uma tarefa para continuar.');
-  }
+  handleIACommand('voltei');
+
+  const msg = T._desvioContextoAnterior
+    ? `Bem-vinda de volta! Tempo perdido: ${tempoPerdidoMin ?? 0}min. "${esc(T._desvioContextoAnterior.task_name)}" selecionada — clique em Iniciar para retomar.`
+    : 'Bem-vinda de volta! Selecione uma tarefa para continuar.';
+  showAssistantMessage(msg);
+
   T._desvioContextoAnterior = null;
 }
 
