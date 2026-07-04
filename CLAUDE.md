@@ -336,6 +336,16 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão S-CONSOLIDA — Assistente ELO restaurado + fix custos recorrentes (V3.30)**
+- Transplante cirúrgico do painel Assistente ELO da branch órfã `claude/caveman-mode-3j2e8f` (V3.29) para `main` (V3.28)
+- HTML: `<aside id="home-right-sidebar">` substituído pelos 4 blocos: `assistant-header-card`, `para-hoje-card`, `atencao-card`, `fala-comigo-card`
+- JS: `renderRightSidebar()` substituído pelo bloco completo do Assistente (315 linhas) — `renderParaHoje`, `renderAtencao`, `submitAssistantCommand`, `handleAssistantCommand`, `handleDesvieiCommand`, `handleVolteiCommand`, `handleAnotaCommand`, etc.
+- CSS: adicionado `#home-right-sidebar .right-card { margin-bottom:0; }`
+- Guards adicionados: `renderScheduledTasks()` (`if (!document.getElementById('sched-tasks-list')) return`) e `renderFinancialCard()` (`if (!card) return`)
+- `autoCarryRecurringCosts()` corrigido: não mais usa `if (FIN.costs.length > 0) return` — compara por `description` para copiar apenas recorrentes ausentes no mês atual
+- CDN mantido em `@supabase/supabase-js@2.110.0` (inalterado)
+- Versão 3.30, data 04/07/2026
+
 **Sessão 20 — `db()` no restante do `index.html` + `conteudo.html` + fixa CDN (V3.28)**
 - Migradas as ~54 chamadas Supabase restantes do `index.html` para `db()` (alarmes, timer, notes, clientes, pagamentos, modal Novo Registro, Resultado, Config, backup/import) — nenhuma chamada `sb.from` crua restante
 - Adicionado helper `db()` (mesmo padrão do `index.html`) ao `conteudo.html`; migradas as 9 chamadas (clientes, `content_notes`, KPIs via `Promise.all`, especialidades, busca paginada via query builder, editar/excluir post)
@@ -397,6 +407,8 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
 | S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
+| S20 | ~~Sessão 20: db() completo + conteudo.html + CDN fixado 2.110.0~~ | **Concluído** |
+| S-CONSOLIDA | ~~Sessão S-CONSOLIDA: Assistente ELO restaurado (transplante branch órfã) + fix autoCarryRecurringCosts~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
