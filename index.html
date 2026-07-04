@@ -195,6 +195,7 @@
 
     /* Right sidebar cards */
     .right-card { background:rgba(255,255,255,.88); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:18px; }
+    #home-right-sidebar .right-card { margin-bottom:0; }
     .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .kpi-item { background:rgba(46,24,71,.035); border-radius:12px; padding:10px 8px; display:flex; flex-direction:column; gap:5px; min-width:0; overflow:hidden; }
     .kpi-icon { width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-size:14px; background:rgba(191,168,217,.28); flex-shrink:0; }
@@ -334,6 +335,7 @@
       #home-grid.mv-atividades #home-timer-col { display:block !important; }
       #home-grid.mv-atividades #timer-card { display:none !important; }
       #home-grid.mv-atividades #home-right-sidebar { display:block !important; position:static; }
+      #atencao-grid { grid-template-columns:1fr !important; }
 
       /* Aba Agenda */
       #home-grid.mv-agenda #mobile-agenda-view { display:block !important; }
@@ -621,77 +623,54 @@
           </div>
         </div>
 
-        <!-- Right sidebar -->
-        <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;">
+        <!-- Right sidebar — Assistente ELO -->
+        <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;display:flex;flex-direction:column;gap:16px;">
 
-          <!-- Resumo -->
-          <div class="right-card">
-            <div class="sec-label" style="margin-bottom:14px;">Resumo de hoje</div>
-            <div class="kpi-grid">
-              <div class="kpi-item">
-                <div class="kpi-icon">⏱</div>
-                <strong class="kpi-val" id="kpi-worked">0min</strong>
-                <span class="kpi-lbl">Trabalhado</span>
+          <!-- BLOCO 1 — ASSISTENTE -->
+          <div class="right-card" id="assistant-header-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">⚡</span>
+                <span style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);">Assistente</span>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-icon">📌</div>
-                <strong class="kpi-val" id="kpi-sessions">0</strong>
-                <span class="kpi-lbl">Registros</span>
+              <span style="font-size:16px;color:var(--text-dim);opacity:.6;cursor:default;" title="Configurações (futuro)">⚙️</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <span style="font-size:34px;line-height:1;">☀️</span>
+              <div style="flex:1;">
+                <div id="assistant-greeting" style="font-size:17px;font-weight:800;color:var(--deep);">ALOU, Helô!</div>
+                <div style="font-size:12px;color:var(--text-dim);">Foca no que importa</div>
               </div>
-              <div class="kpi-item">
-                <div class="kpi-icon">⭐</div>
-                <strong class="kpi-val" id="kpi-top">—</strong>
-                <span class="kpi-lbl">Top cliente</span>
-              </div>
-              <div class="kpi-item">
-                <div class="kpi-icon">⏸</div>
-                <strong class="kpi-val" id="kpi-paused">0</strong>
-                <span class="kpi-lbl">Pausadas</span>
-              </div>
+              <button onclick="handleEstouAqui()" style="padding:10px 18px;border:none;border-radius:12px;background:var(--coral);color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .15s;">Estou aqui</button>
             </div>
           </div>
 
-          <!-- Anotações -->
-          <div class="right-card" id="notes-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <span class="sec-label">Anotações</span>
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-              <input
-                id="notes-input"
-                class="elo-input"
-                placeholder="Nova ideia ou lembrete…"
-                style="flex:1;"
-                onkeydown="if(event.key==='Enter')saveNote()"
-              />
-              <button
-                onclick="saveNote()"
-                style="padding:8px 14px;border-radius:8px;border:none;background:var(--coral);
-                       color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;
-                       white-space:nowrap;"
-              >Salvar</button>
-            </div>
-            <div id="notes-list" style="display:flex;flex-direction:column;max-height:200px;overflow-y:auto;"></div>
+          <!-- BLOCO 2 — PARA HOJE -->
+          <div class="right-card" id="para-hoje-card">
+            <div class="sec-label" style="margin-bottom:14px;">Para hoje</div>
+            <div id="para-hoje-chips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;"></div>
+            <div id="para-hoje-timeline"></div>
+            <div id="para-hoje-vertodos" style="margin-top:10px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;"></div>
           </div>
 
-          <!-- Próximas tarefas -->
-          <div class="right-card" id="sched-tasks-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <span class="sec-label">Próximas tarefas</span>
-              <button onclick="openTaskModal()" style="background:var(--coral);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit;">+ ADD</button>
+          <!-- BLOCO 3 — ATENÇÃO -->
+          <div class="right-card" id="atencao-card">
+            <div class="sec-label" style="margin-bottom:14px;">Atenção</div>
+            <div id="atencao-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div id="atencao-financeiro"></div>
+              <div id="atencao-agenda"></div>
             </div>
-            <div id="sched-tasks-list">
-              <div style="font-size:13px;color:var(--text-dim);opacity:.7;padding:8px 0;">Nenhuma tarefa cadastrada.</div>
-            </div>
-            <div id="sched-done-count" style="display:none;font-size:11px;color:#aaa;margin-top:8px;"></div>
           </div>
 
-
-          <!-- Financeiro -->
-          <div id="fin-card" style="display:none;" class="fin-card">
-            <div class="sec-label" style="color:var(--coral);margin-bottom:14px;">Financeiro</div>
-            <div id="fin-list"></div>
+          <!-- BLOCO 4 — FALA COMIGO, BB -->
+          <div class="right-card" id="fala-comigo-card">
+            <div class="sec-label" style="margin-bottom:10px;">Fala comigo, bb</div>
+            <textarea id="assistant-input" class="elo-input" placeholder="Digite um comando..." rows="2" style="width:100%;resize:none;font-family:inherit;margin-bottom:4px;" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+            <div style="font-size:10px;color:var(--text-dim);opacity:.7;margin-bottom:8px;">Ex: /ia estou aqui</div>
+            <button onclick="submitAssistantCommand()" style="width:100%;padding:8px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Enviar</button>
+            <div id="assistant-message" style="margin-top:8px;font-size:12px;color:var(--text-dim);min-height:16px;"></div>
           </div>
+
         </aside>
 
         <!-- Mobile Agenda view -->
@@ -1366,7 +1345,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.27b · ELO Comunicação · Atualizado em 03/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.28 · ELO Comunicação · Atualizado em 04/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1436,9 +1415,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.27b</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.28</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">03/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">04/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -2122,7 +2101,6 @@ async function initHome() {
   renderTodayActivities();
   renderRightSidebar();
   updateAlertBadge();
-  renderNotesList();
   // Event delegation for activity rows (edit + delete)
   const actList = document.getElementById('activities-list');
   if (actList && !actList._delegated) {
@@ -2133,33 +2111,6 @@ async function initHome() {
       const id = Number(btn.dataset.id);
       if (btn.dataset.action === 'edit-entry') openManualEntryModal(id);
       else if (btn.dataset.action === 'del-entry') deleteEntry(id);
-    });
-  }
-  // Event delegation for notes list (delete)
-  const notesList = document.getElementById('notes-list');
-  if (notesList && !notesList._delegated) {
-    notesList._delegated = true;
-    notesList.addEventListener('click', async function(ev) {
-      // Abrir modal da nota
-      const openBtn = ev.target.closest('[data-open-note]');
-      if (openBtn) {
-        const id = Number(openBtn.dataset.openNote);
-        openNoteModal(id);
-        return;
-      }
-      // Concluir (bolinha)
-      const checkBtn = ev.target.closest('[data-complete-note]');
-      if (checkBtn) {
-        const id = Number(checkBtn.dataset.completeNote);
-        const row = checkBtn.closest('.note-item');
-        if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
-        await new Promise(r => setTimeout(r, 200));
-        const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir nota');
-        if (error) { if (row) row.style.opacity='1'; return; }
-        T.notes = T.notes.filter(n => n.id !== id);
-        renderNotesList();
-        if (document.getElementById('cal-notes-list')) renderCalNotes();
-      }
     });
   }
 }
@@ -3037,31 +2988,275 @@ function renderTodayActivities() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// HOME — RIGHT SIDEBAR
+// HOME — RIGHT SIDEBAR (Assistente ELO)
 // ════════════════════════════════════════════════════════════════
 function renderRightSidebar() {
-  const completed = T.todayEntries.filter(e=>e.duration_minutes!=null);
-  const todayMins = completed.reduce((s,e)=>s+(e.duration_minutes||0),0);
+  renderParaHoje();
+  renderAtencao();
+}
 
-  // KPIs
-  document.getElementById('kpi-worked').textContent = fMin(todayMins);
-  document.getElementById('kpi-sessions').textContent = completed.length;
+// ── Dados mockados (substituir por queries reais em sessão futura) ──
+function getParaHojeData() {
+  return {
+    fazer: 10,
+    fazendo: 2,
+    atrasado: 20,
+    items: [
+      { time: "10:00", title: "Planejamento Bruna", color: "purple" },
+      { time: "11:30", title: "Revisar SXMED", color: "orange" },
+      { time: "14:00", title: "Resposta clientes", color: "green" },
+      { time: "15:30", title: "Briefing campanha", color: "blue" },
+      { time: "16:30", title: "Analisar métricas", color: "red" }
+    ]
+  };
+}
 
-  // Top client
-  const clientMins = {};
-  for (const e of completed) clientMins[e.client_id] = (clientMins[e.client_id]||0)+(e.duration_minutes||0);
-  const topEntry = Object.entries(clientMins).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('kpi-top').textContent = topEntry ? (T.clients.find(c=>c.id===Number(topEntry[0]))?.name||'—') : '—';
-  document.getElementById('kpi-paused').textContent = '0';
+function getAtencaoData() {
+  return {
+    financeiro: [
+      { type: "receber", title: "Receber Bruna", due: "hoje", status: "ok" },
+      { type: "pagar", title: "Pagar contador", due: "amanhã", status: "warning" },
+      { type: "receber", title: "Receber SXMED", due: "dia 10", status: "info" },
+      { type: "pagar", title: "Conta ferramenta", due: "atrasado", status: "danger" }
+    ],
+    agenda: [
+      { time: "10:00", title: "Reunião Bruna" },
+      { time: "11:30", title: "Revisar SXMED" },
+      { time: "14:00", title: "Resposta clientes" },
+      { time: "15:30", title: "Briefing campanha" }
+    ]
+  };
+}
 
-  // Scheduled tasks
-  renderScheduledTasks();
+// ── Render: Para Hoje ──
+function renderParaHoje(data) {
+  data = data || getParaHojeData();
 
-  // Financial
-  renderFinancialCard();
+  const colorMap = {
+    purple: 'var(--purple)', orange: 'var(--orange)', green: 'var(--green)',
+    blue: 'var(--blue)', red: 'var(--pink)'
+  };
+
+  const chipsEl = document.getElementById('para-hoje-chips');
+  if (chipsEl) {
+    chipsEl.innerHTML = `
+      <div style="background:var(--surface2);border-radius:12px;padding:10px 6px;text-align:center;">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--purple);margin-bottom:2px;">FAZER</div>
+        <div style="font-size:20px;font-weight:800;color:var(--deep);">${data.fazer}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:10px 6px;text-align:center;">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--orange);margin-bottom:2px;">FAZENDO</div>
+        <div style="font-size:20px;font-weight:800;color:var(--orange);">${data.fazendo}</div>
+      </div>
+      <div style="background:rgba(196,114,90,.12);border-radius:12px;padding:10px 6px;text-align:center;">
+        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--coral);margin-bottom:2px;">ATRASADO</div>
+        <div style="font-size:20px;font-weight:800;color:var(--coral);">${data.atrasado}</div>
+      </div>
+    `;
+  }
+
+  const timelineEl = document.getElementById('para-hoje-timeline');
+  if (timelineEl) {
+    timelineEl.innerHTML = data.items.slice(0, 5).map(it => `
+      <div style="display:flex;gap:10px;align-items:center;padding:7px 0;">
+        <span style="width:9px;height:9px;border-radius:50%;background:${colorMap[it.color] || 'var(--lavender)'};flex-shrink:0;"></span>
+        <div style="font-size:13px;font-weight:700;color:var(--text-dim);width:44px;flex-shrink:0;">${esc(it.time)}</div>
+        <div style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+      </div>
+    `).join('');
+  }
+
+  const verTodosEl = document.getElementById('para-hoje-vertodos');
+  if (verTodosEl) {
+    verTodosEl.textContent = `Ver todos (${data.items.length})`;
+  }
+}
+
+// ── Render: Atenção ──
+function renderFinanceiroResumo(items) {
+  const statusColor = { ok:'var(--green)', warning:'var(--orange)', info:'var(--blue)', danger:'var(--pink)' };
+  const el = document.getElementById('atencao-financeiro');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+      <span style="font-size:14px;">💰</span>
+      <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--purple);">FINANCEIRO</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+      ${items.slice(0,4).map(it => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:${statusColor[it.status] || 'var(--lavender)'};flex-shrink:0;"></span>
+          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(it.title)}</span>
+          <span style="color:${statusColor[it.status] || 'var(--text-dim)'};font-weight:700;white-space:nowrap;">${esc(it.due)}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--purple);cursor:default;">Ver todas as contas →</div>
+  `;
+}
+
+function renderAgendaResumo(items) {
+  const el = document.getElementById('atencao-agenda');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+      <span style="font-size:14px;">📅</span>
+      <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--purple);">AGENDA</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+      ${items.slice(0,4).map(it => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(it.title)}</span>
+          <span style="color:var(--text-dim);font-weight:700;white-space:nowrap;">${esc(it.time)}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--purple);cursor:default;">Ver todos os compromissos →</div>
+  `;
+}
+
+function renderAtencao(data) {
+  data = data || getAtencaoData();
+  renderFinanceiroResumo(data.financeiro);
+  renderAgendaResumo(data.agenda);
+}
+
+// ── Assistente: Parser de comandos ──
+function submitAssistantCommand() {
+  const input = document.getElementById('assistant-input');
+  if (!input) return;
+  const value = input.value;
+  handleAssistantCommand(value);
+  input.value = '';
+}
+
+function showAssistantMessage(msg) {
+  const el = document.getElementById('assistant-message');
+  if (el) el.textContent = msg;
+}
+
+function handleAssistantCommand(input) {
+  const text = (input || '').trim();
+  if (!text) return;
+
+  if (!text.startsWith('/')) {
+    showAssistantMessage('Use um comando com barra. Ex: /ia estou aqui');
+    return;
+  }
+
+  const [command, ...args] = text.split(' ');
+  const payload = args.join(' ').trim();
+
+  switch (command.toLowerCase()) {
+    case '/ia':
+      return handleIACommand(payload);
+    case '/anota':
+      return handleAnotaCommand(payload);
+    case '/financeiro':
+      return openFinanceiroResumo();
+    case '/agenda':
+      return openAgendaResumo();
+    case '/desviei':
+      return handleDesvieiCommand();
+    case '/voltei':
+      return handleVolteiCommand();
+    case '/ajuda':
+      return showAssistantHelp();
+    default:
+      return showAssistantMessage('Comando não reconhecido. Use /ajuda.');
+  }
+}
+
+function showAssistantHelp() {
+  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /financeiro · /agenda · /desviei · /voltei');
+}
+
+// ── Comando /ia e botão "Estou aqui" ──
+function handleEstouAqui() {
+  handleIACommand('estou aqui');
+}
+
+function handleIACommand(payload) {
+  const contexto = {
+    hora_atual: new Date().toISOString(),
+    para_hoje: getParaHojeData(),
+    atencao: getAtencaoData(),
+    payload: payload
+  };
+  console.log('[Assistente ELO] handleIACommand — pacote de contexto:', contexto);
+  showAssistantMessage('IA ainda não conectada. Comando registrado: "' + payload + '".');
+}
+
+// ── Comando /anota ──
+async function handleAnotaCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /anota [texto da anotação]');
+    return;
+  }
+  const { error } = await db(
+    () => sb.from('notes').insert({ content: text }),
+    'Erro ao salvar anotação'
+  );
+  if (!error) {
+    showAssistantMessage('Anotado.');
+  }
+}
+
+// ── Comandos /financeiro e /agenda ──
+function openFinanceiroResumo() {
+  const el = document.getElementById('atencao-financeiro');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.outline = '2px solid var(--coral)';
+    setTimeout(() => { el.style.outline = 'none'; }, 1500);
+  }
+  showAssistantMessage('Resumo financeiro em destaque.');
+}
+
+function openAgendaResumo() {
+  const el = document.getElementById('atencao-agenda');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.outline = '2px solid var(--coral)';
+    setTimeout(() => { el.style.outline = 'none'; }, 1500);
+  }
+  showAssistantMessage('Agenda em destaque.');
+}
+
+// ── Comando /desviei ──
+function handleDesvieiCommand() {
+  if (T.activeEntry) {
+    T._desvioContextoAnterior = { ...T.activeEntry };
+    // Pausa o cronômetro atual em vez de finalizar, para não perder o registro
+    if (!T.isPaused) pauseTimer();
+  } else {
+    T._desvioContextoAnterior = null;
+  }
+  console.log('[Assistente ELO] Desvio iniciado — contexto anterior:', T._desvioContextoAnterior);
+  showAssistantMessage('Desvio registrado. Use /voltei quando retomar.');
+}
+
+// ── Comando /voltei ──
+function handleVolteiCommand() {
+  const contexto = {
+    hora_atual: new Date().toISOString(),
+    tarefa_anterior: T._desvioContextoAnterior || null,
+    para_hoje_restante: getParaHojeData(),
+    atencao: getAtencaoData()
+  };
+  console.log('[Assistente ELO] handleVolteiCommand — pacote de contexto:', contexto);
+
+  if (T._desvioContextoAnterior && T.activeEntry && T.isPaused) {
+    resumeTimer();
+    showAssistantMessage('Bem-vinda de volta! Timer retomado.');
+  } else {
+    showAssistantMessage('Bem-vinda de volta! Selecione uma tarefa para continuar.');
+  }
+  T._desvioContextoAnterior = null;
 }
 
 function renderScheduledTasks() {
+  if (!document.getElementById('sched-tasks-list')) return;
   const today = new Date(); today.setHours(0,0,0,0);
   const todayTs = today.getTime();
 
@@ -3128,9 +3323,10 @@ function renderScheduledTasks() {
 
 
 function renderFinancialCard() {
+  const card = document.getElementById('fin-card');
+  if (!card) return;
   const vencidos = T.paymentAlerts.filter(a => a.type === 'vencido');
   const avencer  = T.paymentAlerts.filter(a => a.type === 'avencer');
-  const card = document.getElementById('fin-card');
   if (vencidos.length === 0 && avencer.length === 0) { card.style.display = 'none'; return; }
   card.style.display = '';
   const fBRL = v => Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});

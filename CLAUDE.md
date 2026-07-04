@@ -357,6 +357,21 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - SQL Supabase: `ALTER TABLE reminders DROP/ADD CONSTRAINT reminders_type_check` para aceitar `type = 'once'`
 - Versão 3.27, data 03/07/2026
 
+**Sessão S-ASSISTENTE — Painel Assistente ELO na coluna direita da Home (V3.28)**
+- Removidos da `#home-right-sidebar`: card Resumo de hoje (KPIs), card Anotações (`#notes-card`), card Próximas tarefas (`#sched-tasks-card`), card Financeiro (`#fin-card`)
+- Novo layout com 4 blocos: Assistente (header + botão "Estou aqui") → Para hoje (chips FAZER/FAZENDO/ATRASADO + timeline) → Atenção (Financeiro | Agenda lado a lado) → Fala comigo, bb (textarea + comandos)
+- Dados mockados via `getParaHojeData()` e `getAtencaoData()` — prontos para substituir por queries reais em sessão futura
+- Funções de render: `renderParaHoje()`, `renderAtencao()`, `renderFinanceiroResumo()`, `renderAgendaResumo()`
+- Parser de comandos: `submitAssistantCommand()` → `handleAssistantCommand()` com switch para `/ia`, `/anota`, `/financeiro`, `/agenda`, `/desviei`, `/voltei`, `/ajuda`
+- `/anota [texto]`: grava na tabela `notes` via `db()`
+- `/financeiro` e `/agenda`: scroll + destaque visual (outline coral 1.5s) no bloco correspondente
+- `/desviei`: pausa cronômetro ativo e salva contexto em `T._desvioContextoAnterior`
+- `/voltei`: retoma cronômetro pausado + loga pacote de contexto (IA stub)
+- `/ia estou aqui` e botão "Estou aqui": loga pacote de contexto no console (IA não conectada — Edge Function futura)
+- Guards adicionados em `renderScheduledTasks()` e `renderFinancialCard()` para evitar crash com elementos removidos
+- Mobile: `#atencao-grid` empilha em 1 coluna via `@media (max-width:768px)`
+- Versão 3.28, data 04/07/2026
+
 ---
 
 ## 8. O que ainda falta implementar
@@ -389,6 +404,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
 | S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
+| SA | ~~Sessão S-ASSISTENTE: Painel Assistente ELO na coluna direita da Home — mock + comandos~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
