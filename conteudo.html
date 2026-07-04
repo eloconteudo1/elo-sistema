@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ELO — Conteúdo</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --coral: #C4725A;
@@ -703,6 +703,13 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, m =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
+async function db(queryFn, errorMsg) {
+  try {
+    const result = await queryFn();
+    if (result.error) { showToast(errorMsg || 'Erro', 'err'); }
+    return result;
+  } catch(e) { showToast(errorMsg || 'Erro', 'err'); return { data: null, error: e }; }
+}
 
 // ── Clock ──
 (function tick(){
@@ -924,7 +931,7 @@ async function loadPosts(reset=true){
   if(filterStatus) query = query.eq('status', filterStatus);
   if(filterText) query = query.or(`title.ilike.%${filterText}%,caption.ilike.%${filterText}%`);
 
-  const { data, count, error } = await query;
+  const { data, count, error } = await db(() => query, 'Erro ao buscar posts');
 
   if(error){
     listEl.innerHTML = '<div class="banco-empty">Erro ao carregar posts.<br>Tente novamente.</div>';

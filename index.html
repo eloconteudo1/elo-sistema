@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -1366,7 +1366,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.27b · ELO Comunicação · Atualizado em 03/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.30 · ELO Comunicação · Atualizado em 04/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1436,9 +1436,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.27b</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.30</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">03/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">04/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1615,7 +1615,7 @@ function remSetLastFired(id, ts) {
 }
 async function checkPersonalReminders() {
   if (!appUser) return;
-  const { data: reminders } = await sb.from('reminders').select('*').eq('is_active', true);
+  const { data: reminders } = await db(() => sb.from('reminders').select('*').eq('is_active', true), 'Erro ao carregar lembretes');
   if (!reminders) return;
   const now = new Date();
   const nowTs = now.getTime();
@@ -1722,7 +1722,7 @@ async function renderMobileAgenda() {
   const subS  = 'font-size:11px;color:var(--text-dim);margin-top:2px;';
 
   // Busca lembretes do banco
-  const { data: reminders } = await sb.from('reminders').select('*');
+  const { data: reminders } = await db(() => sb.from('reminders').select('*'), 'Erro ao carregar alarmes');
 
   // Dados já carregados em T
   const upcoming = (T.appointments||[]).filter(a => {
@@ -1946,7 +1946,7 @@ async function saveMobileAppt() {
   const [y,m,d] = date.split('-').map(Number);
   const [h,min] = time.split(':').map(Number);
   const scheduledAt = new Date(y,m-1,d,h,min,0).getTime();
-  const { error } = await sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false });
+  const { error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false }), 'Erro ao salvar compromisso');
   if (error) { showToast('Erro ao salvar','err'); return; }
   showToast('Compromisso salvo ✓','ok');
   closeMobileNewItem();
@@ -1961,10 +1961,10 @@ async function saveMobileTask() {
   const clientId = Number(document.getElementById('mni-task-client')?.value) || null;
   if (!title) { showToast('Informe o título','warn'); return; }
   if (!date)  { showToast('Informe a data','warn'); return; }
-  const { error } = await sb.from('scheduled_tasks').insert({
+  const { error } = await db(() => sb.from('scheduled_tasks').insert({
     title, scheduled_date:date, scheduled_time:time,
     priority, client_id:clientId, is_done:false, user_id:appUser.id
-  });
+  }), 'Erro ao salvar tarefa');
   if (error) { showToast('Erro ao salvar','err'); return; }
   showToast('Tarefa salva ✓','ok');
   closeMobileNewItem();
@@ -1978,7 +1978,7 @@ async function saveMobileReminder() {
   const payload = type === 'daily'
     ? { type:'daily', daily_time:dailyTime, interval_minutes:null, user_id: appUser.id, is_active:true }
     : { type:'interval', interval_minutes:intervalMins, daily_time:null, user_id: appUser.id, is_active:true };
-  const { error } = await sb.from('reminders').insert(payload);
+  const { error } = await db(() => sb.from('reminders').insert(payload), 'Erro ao salvar lembrete');
   if (error) { showToast('Erro ao salvar','err'); return; }
   showToast('Lembrete salvo ✓','ok');
   closeMobileNewItem();
@@ -2051,10 +2051,10 @@ document.addEventListener('keydown', e => {
 });
 
 async function getOrCreateUser(au) {
-  const { data, error } = await sb.from('users').select('*').eq('auth_id', au.id).maybeSingle();
+  const { data, error } = await db(() => sb.from('users').select('*').eq('auth_id', au.id).maybeSingle(), 'Erro ao carregar usuário');
   if (data) return data;
   const name = au.user_metadata?.name || au.email?.split('@')[0] || 'Usuário';
-  const { data: nu, error: e2 } = await sb.from('users').insert({ auth_id: au.id, name, email: au.email, role:'user' }).select().single();
+  const { data: nu, error: e2 } = await db(() => sb.from('users').insert({ auth_id: au.id, name, email: au.email, role:'user' }).select().single(), 'Erro ao criar usuário');
   if (e2) { showToast('Erro ao criar usuário: '+e2.message,'err'); return null; }
   return nu;
 }
@@ -2094,9 +2094,9 @@ sb.auth.getSession().then(({ data: { session } }) => { if (!session) showLogin()
 // ════════════════════════════════════════════════════════════════
 async function refreshTodayPill() {
   try {
-    const { data } = await sb.from('time_entries').select('duration_minutes')
+    const { data } = await db(() => sb.from('time_entries').select('duration_minutes')
       .gte('start_time', startOfToday()).lt('start_time', endOfToday())
-      .not('duration_minutes','is',null);
+      .not('duration_minutes','is',null), 'Erro ao atualizar pill');
     const total = (data||[]).reduce((s,e)=>s+(e.duration_minutes||0),0);
     const h = Math.floor(total/60), m = total%60;
     document.getElementById('today-pill').textContent = h>0 ? `${h}h ${m}m hoje` : `${m}m hoje`;
@@ -2584,11 +2584,11 @@ async function startTimer() {
   renderTimerButtons();
 
   try {
-    const { data, error } = await sb.from('time_entries').insert({
+    const { data, error } = await db(() => sb.from('time_entries').insert({
       user_id: appUser.id, client_id: T.selectedClientId,
       task_id: T.selectedTaskId, task_name: T.selectedTaskName,
       start_time: now, paused_duration: 0, notes: desc,
-    }).select().single();
+    }).select().single(), 'Erro ao iniciar entrada de tempo');
     if (error) throw new Error(error.message);
     T.activeEntry = data;
     showToast('Timer iniciado!','ok');
@@ -2623,9 +2623,9 @@ async function stopTimer() {
   renderTimerButtons();
 
   try {
-    const { error } = await sb.from('time_entries').update({
+    const { error } = await db(() => sb.from('time_entries').update({
       end_time: now, duration_minutes: durationMinutes,
-    }).eq('id', entryId);
+    }).eq('id', entryId), 'Erro ao salvar entrada de tempo');
     if (error) throw new Error(error.message);
     showToast(`Registrado: ${fMin(durationMinutes)}`,'ok');
     await reloadTodayData();
@@ -2778,7 +2778,7 @@ function editNoteInline(el, id) {
     if (this._cancel) { el.textContent = original; return; }
     const newText = this.value.trim();
     if (!newText || newText === original) { el.textContent = original; return; }
-    const { error } = await sb.from('notes').update({ content: newText }).eq('id', id);
+    const { error } = await db(() => sb.from('notes').update({ content: newText }).eq('id', id), 'Erro ao salvar anotação');
     if (error) { showToast('Erro ao salvar','err'); el.textContent = original; return; }
     const note = T.notes.find(n => n.id === id);
     if (note) note.content = newText;
@@ -2804,7 +2804,7 @@ async function saveNote() {
 async function renderCalNotes() {
   const list = document.getElementById('cal-notes-list');
   if (!list) return;
-  const { data, error } = await sb.from('notes').select('*').order('created_at',{ascending:false});
+  const { data, error } = await db(() => sb.from('notes').select('*').order('created_at',{ascending:false}), 'Erro ao carregar anotações');
   if (error) { list.innerHTML = '<div style="font-size:12px;color:#aaa;">Erro ao carregar.</div>'; return; }
   if (!data || data.length === 0) {
     list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;">Nenhuma anotação ainda.</div>`;
@@ -2935,18 +2935,18 @@ async function saveManualEntry(editId) {
   const btn = document.getElementById('me-save-btn');
   btn.disabled = true; btn.textContent = 'Salvando...';
   if (editId) {
-    const { error } = await sb.from('time_entries').update({
+    const { error } = await db(() => sb.from('time_entries').update({
       client_id: clientId, task_id: taskId, task_name: taskName,
       duration_minutes: totalMinutes, start_time: startTime, notes,
-    }).eq('id', editId);
+    }).eq('id', editId), 'Erro ao atualizar entrada');
     if (error) { showToast('Erro ao atualizar: '+error.message,'err'); btn.disabled=false; btn.textContent='Salvar alterações'; return; }
     showToast('Registro atualizado ✓','ok');
   } else {
-    const { error } = await sb.from('time_entries').insert({
+    const { error } = await db(() => sb.from('time_entries').insert({
       user_id: appUser.id, client_id: clientId, task_id: taskId, task_name: taskName,
       start_time: startTime, end_time: startTime + (totalMinutes*60000),
       duration_minutes: totalMinutes, paused_duration: 0, notes,
-    });
+    }), 'Erro ao inserir entrada');
     if (error) { showToast('Erro ao registrar: '+error.message,'err'); btn.disabled=false; btn.textContent='Registrar'; return; }
     showToast(`Registrado: ${fMin(totalMinutes)} ✓`,'ok');
   }
@@ -3267,7 +3267,7 @@ async function saveTask() {
   if (!title) { showToast('Informe o título','warn'); return; }
   const btn = document.getElementById('mt-save-btn');
   btn.disabled=true; btn.textContent='Salvando...';
-  const { data, error } = await sb.from('scheduled_tasks').insert({
+  const { data, error } = await db(() => sb.from('scheduled_tasks').insert({
     user_id: appUser.id, title,
     description: document.getElementById('mt-desc').value.trim()||null,
     scheduled_date: inputToDbDate(document.getElementById('mt-date').value.trim())||null,
@@ -3275,7 +3275,7 @@ async function saveTask() {
     priority: document.getElementById('mt-priority').value,
     client_id: document.getElementById('mt-client').value ? Number(document.getElementById('mt-client').value) : null,
     is_done: false,
-  }).select().single();
+  }).select().single(), 'Erro ao criar tarefa');
   if (error) { showToast('Erro ao criar: '+error.message,'err'); btn.disabled=false; btn.textContent='Criar Tarefa'; return; }
   T.scheduledTasks.unshift(data);
   renderRightSidebar();
@@ -3304,8 +3304,8 @@ async function initClientes() {
 async function loadClientesData() {
   const now = new Date();
   const [cl, pm] = await Promise.all([
-    sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}),
-    sb.from('monthly_payments').select('*').eq('month', now.getMonth()+1).eq('year', now.getFullYear()),
+    db(() => sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar clientes'),
+    db(() => sb.from('monthly_payments').select('*').eq('month', now.getMonth()+1).eq('year', now.getFullYear()), 'Erro ao carregar pagamentos'),
   ]);
   C.clients = cl.data || [];
   C.payments = pm.data || [];
@@ -3476,7 +3476,7 @@ function renderClientGrid() {
 
 async function markUnpaid(clientId, payId) {
   if (!payId) return;
-  const { error } = await sb.from('monthly_payments').update({ is_paid:false, paid_at:null, paid_date:null }).eq('id', payId);
+  const { error } = await db(() => sb.from('monthly_payments').update({ is_paid:false, paid_at:null, paid_date:null }).eq('id', payId), 'Erro ao reverter pagamento');
   if (error) { showToast('Erro: '+error.message,'err'); return; }
   C.payments = C.payments.map(p => p.id===payId ? {...p,is_paid:false,paid_at:null} : p);
   renderClientGrid();
@@ -3487,7 +3487,7 @@ async function markPaid(clientId, payId) {
   const now = Date.now();
   const d = new Date();
   const paid_date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  const { error } = await sb.from('monthly_payments').update({ is_paid:true, paid_at:now, paid_date }).eq('id', payId);
+  const { error } = await db(() => sb.from('monthly_payments').update({ is_paid:true, paid_at:now, paid_date }).eq('id', payId), 'Erro ao marcar pagamento');
   if (error) { showToast('Erro ao marcar pago: '+error.message,'err'); return; }
   C.payments = C.payments.map(p => p.id===payId ? {...p,is_paid:true,paid_at:now} : p);
   renderClientGrid();
@@ -3500,12 +3500,12 @@ async function createAndMarkPaid(clientId) {
   if (!client) return;
   const d = new Date();
   const paid_date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  const { data, error } = await sb.from('monthly_payments').insert({
+  const { data, error } = await db(() => sb.from('monthly_payments').insert({
     client_id: clientId, month: now.getMonth()+1, year: now.getFullYear(),
     amount: client.contract_value||0, is_paid: true, paid_at: Date.now(),
     due_day: client.due_day, payment_method: client.payment_method,
     paid_date,
-  }).select().single();
+  }).select().single(), 'Erro ao registrar pagamento');
   if (error) { showToast('Erro: '+error.message,'err'); return; }
   C.payments.push(data);
   renderClientGrid();
@@ -3514,7 +3514,7 @@ async function createAndMarkPaid(clientId) {
 
 async function deleteClient(id, name) {
   openConfirmModal(`Excluir "${name}"?`, 'Este cliente será desativado. Os registros históricos serão mantidos.', async () => {
-    const { error } = await sb.from('clients').update({ is_active:false }).eq('id', id);
+    const { error } = await db(() => sb.from('clients').update({ is_active:false }).eq('id', id), 'Erro ao desativar cliente');
     if (error) { showToast('Erro ao excluir: '+error.message,'err'); return; }
     C.clients = C.clients.map(c => c.id===id ? {...c,is_active:false} : c);
     renderClientGrid();
@@ -3741,13 +3741,13 @@ async function saveClient(id) {
   };
 
   if (id) {
-    const { data, error } = await sb.from('clients').update(payload).eq('id', id).select().single();
+    const { data, error } = await db(() => sb.from('clients').update(payload).eq('id', id).select().single(), 'Erro ao salvar cliente');
     if (error) { showToast('Erro ao salvar: '+error.message,'err'); btn.disabled=false; btn.textContent='Salvar'; return; }
     C.clients = C.clients.map(c => c.id===id ? data : c);
     T.clients = T.clients.map(c => c.id===id ? data : c);
     showToast('Cliente atualizado ✓','ok');
   } else {
-    const { data, error } = await sb.from('clients').insert(payload).select().single();
+    const { data, error } = await db(() => sb.from('clients').insert(payload).select().single(), 'Erro ao criar cliente');
     if (error) { showToast('Erro ao criar: '+error.message,'err'); btn.disabled=false; btn.textContent='Criar Cliente'; return; }
     C.clients.push(data);
     T.clients.push(data);
@@ -3796,10 +3796,10 @@ async function loadCalData() {
   const calMonthEndStr   = `${CAL.year}-${String(CAL.month+1).padStart(2,'0')}-31`;
 
   const [apptRes, taskRes, remRes, teRes] = await Promise.all([
-    sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'),
-    sb.from('scheduled_tasks').select('*').gte('scheduled_date', calMonthStartStr).lte('scheduled_date', calMonthEndStr).order('scheduled_date', {ascending:true}),
-    sb.from('reminders').select('*').order('id'),
-    sb.from('time_entries').select('start_time,duration_minutes').gte('start_time', monthStart).lte('start_time', monthEnd),
+    db(() => sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'), 'Erro ao carregar compromissos'),
+    db(() => sb.from('scheduled_tasks').select('*').gte('scheduled_date', calMonthStartStr).lte('scheduled_date', calMonthEndStr).order('scheduled_date', {ascending:true}), 'Erro ao carregar tarefas'),
+    db(() => sb.from('reminders').select('*').order('id'), 'Erro ao carregar lembretes'),
+    db(() => sb.from('time_entries').select('start_time,duration_minutes').gte('start_time', monthStart).lte('start_time', monthEnd), 'Erro ao carregar horas'),
   ]);
   CAL.appointments = apptRes.data || [];
   CAL.scheduledTasks = taskRes.data || [];
@@ -4172,7 +4172,7 @@ async function toggleNrmReminder(btn) {
   const id = Number(btn.dataset.remId);
   const isActive = btn.dataset.remActive === 'true';
   const newActive = !isActive;
-  const { error } = await sb.from('reminders').update({ is_active: newActive }).eq('id', id);
+  const { error } = await db(() => sb.from('reminders').update({ is_active: newActive }).eq('id', id), 'Erro ao atualizar alarme');
   if (error) { showToast('Erro ao atualizar alarme', 'err'); return; }
   CAL.reminders = CAL.reminders.map(r => r.id === id ? {...r, is_active: newActive} : r);
   renderNrmRemList();
@@ -4182,7 +4182,7 @@ async function toggleNrmReminder(btn) {
 async function deleteNrmReminder(btn) {
   const id = Number(btn.dataset.remId);
   openConfirmModal('Excluir alarme?', 'Essa ação não pode ser desfeita.', async () => {
-    const { error } = await sb.from('reminders').delete().eq('id', id);
+    const { error } = await db(() => sb.from('reminders').delete().eq('id', id), 'Erro ao excluir alarme');
     if (error) { showToast('Erro ao excluir', 'err'); return; }
     CAL.reminders = CAL.reminders.filter(r => r.id !== id);
     showToast('Alarme excluído', 'ok');
@@ -4214,12 +4214,12 @@ async function saveNrmReminder() {
   const saveBtn = document.getElementById('nrm-rem-save-btn');
   saveBtn.textContent = 'Salvando...'; saveBtn.disabled = true;
   if (_nrmEditingRemId) {
-    const { error } = await sb.from('reminders').update(payload).eq('id', _nrmEditingRemId);
+    const { error } = await db(() => sb.from('reminders').update(payload).eq('id', _nrmEditingRemId), 'Erro ao salvar alarme');
     if (error) { showToast('Erro: ' + error.message, 'err'); saveBtn.textContent = 'Atualizar alarme'; saveBtn.disabled = false; return; }
     CAL.reminders = CAL.reminders.map(r => r.id === _nrmEditingRemId ? {...r,...payload} : r);
     showToast('Alarme atualizado!', 'ok');
   } else {
-    const { data, error } = await sb.from('reminders').insert({...payload, is_active: true, user_id: appUser.id}).select().single();
+    const { data, error } = await db(() => sb.from('reminders').insert({...payload, is_active: true, user_id: appUser.id}).select().single(), 'Erro ao criar alarme');
     if (error) { showToast('Erro: ' + error.message, 'err'); saveBtn.textContent = 'Salvar alarme'; saveBtn.disabled = false; return; }
     CAL.reminders.push(data);
     showToast('Alarme criado!', 'ok');
@@ -4258,14 +4258,14 @@ async function _nrmSaveAppt() {
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (_nrmEditingApptId) {
-    const { error } = await sb.from('appointments').update(payload).eq('id', _nrmEditingApptId);
+    const { error } = await db(() => sb.from('appointments').update(payload).eq('id', _nrmEditingApptId), 'Erro ao salvar compromisso');
     btn.textContent = 'Atualizar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     const idx = CAL.appointments.findIndex(a => a.id === _nrmEditingApptId);
     if (idx !== -1) CAL.appointments[idx] = { ...CAL.appointments[idx], ...payload };
     showToast('Compromisso atualizado!', 'ok');
   } else {
-    const { data, error } = await sb.from('appointments').insert(payload).select().single();
+    const { data, error } = await db(() => sb.from('appointments').insert(payload).select().single(), 'Erro ao criar compromisso');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     CAL.appointments.push(data);
@@ -4292,7 +4292,7 @@ async function _nrmSaveTask() {
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (_nrmEditingTaskId) {
-    const { error } = await sb.from('scheduled_tasks').update(payload).eq('id', _nrmEditingTaskId);
+    const { error } = await db(() => sb.from('scheduled_tasks').update(payload).eq('id', _nrmEditingTaskId), 'Erro ao salvar tarefa');
     btn.textContent = 'Atualizar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     const idx = CAL.scheduledTasks.findIndex(t => t.id === _nrmEditingTaskId);
@@ -4300,7 +4300,7 @@ async function _nrmSaveTask() {
     showToast('Tarefa atualizada!', 'ok');
   } else {
     payload.is_done = false; payload.user_id = 1;
-    const { data, error } = await sb.from('scheduled_tasks').insert(payload).select().single();
+    const { data, error } = await db(() => sb.from('scheduled_tasks').insert(payload).select().single(), 'Erro ao criar tarefa');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     CAL.scheduledTasks.push(data);
@@ -4317,13 +4317,13 @@ async function _nrmSaveNota() {
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (editId) {
-    const { error } = await sb.from('notes').update({ content }).eq('id', Number(editId));
+    const { error } = await db(() => sb.from('notes').update({ content }).eq('id', Number(editId)), 'Erro ao atualizar anotação');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     if (Array.isArray(T.notes)) T.notes = T.notes.map(n => n.id === Number(editId) ? {...n, content} : n);
     showToast('Anotação atualizada!', 'ok');
   } else {
-    const { data, error } = await sb.from('notes').insert({ content }).select().single();
+    const { data, error } = await db(() => sb.from('notes').insert({ content }).select().single(), 'Erro ao criar anotação');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) { showToast('Erro: ' + error.message, 'err'); return; }
     if (Array.isArray(T.notes)) T.notes.unshift(data);
@@ -4689,12 +4689,12 @@ async function saveReminder() {
   const payload = { title, description, type, interval_minutes, daily_times, once_at, daily_time: null };
 
   if (CAL.editingRemId) {
-    const { error } = await sb.from('reminders').update(payload).eq('id', CAL.editingRemId);
+    const { error } = await db(() => sb.from('reminders').update(payload).eq('id', CAL.editingRemId), 'Erro ao salvar alarme');
     if (error) { showToast('Erro: '+error.message,'err'); return; }
     CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,...payload} : r);
     showToast('Alarme atualizado!','ok');
   } else {
-    const { data, error } = await sb.from('reminders').insert({ ...payload, is_active:true, user_id: appUser.id }).select().single();
+    const { data, error } = await db(() => sb.from('reminders').insert({ ...payload, is_active:true, user_id: appUser.id }).select().single(), 'Erro ao criar alarme');
     if (error) { showToast('Erro: '+error.message,'err'); return; }
     CAL.reminders.push(data);
     showToast('Alarme criado!','ok');
@@ -4704,7 +4704,7 @@ async function saveReminder() {
 }
 
 async function toggleReminder(id, isActive) {
-  const { error } = await sb.from('reminders').update({ is_active:isActive }).eq('id', id);
+  const { error } = await db(() => sb.from('reminders').update({ is_active:isActive }).eq('id', id), 'Erro ao atualizar alarme');
   if (error) { showToast('Erro','err'); return; }
   CAL.reminders = CAL.reminders.map(r => r.id===id ? {...r,is_active:isActive} : r);
   renderCalAlerts();
@@ -4712,7 +4712,7 @@ async function toggleReminder(id, isActive) {
 
 async function deleteReminder(id) {
   openConfirmModal('Excluir alarme?', 'Essa ação não pode ser desfeita.', async () => {
-    const { error } = await sb.from('reminders').delete().eq('id', id);
+    const { error } = await db(() => sb.from('reminders').delete().eq('id', id), 'Erro ao excluir alarme');
     if (error) { showToast('Erro','err'); return; }
     CAL.reminders = CAL.reminders.filter(r=>r.id!==id);
     showToast('Alarme excluído','ok');
@@ -5056,9 +5056,9 @@ async function renderFinChart() {
   }
   const results = await Promise.all(months6.map(hm =>
     Promise.all([
-      sb.from('monthly_payments').select('amount').eq('month',hm.month).eq('year',hm.year),
-      sb.from('monthly_payments').select('amount').eq('month',hm.month).eq('year',hm.year).eq('is_paid',true),
-      sb.from('cost_items').select('amount').eq('month',hm.month).eq('year',hm.year),
+      db(() => sb.from('monthly_payments').select('amount').eq('month',hm.month).eq('year',hm.year), 'Erro ao carregar receita'),
+      db(() => sb.from('monthly_payments').select('amount').eq('month',hm.month).eq('year',hm.year).eq('is_paid',true), 'Erro ao carregar recebido'),
+      db(() => sb.from('cost_items').select('amount').eq('month',hm.month).eq('year',hm.year), 'Erro ao carregar custos'),
     ])
   ));
   const labels  = months6.map(hm => hm.label);
@@ -5497,16 +5497,16 @@ async function repGenerate() {
     .gte('start_time', startTs)
     .lte('start_time', endTs);
   if (clientId) query = query.eq('client_id', Number(clientId));
-  const { data: entries, error } = await query;
-  if (error) { showToast('Erro ao carregar dados','err'); return; }
+  const { data: entries, error } = await db(() => query, 'Erro ao carregar dados');
+  if (error) return;
   const clientIds = [...new Set((entries||[]).map(e => e.client_id).filter(Boolean))];
   let allClientsMap = {};
   if (clientIds.length) {
-    const { data: allClients } = await sb.from('clients').select('id,name,color,is_active').in('id', clientIds);
+    const { data: allClients } = await db(() => sb.from('clients').select('id,name,color,is_active').in('id', clientIds), 'Erro ao carregar clientes');
     (allClients||[]).forEach(c => { allClientsMap[c.id] = c; });
   }
-  const { data: settings } = await sb.from('settings')
-    .select('hourly_rate_min,hourly_rate_optimal').eq('id',1).single();
+  const { data: settings } = await db(() => sb.from('settings')
+    .select('hourly_rate_min,hourly_rate_optimal').eq('id',1).single(), 'Erro ao carregar taxas');
   const hourlyMin = settings?.hourly_rate_min ?? 0;
   const hourlyOpt = settings?.hourly_rate_optimal ?? 0;
   const fBRL = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
@@ -5713,18 +5713,18 @@ async function resRenderHoje() {
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const endOfDay = startOfDay + 86400000;
 
-  const { data: entries } = await sb.from('time_entries')
+  const { data: entries } = await db(() => sb.from('time_entries')
     .select('*, clients(name)')
     .gte('start_time', startOfDay)
     .lt('start_time', endOfDay)
-    .order('start_time', { ascending: false });
+    .order('start_time', { ascending: false }), 'Erro ao carregar entradas');
 
   const validEntries = (entries||[]).filter(e => e.duration_minutes != null && e.duration_minutes > 0);
   const totalMins = validEntries.reduce((s,e) => s + e.duration_minutes, 0);
   const totalH = Math.floor(totalMins/60), totalM = totalMins%60;
 
   // Settings para meta e custo/hora
-  const { data: settings } = await sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single();
+  const { data: settings } = await db(() => sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single(), 'Erro ao carregar metas');
   const goalMins = settings?.daily_goal_minutes ?? 480;
   const hourlyMin = settings?.hourly_rate_min ?? 0;
   const hourlyOpt = settings?.hourly_rate_optimal ?? 0;
@@ -5817,12 +5817,12 @@ async function resRenderMes() {
   const prevEndTs   = new Date(prevYear, prevMonth, 1).getTime();
 
   const [entriesRes, settingsRes, clientsRes, paymentsRes, prevEntriesRes, prevPaymentsRes] = await Promise.all([
-    sb.from('time_entries').select('*, clients(name, contract_value)').gte('start_time', startTs).lt('start_time', endTs),
-    sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single(),
-    sb.from('clients').select('id, name, contract_value').eq('is_internal', false),
-    sb.from('monthly_payments').select('amount,is_paid').eq('month', resMonth).eq('year', resYear),
-    sb.from('time_entries').select('duration_minutes,start_time').gte('start_time', prevStartTs).lt('start_time', prevEndTs),
-    sb.from('monthly_payments').select('amount,is_paid').eq('month', prevMonth).eq('year', prevYear),
+    db(() => sb.from('time_entries').select('*, clients(name, contract_value)').gte('start_time', startTs).lt('start_time', endTs), 'Erro ao carregar entradas'),
+    db(() => sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single(), 'Erro ao carregar metas'),
+    db(() => sb.from('clients').select('id, name, contract_value').eq('is_internal', false), 'Erro ao carregar clientes'),
+    db(() => sb.from('monthly_payments').select('amount,is_paid').eq('month', resMonth).eq('year', resYear), 'Erro ao carregar pagamentos'),
+    db(() => sb.from('time_entries').select('duration_minutes,start_time').gte('start_time', prevStartTs).lt('start_time', prevEndTs), 'Erro ao carregar histórico'),
+    db(() => sb.from('monthly_payments').select('amount,is_paid').eq('month', prevMonth).eq('year', prevYear), 'Erro ao carregar histórico financeiro'),
   ]);
 
   const entries = (entriesRes.data||[]).filter(e => e.duration_minutes > 0);
@@ -6004,12 +6004,12 @@ async function genMonthlyReport() {
   const prevStartTs = new Date(prevYear, prevMonth-1, 1).getTime();
   const prevEndTs   = new Date(prevYear, prevMonth, 1).getTime();
   const [entriesRes, settingsRes, paymentsRes, prevEntriesRes, prevPaymentsRes, costsRes] = await Promise.all([
-    sb.from('time_entries').select('*, clients(name)').gte('start_time', startTs).lt('start_time', endTs),
-    sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal,revenue_goal').eq('id',1).single(),
-    sb.from('monthly_payments').select('amount,is_paid,due_day,client_id,is_manual').eq('month', resMonth).eq('year', resYear),
-    sb.from('time_entries').select('duration_minutes,start_time').gte('start_time', prevStartTs).lt('start_time', prevEndTs),
-    sb.from('monthly_payments').select('amount,is_paid').eq('month', prevMonth).eq('year', prevYear),
-    sb.from('cost_items').select('amount,is_paid').eq('month', resMonth).eq('year', resYear),
+    db(() => sb.from('time_entries').select('*, clients(name)').gte('start_time', startTs).lt('start_time', endTs), 'Erro ao carregar entradas'),
+    db(() => sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal,revenue_goal').eq('id',1).single(), 'Erro ao carregar metas'),
+    db(() => sb.from('monthly_payments').select('amount,is_paid,due_day,client_id,is_manual').eq('month', resMonth).eq('year', resYear), 'Erro ao carregar pagamentos'),
+    db(() => sb.from('time_entries').select('duration_minutes,start_time').gte('start_time', prevStartTs).lt('start_time', prevEndTs), 'Erro ao carregar histórico'),
+    db(() => sb.from('monthly_payments').select('amount,is_paid').eq('month', prevMonth).eq('year', prevYear), 'Erro ao carregar histórico financeiro'),
+    db(() => sb.from('cost_items').select('amount,is_paid').eq('month', resMonth).eq('year', resYear), 'Erro ao carregar custos'),
   ]);
   const entries = (entriesRes.data||[]).filter(e => e.duration_minutes > 0);
   const goalMins  = settingsRes.data?.daily_goal_minutes ?? 480;
@@ -6068,7 +6068,7 @@ async function genMonthlyReport() {
   const mesLabel = `${MONTHS_PT[resMonth-1]}/${resYear}`;
   const revenueGoalPct = revenueGoal > 0 ? Math.round((receitaPrevista/revenueGoal)*100) : null;
   if (!FIN.clients || !FIN.clients.length) {
-    const { data } = await sb.from('clients').select('id,name').eq('is_active',true);
+    const { data } = await db(() => sb.from('clients').select('id,name').eq('is_active',true), 'Erro ao carregar clientes');
     FIN.clients = data || [];
   }
   let txt = `RELATÓRIO MENSAL — ${mesLabel}\n`;
@@ -6179,7 +6179,7 @@ function cfgShowTab(tab) {
 
 async function cfgRenderCats() {
   const el = document.getElementById('cfg-cats-list');
-  const { data } = await sb.from('categories').select('*').order('sort_order');
+  const { data } = await db(() => sb.from('categories').select('*').order('sort_order'), 'Erro ao carregar categorias');
   _cfgCats = data || [];
   TASK_CATS = _cfgCats.map(c => c.name);
   if (!_cfgCats.length) {
@@ -6224,12 +6224,12 @@ async function cfgSubmitCat(id) {
   btn.disabled = true; btn.textContent = 'Salvando...';
   let error;
   if (id) {
-    ({ error } = await sb.from('categories').update({ name }).eq('id', id));
-    if (!error) await sb.from('tasks').update({ category: name }).eq('category',
-      _cfgCats.find(c => c.id === id)?.name || '');
+    ({ error } = await db(() => sb.from('categories').update({ name }).eq('id', id), 'Erro ao salvar categoria'));
+    if (!error) await db(() => sb.from('tasks').update({ category: name }).eq('category',
+      _cfgCats.find(c => c.id === id)?.name || ''), 'Erro ao atualizar tarefas');
   } else {
     const maxOrder = _cfgCats.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
-    ({ error } = await sb.from('categories').insert({ name, sort_order: maxOrder + 1 }));
+    ({ error } = await db(() => sb.from('categories').insert({ name, sort_order: maxOrder + 1 }), 'Erro ao criar categoria'));
   }
   if (error) { showToast('Erro: ' + error.message, 'err'); btn.disabled = false; btn.textContent = id ? 'Salvar' : 'Criar'; return; }
   document.getElementById('cfg-cat-modal').remove();
@@ -6243,7 +6243,7 @@ async function cfgDeleteCat(id, name) {
     ? `A categoria "${name}" tem ${count} tarefa(s). Excluir irá remover a categoria, mas as tarefas serão mantidas sem categoria.`
     : `Excluir a categoria "${name}"?`;
   openConfirmModal('Excluir categoria?', msg, async () => {
-    await sb.from('categories').delete().eq('id', id);
+    await db(() => sb.from('categories').delete().eq('id', id), 'Erro ao excluir categoria');
     await cfgRenderCats();
     showToast('Categoria removida', 'ok');
   });
@@ -6254,7 +6254,7 @@ async function cfgRenderTasks() {
   const countEl = document.getElementById('cfg-tasks-count');
   el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-dim)">Carregando...</div>';
   await cfgRenderCats();
-  const { data: tasks, error } = await sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true});
+  const { data: tasks, error } = await db(() => sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar tarefas');
   if (error) { el.innerHTML = '<div style="color:red;padding:16px">Erro ao carregar tarefas</div>'; return; }
   T.tasks = tasks || [];
   countEl.textContent = `${T.tasks.length} tarefa${T.tasks.length!==1?'s':''} cadastrada${T.tasks.length!==1?'s':''}`;
@@ -6290,7 +6290,7 @@ function cfgTaskRowHTML(t) {
 }
 
 async function cfgToggleFav(id, isFav) {
-  const { error } = await sb.from('tasks').update({ is_favorite: isFav }).eq('id', id);
+  const { error } = await db(() => sb.from('tasks').update({ is_favorite: isFav }).eq('id', id), 'Erro ao favoritar tarefa');
   if (error) { showToast('Erro ao atualizar favorito', 'err'); return; }
   const t = T.tasks.find(x => x.id === id);
   if (t) t.is_favorite = isFav;
@@ -6300,7 +6300,7 @@ async function cfgToggleFav(id, isFav) {
 
 async function cfgDeleteTask(id, name) {
   openConfirmModal(`Remover a tarefa "${name}"?`, 'Esta tarefa será removida permanentemente.', async () => {
-    await sb.from('tasks').delete().eq('id', id);
+    await db(() => sb.from('tasks').delete().eq('id', id), 'Erro ao excluir tarefa');
     cfgRenderTasks();
     renderTaskTree();
     showToast('Tarefa removida');
@@ -6356,10 +6356,10 @@ async function cfgSubmitTask(id) {
   btn.disabled=true; btn.textContent='Salvando...';
   let error;
   if (id) {
-    ({ error } = await sb.from('tasks').update(obj).eq('id', id));
+    ({ error } = await db(() => sb.from('tasks').update(obj).eq('id', id), 'Erro ao salvar tarefa'));
   } else {
     const maxOrder = T.tasks.reduce((m,t)=>Math.max(m,t.sort_order||0),0);
-    ({ error } = await sb.from('tasks').insert({...obj, sort_order: maxOrder+1}));
+    ({ error } = await db(() => sb.from('tasks').insert({...obj, sort_order: maxOrder+1}), 'Erro ao criar tarefa'));
   }
   if (error) { showToast('Erro: '+error.message,'err'); btn.disabled=false; btn.textContent=id?'Salvar':'Criar'; return; }
   document.getElementById('cfg-task-modal').remove();
@@ -6382,8 +6382,8 @@ async function cfgRecalcHora() {
 
   // Busca despesas do mês atual no Financeiro
   const now = new Date();
-  const { data: costs } = await sb.from('cost_items')
-    .select('amount').eq('month', now.getMonth()+1).eq('year', now.getFullYear());
+  const { data: costs } = await db(() => sb.from('cost_items')
+    .select('amount').eq('month', now.getMonth()+1).eq('year', now.getFullYear()), 'Erro ao carregar despesas');
   const despesasEmpresa = (costs||[]).reduce((s,c) => s + Number(c.amount||0), 0);
 
   const fBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0});
@@ -6425,7 +6425,7 @@ async function cfgRecalcHora() {
 }
 
 async function cfgLoadMetas() {
-  const { data } = await sb.from('settings').select('*').eq('id',1).single();
+  const { data } = await db(() => sb.from('settings').select('*').eq('id',1).single(), 'Erro ao carregar configurações');
   if (data) {
     const horasDia = data.daily_goal_minutes ? (data.daily_goal_minutes / 60) : 8;
     document.getElementById('cfg-daily-hours').value = horasDia;
@@ -6454,14 +6454,14 @@ async function cfgSaveMetas() {
 
   const btn = document.querySelector('#cfg-pane-metas .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
-  const { error } = await sb.from('settings').upsert({
+  const { error } = await db(() => sb.from('settings').upsert({
     id:1, daily_goal_minutes:daily, payment_alert_days:alertDays,
     pro_labore:proLabore, lucro_desejado:lucro,
     revenue_goal:fatOpt, despesas_mensais:fatMin,
     dias_uteis:diasUteis,
     hourly_rate_min:hourlyMin, hourly_rate_optimal:hourlyOpt,
     user_id: appUser?.id,
-  }, { onConflict:'id' });
+  }, { onConflict:'id' }), 'Erro ao salvar configurações');
   btn.disabled=false; btn.textContent='Salvar metas';
   if (error) { showToast('Erro: '+error.message,'err'); return; }
   T.settings.daily_goal_minutes  = daily;
@@ -6519,7 +6519,7 @@ async function cfgImportClientes() {
       is_active: true, display_order: 0,
     };
     if (!obj.name) { err++; continue; }
-    const { error } = await sb.from('clients').insert(obj);
+    const { error } = await db(() => sb.from('clients').insert(obj), 'Erro ao importar cliente');
     error ? err++ : ok++;
   }
   cfgCancelClientes();
@@ -6545,7 +6545,7 @@ function cfgCancelPagamentos() { _impPayRows=[]; document.getElementById('imp-pa
 async function cfgImportPagamentos() {
   const btn = document.getElementById('imp-pay-btn');
   btn.disabled=true; btn.textContent='Importando...';
-  const { data: clients } = await sb.from('clients').select('id,name');
+  const { data: clients } = await db(() => sb.from('clients').select('id,name'), 'Erro ao carregar clientes');
   let ok=0, err=0;
   for (const r of _impPayRows) {
     const clientName = r.cliente||r.client||'';
@@ -6558,7 +6558,7 @@ async function cfgImportPagamentos() {
       is_paid: ['sim','1','true','pago'].includes((r.pago||r.paid||'').toLowerCase()),
       paid_at: null,
     };
-    const { error } = await sb.from('monthly_payments').insert(obj);
+    const { error } = await db(() => sb.from('monthly_payments').insert(obj), 'Erro ao importar pagamento');
     error ? err++ : ok++;
   }
   cfgCancelPagamentos();
@@ -6569,11 +6569,11 @@ async function cfgImportPagamentos() {
 async function cfgExportBackup() {
   try {
     const [cl, tk, te, pay, costs] = await Promise.all([
-      sb.from('clients').select('*'),
-      sb.from('tasks').select('*'),
-      sb.from('time_entries').select('*').order('start_time',{ascending:false}).limit(5000),
-      sb.from('monthly_payments').select('*'),
-      sb.from('cost_items').select('*'),
+      db(() => sb.from('clients').select('*'), 'Erro ao exportar clientes'),
+      db(() => sb.from('tasks').select('*'), 'Erro ao exportar tarefas'),
+      db(() => sb.from('time_entries').select('*').order('start_time',{ascending:false}).limit(5000), 'Erro ao exportar entradas'),
+      db(() => sb.from('monthly_payments').select('*'), 'Erro ao exportar pagamentos'),
+      db(() => sb.from('cost_items').select('*'), 'Erro ao exportar custos'),
     ]);
     const data = {
       exported_at: new Date().toISOString(), version: '3.0',

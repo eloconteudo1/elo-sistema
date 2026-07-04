@@ -336,6 +336,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão 20b — `db()` completo + CDN fixo (V3.30)**
+- CDN Supabase fixado para `@2.49.4/dist/umd/supabase.min.js` em `index.html` e `conteudo.html`
+- Migradas todas as chamadas `sb.from()` cruas restantes em `index.html` (grupos A–Z2): checkPersonalReminders, checkAlarms, saveMobileAppt/Task/Reminder, getOrCreateUser, refreshTodayPill, startTimer, stopTimer, saveManualEntry, editNoteInline, loadNotes, loadClientesData, saveTask (modal), markUnpaid, markPaid, createAndMarkPaid, deleteClient, saveClient, loadCalData, CRUD alarmes NRM, CRUD modal unificado (appt/task/nota), CRUD alarmes modal antigo, loadChartData, resRenderMes, repGenerate, resRenderHoje, cfgRenderCats, cfgSubmitCat, cfgDeleteCat, cfgRenderTasks, cfgToggleFav, cfgDeleteTask, cfgSaveTask, cfgLoadMetas, cfgSaveMetas, cfgRecalcHora (cost_items), genMonthlyReport, cfgImportClientes, cfgImportPagamentos, cfgExportBackup
+- `conteudo.html`: helper `db()` adicionado após `esc()`; query `inspiration_posts` migrada para `db()`
+- Versão 3.30, data 04/07/2026
+
 **Sessão 19b — Financeiro: status, custos recorrentes, fix FIN.clients (V3.27b)**
 - Fix bug: `renderFinanceiro` usava `T.clients` em vez de `FIN.clients`
 - `loadFinData` migrado para `db()` + auto-marca VENCIDO no banco + chama `autoCarryRecurringCosts()`
@@ -389,6 +395,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
 | S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
+| S20b | ~~Sessão 20b: db() completo + CDN Supabase @2.49.4 fixado em index.html e conteudo.html~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
