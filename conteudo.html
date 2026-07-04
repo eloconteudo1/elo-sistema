@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ELO — Conteúdo</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
 <style>
 :root {
   --coral: #C4725A;
@@ -723,6 +723,20 @@ function showToast(msg, type='ok'){
   t._timer = setTimeout(()=>{ t.className='toast'; }, 2800);
 }
 
+async function db(queryFn, errorMsg) {
+  try {
+    const result = await queryFn();
+    if (result.error) {
+      showToast((errorMsg || 'Erro') + ': ' + result.error.message, 'err');
+      return { data: null, error: result.error, count: null };
+    }
+    return result;
+  } catch (e) {
+    showToast((errorMsg || 'Erro inesperado') + ': ' + e.message, 'err');
+    return { data: null, error: e, count: null };
+  }
+}
+
 // ── Estado global ──
 let clients = [];
 let selectedClient = null;
@@ -757,11 +771,11 @@ async function init(){
 
 // ── Clientes ──
 async function loadClients(){
-  const { data, error } = await sb.from('clients')
+  const { data, error } = await db(() => sb.from('clients')
     .select('id,name,color,is_active')
     .eq('is_active', true)
-    .order('name');
-  if(error){ showToast('Erro ao carregar clientes','err'); return; }
+    .order('name'), 'Erro ao carregar clientes');
+  if(error) return;
   clients = data || [];
   renderDropdown();
 }
@@ -824,8 +838,8 @@ async function selectClient(id){
     ed.innerHTML = notesCache[id];
   } else {
     ed.innerHTML = '<span style="color:var(--lavender);font-size:12px;">Carregando...</span>';
-    const { data } = await sb.from('content_notes')
-      .select('content').eq('client_id', id).maybeSingle();
+    const { data } = await db(() => sb.from('content_notes')
+      .select('content').eq('client_id', id).maybeSingle(), 'Erro ao carregar notas');
     notesCache[id] = data?.content || '';
     ed.innerHTML = notesCache[id];
   }
@@ -855,12 +869,12 @@ async function salvar(){
   notesCache[selectedClient.id] = content;
   const btn = document.getElementById('btnSalvar');
   btn.disabled = true; btn.textContent = 'Salvando...';
-  const { error } = await sb.from('content_notes').upsert(
+  const { error } = await db(() => sb.from('content_notes').upsert(
     { client_id: selectedClient.id, content, updated_at: new Date().toISOString() },
     { onConflict: 'client_id' }
-  );
+  ), 'Erro ao salvar');
   btn.disabled = false; btn.textContent = 'Salvar';
-  if(error){ showToast('Erro ao salvar: '+error.message,'err'); return; }
+  if(error) return;
   showToast('Anotações salvas ✓','ok');
 }
 
@@ -869,13 +883,13 @@ async function loadKPIs(){
   // Conta por status de forma eficiente
   const statuses = ['Ideia','Aprovado','Usado'];
   const results = await Promise.all([
-    sb.from('inspiration_posts').select('*', {count:'exact',head:true}),
-    ...statuses.map(s => sb.from('inspiration_posts').select('*',{count:'exact',head:true}).eq('status',s))
+    db(() => sb.from('inspiration_posts').select('*', {count:'exact',head:true}), 'Erro ao carregar KPIs'),
+    ...statuses.map(s => db(() => sb.from('inspiration_posts').select('*',{count:'exact',head:true}).eq('status',s), 'Erro ao carregar KPIs'))
   ]);
-  kpiCounts.total = results[0].count || 0;
-  kpiCounts.ideia = results[1].count || 0;
-  kpiCounts.aprovado = results[2].count || 0;
-  kpiCounts.usado = results[3].count || 0;
+  kpiCounts.total = results[0].count ?? 0;
+  kpiCounts.ideia = results[1].count ?? 0;
+  kpiCounts.aprovado = results[2].count ?? 0;
+  kpiCounts.usado = results[3].count ?? 0;
   renderKPIs();
 }
 
@@ -888,7 +902,7 @@ function renderKPIs(){
 
 // ── Especialidades (filtro dinâmico) ──
 async function loadSpecialties(){
-  const { data } = await sb.from('inspiration_posts').select('specialty').limit(2000);
+  const { data } = await db(() => sb.from('inspiration_posts').select('specialty').limit(2000), 'Erro ao carregar especialidades');
   if(!data) return;
   const set = new Set(data.map(d => d.specialty).filter(Boolean).sort());
   const sel = document.getElementById('filter-esp');
@@ -924,11 +938,10 @@ async function loadPosts(reset=true){
   if(filterStatus) query = query.eq('status', filterStatus);
   if(filterText) query = query.or(`title.ilike.%${filterText}%,caption.ilike.%${filterText}%`);
 
-  const { data, count, error } = await query;
+  const { data, count, error } = await db(() => query, 'Erro na busca');
 
   if(error){
     listEl.innerHTML = '<div class="banco-empty">Erro ao carregar posts.<br>Tente novamente.</div>';
-    showToast('Erro ao carregar posts: '+error.message,'err');
     return;
   }
 
@@ -1121,8 +1134,8 @@ async function saveEdit(){
     status: document.getElementById('edit-status').value,
     format: document.getElementById('edit-format').value.trim(),
   };
-  const { error } = await sb.from('inspiration_posts').update(updates).eq('id', editingPostId);
-  if(error){ showToast('Erro ao salvar: '+error.message,'err'); return; }
+  const { error } = await db(() => sb.from('inspiration_posts').update(updates).eq('id', editingPostId), 'Erro ao salvar post');
+  if(error) return;
 
   // Atualiza cache local
   const idx = allPosts.findIndex(p => p.id === editingPostId);
@@ -1136,8 +1149,8 @@ async function saveEdit(){
 // ── Deletar ──
 async function deletePost(p){
   if(!confirm(`Excluir "${p.title}"?`)) return; // fallback aceitável por não existir openConfirmModal aqui
-  const { error } = await sb.from('inspiration_posts').delete().eq('id', p.id);
-  if(error){ showToast('Erro ao excluir: '+error.message,'err'); return; }
+  const { error } = await db(() => sb.from('inspiration_posts').delete().eq('id', p.id), 'Erro ao excluir post');
+  if(error) return;
   allPosts = allPosts.filter(x => x.id !== p.id);
   totalCount--;
   renderPosts(true);

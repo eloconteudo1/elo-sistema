@@ -336,6 +336,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão 20 — `db()` no restante do index.html + conteudo.html + fixar CDN (V3.28)**
+- Migradas as ~56 chamadas `sb.from(...)` restantes do `index.html` para `db()` (alarmes, timer, notes, clientes, pagamentos, modal Novo Registro, Calendário, Resultado, Config, importação CSV)
+- Toasts manuais duplicados removidos onde o código antigo já tratava `error` — fluxo (`if (error) return;` / revert de estado otimista) preservado
+- `conteudo.html`: helper `db()` adicionado após `showToast`; migradas as 9 chamadas (clientes, `content_notes`, KPIs via `Promise.all`, especialidades, busca com query builder dinâmico, editar/excluir post)
+- CDN `@supabase/supabase-js@2` fixado em `@supabase/supabase-js@2.110.0` nos dois arquivos
+- `sb.auth.*` (login/logout/sessão) não foi tocado — mantém tratamento de erro próprio
+- Versão 3.28, data 04/07/2026
+
 **Sessão 19b — Financeiro: status, custos recorrentes, fix FIN.clients (V3.27b)**
 - Fix bug: `renderFinanceiro` usava `T.clients` em vez de `FIN.clients`
 - `loadFinData` migrado para `db()` + auto-marca VENCIDO no banco + chama `autoCarryRecurringCosts()`
@@ -389,6 +397,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S18 | ~~Sessão 18: esc() nos 6 pontos remanescentes (t.title, ev.title, s.title, x.name, r.nome/especialidade) + filtro de mês em scheduled_tasks no calendário~~ | **Concluído** |
 | S19 | ~~Sessão 19: helper db() + remove Alerta Pausa + fix notas 3x + botão excluir sidebar cal + fix constraint once~~ | **Concluído** |
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
+| S20 | ~~Sessão 20: db() no restante do index.html + conteudo.html + fixar versão CDN supabase-js~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
