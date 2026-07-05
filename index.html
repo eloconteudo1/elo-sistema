@@ -626,30 +626,24 @@
         <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;display:flex;flex-direction:column;gap:16px;">
 
           <!-- BLOCO 1 — ASSISTENTE -->
-          <div class="right-card" id="assistant-header-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:16px;">⚡</span>
-                <span style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);">Assistente</span>
-              </div>
-              <span style="font-size:16px;color:var(--text-dim);opacity:.6;cursor:default;" title="Configurações (futuro)">⚙️</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
-              <span style="font-size:34px;line-height:1;">☀️</span>
+          <div class="right-card" id="assistant-header-card" style="padding:14px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;line-height:1;">☀️</span>
               <div style="flex:1;">
-                <div id="assistant-greeting" style="font-size:17px;font-weight:800;color:var(--deep);">ALOU, Helô!</div>
-                <div style="font-size:12px;color:var(--text-dim);">Foca no que importa</div>
+                <div id="assistant-greeting" style="font-size:16px;font-weight:800;color:var(--deep);">ALOU, Helô!</div>
               </div>
-              <button onclick="handleEstouAqui()" style="padding:10px 18px;border:none;border-radius:12px;background:var(--coral);color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .15s;">Estou aqui</button>
+              <button onclick="handleEstouAqui()" style="padding:8px 16px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .15s;">Estou aqui</button>
             </div>
           </div>
 
           <!-- BLOCO 2 — PARA HOJE -->
           <div class="right-card" id="para-hoje-card">
-            <div class="sec-label" style="margin-bottom:14px;">Para hoje</div>
-            <div id="para-hoje-chips" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;"></div>
-            <div id="para-hoje-timeline"></div>
-            <div id="para-hoje-vertodos" style="margin-top:10px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;"></div>
+            <div class="sec-label" style="margin-bottom:12px;">Para hoje</div>
+            <div style="display:flex;gap:12px;">
+              <div id="para-hoje-timeline" style="flex:1;"></div>
+              <div id="para-hoje-chips" style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;"></div>
+            </div>
+            <div id="para-hoje-vertodos" style="margin-top:10px;"></div>
           </div>
 
           <!-- BLOCO 3 — ATENÇÃO -->
@@ -663,11 +657,12 @@
 
           <!-- BLOCO 4 — FALA COMIGO, BB -->
           <div class="right-card" id="fala-comigo-card">
-            <div class="sec-label" style="margin-bottom:10px;">Fala comigo, bb</div>
-            <textarea id="assistant-input" class="elo-input" placeholder="Digite um comando..." rows="2" style="width:100%;resize:none;font-family:inherit;margin-bottom:4px;" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
-            <div style="font-size:10px;color:var(--text-dim);opacity:.7;margin-bottom:8px;">Ex: /ia estou aqui</div>
-            <button onclick="submitAssistantCommand()" style="width:100%;padding:8px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Enviar</button>
-            <div id="assistant-message" style="margin-top:8px;font-size:12px;color:var(--text-dim);min-height:16px;"></div>
+            <div class="sec-label" style="margin-bottom:8px;">Fala comigo, bb</div>
+            <div id="assistant-history" style="max-height:80px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input id="assistant-input" class="elo-input" type="text" placeholder="/comando..." style="flex:1;font-family:inherit;padding:8px 10px;font-size:12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitAssistantCommand();}">
+              <button onclick="submitAssistantCommand()" style="padding:8px 14px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">↵</button>
+            </div>
           </div>
 
         </aside>
@@ -1344,7 +1339,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.30 · ELO Comunicação · Atualizado em 04/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.31 · ELO Comunicação · Atualizado em 04/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1414,7 +1409,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.30</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.31</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">04/07/2026</span></span>
   </footer>
@@ -3056,44 +3051,40 @@ function getAtencaoData() {
 // ── Render: Para Hoje ──
 function renderParaHoje(data) {
   data = data || getParaHojeData();
-
   const colorMap = {
     purple: 'var(--purple)', orange: 'var(--orange)', green: 'var(--green)',
     blue: 'var(--blue)', red: 'var(--pink)'
   };
-
   const chipsEl = document.getElementById('para-hoje-chips');
   if (chipsEl) {
     chipsEl.innerHTML = `
-      <div style="background:var(--surface2);border-radius:12px;padding:10px 6px;text-align:center;">
-        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--purple);margin-bottom:2px;">FAZER</div>
-        <div style="font-size:20px;font-weight:800;color:var(--deep);">${data.fazer}</div>
+      <div style="background:var(--surface2);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
+        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--purple);margin-bottom:1px;">FAZER</div>
+        <div style="font-size:15px;font-weight:800;color:var(--deep);">${data.fazer}</div>
       </div>
-      <div style="background:var(--surface2);border-radius:12px;padding:10px 6px;text-align:center;">
-        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--orange);margin-bottom:2px;">FAZENDO</div>
-        <div style="font-size:20px;font-weight:800;color:var(--orange);">${data.fazendo}</div>
+      <div style="background:var(--surface2);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
+        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--orange);margin-bottom:1px;">FAZENDO</div>
+        <div style="font-size:15px;font-weight:800;color:var(--orange);">${data.fazendo}</div>
       </div>
-      <div style="background:rgba(196,114,90,.12);border-radius:12px;padding:10px 6px;text-align:center;">
-        <div style="font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--coral);margin-bottom:2px;">ATRASADO</div>
-        <div style="font-size:20px;font-weight:800;color:var(--coral);">${data.atrasado}</div>
+      <div style="background:rgba(196,114,90,.12);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
+        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--coral);margin-bottom:1px;">ATRASADO</div>
+        <div style="font-size:15px;font-weight:800;color:var(--coral);">${data.atrasado}</div>
       </div>
     `;
   }
-
   const timelineEl = document.getElementById('para-hoje-timeline');
   if (timelineEl) {
     timelineEl.innerHTML = data.items.slice(0, 5).map(it => `
-      <div style="display:flex;gap:10px;align-items:center;padding:7px 0;">
-        <span style="width:9px;height:9px;border-radius:50%;background:${colorMap[it.color] || 'var(--lavender)'};flex-shrink:0;"></span>
-        <div style="font-size:13px;font-weight:700;color:var(--text-dim);width:44px;flex-shrink:0;">${esc(it.time)}</div>
-        <div style="font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+      <div style="display:flex;gap:8px;align-items:center;padding:5px 0;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${colorMap[it.color] || 'var(--lavender)'};flex-shrink:0;"></span>
+        <div style="font-size:12px;font-weight:700;color:var(--text-dim);width:38px;flex-shrink:0;">${esc(it.time)}</div>
+        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
       </div>
     `).join('');
   }
-
   const verTodosEl = document.getElementById('para-hoje-vertodos');
   if (verTodosEl) {
-    verTodosEl.textContent = `Ver todos (${data.items.length})`;
+    verTodosEl.innerHTML = `<span onclick="navigateTo('calendario')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </span>`;
   }
 }
 
@@ -3116,7 +3107,7 @@ function renderFinanceiroResumo(items) {
         </div>
       `).join('')}
     </div>
-    <div style="font-size:11px;font-weight:700;color:var(--purple);cursor:default;">Ver todas as contas →</div>
+    <div onclick="navigateTo('financeiro')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </div>
   `;
 }
 
@@ -3136,7 +3127,7 @@ function renderAgendaResumo(items) {
         </div>
       `).join('')}
     </div>
-    <div style="font-size:11px;font-weight:700;color:var(--purple);cursor:default;">Ver todos os compromissos →</div>
+    <div onclick="navigateTo('calendario')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </div>
   `;
 }
 
@@ -3151,13 +3142,29 @@ function submitAssistantCommand() {
   const input = document.getElementById('assistant-input');
   if (!input) return;
   const value = input.value;
+  if (value.trim()) {
+    const el = document.getElementById('assistant-history');
+    if (el) {
+      const cmd = document.createElement('div');
+      cmd.style.cssText = 'font-size:11px;color:var(--purple);font-weight:700;padding:2px 0;';
+      cmd.textContent = '> ' + value.trim();
+      el.appendChild(cmd);
+      while (el.children.length > 10) el.removeChild(el.firstChild);
+    }
+  }
   handleAssistantCommand(value);
   input.value = '';
 }
 
 function showAssistantMessage(msg) {
-  const el = document.getElementById('assistant-message');
-  if (el) el.textContent = msg;
+  const el = document.getElementById('assistant-history');
+  if (!el) return;
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'font-size:11px;color:var(--text-dim);background:var(--surface2);padding:6px 10px;border-radius:8px;line-height:1.4;';
+  bubble.textContent = msg;
+  el.appendChild(bubble);
+  while (el.children.length > 5) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
 }
 
 function handleAssistantCommand(input) {
