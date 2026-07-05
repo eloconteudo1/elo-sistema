@@ -1333,7 +1333,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.32 · ELO Comunicação · Atualizado em 04/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.33 · ELO Comunicação · Atualizado em 05/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1403,9 +1403,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.32</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.33</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">04/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">05/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3164,6 +3164,12 @@ function handleAssistantCommand(input) {
       return handleIACommand(payload);
     case '/anota':
       return handleAnotaCommand(payload);
+    case '/tarefa':
+      return handleTarefaCommand(payload);
+    case '/recebido':
+      return handleRecebidoCommand(payload);
+    case '/pago':
+      return handlePagoCommand(payload);
     case '/financeiro':
       return openFinanceiroResumo();
     case '/agenda':
@@ -3180,7 +3186,7 @@ function handleAssistantCommand(input) {
 }
 
 function showAssistantHelp() {
-  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /financeiro · /agenda · /desviei · /voltei');
+  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /tarefa [hora] [texto] [!prioridade] · /recebido [cliente] · /pago [conta] · /financeiro · /agenda · /desviei · /voltei');
 }
 
 // ── Comando /ia e botão "Estou aqui" ──
@@ -3212,6 +3218,120 @@ async function handleAnotaCommand(text) {
   if (!error) {
     showAssistantMessage('Anotado.');
   }
+}
+
+// ── Comandos /tarefa /recebido /pago ──
+async function handleTarefaCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /tarefa [hora] [texto] [!alta|!media|!baixa]');
+    return;
+  }
+  const m = text.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
+  const hora = m?.[1] || null;
+  const titulo = (m?.[2] || text).trim();
+  const prioridade = (m?.[3] || 'media').toLowerCase();
+  if (!titulo) {
+    showAssistantMessage('Não entendi o texto da tarefa.');
+    return;
+  }
+  const payload = {
+    scheduled_date: todayStr(),
+    scheduled_time: hora,
+    title: titulo,
+    priority: prioridade,
+    is_done: false,
+    user_id: 1
+  };
+  const { data, error } = await db(
+    () => sb.from('scheduled_tasks').insert(payload).select().single(),
+    'Erro ao criar tarefa'
+  );
+  if (error) return;
+  T.scheduledTasks.unshift(data);
+  showAssistantMessage(`Tarefa criada: "${titulo}"${hora ? ' às ' + hora : ''}.`);
+}
+
+async function handleRecebidoCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /recebido [nome do cliente]');
+    return;
+  }
+  const term = normalizeStr(text);
+  const matches = T.clients.filter(c =>
+    c.is_active !== false && !c.is_internal && normalizeStr(c.name).includes(term)
+  );
+  if (matches.length === 0) {
+    showAssistantMessage(`Cliente não encontrado: "${text}".`);
+    return;
+  }
+  if (matches.length > 1) {
+    showAssistantMessage(`Mais de um cliente encontrado: ${matches.map(c => c.name).join(', ')}. Seja mais específica.`);
+    return;
+  }
+  const client = matches[0];
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const { data: existing, error: findErr } = await db(
+    () => sb.from('monthly_payments').select('*').eq('client_id', client.id).eq('month', month).eq('year', year),
+    'Erro ao buscar pagamento'
+  );
+  if (findErr) return;
+  const row = (existing || [])[0];
+  if (row) {
+    const { error } = await db(
+      () => sb.from('monthly_payments').update({ status: 'PAGO', is_paid: true, paid_at: now.toISOString() }).eq('id', row.id),
+      'Erro ao dar baixa'
+    );
+    if (error) return;
+  } else {
+    const { error } = await db(
+      () => sb.from('monthly_payments').insert({
+        client_id: client.id, month, year,
+        amount: client.contract_value || 0,
+        due_day: client.due_day || null,
+        payment_method: client.payment_method || null,
+        is_paid: true, is_manual: false,
+        status: 'PAGO', paid_at: now.toISOString()
+      }),
+      'Erro ao registrar recebimento'
+    );
+    if (error) return;
+  }
+  T.paymentAlerts = T.paymentAlerts.filter(a => a.clientId !== client.id);
+  showAssistantMessage(`Recebido: ${client.name}.`);
+}
+
+async function handlePagoCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /pago [descrição da conta]');
+    return;
+  }
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const term = normalizeStr(text);
+  const { data: costs, error: findErr } = await db(
+    () => sb.from('cost_items').select('*').eq('month', month).eq('year', year).eq('is_paid', false),
+    'Erro ao buscar custos'
+  );
+  if (findErr) return;
+  const matches = (costs || []).filter(c => normalizeStr(c.description || '').includes(term));
+  if (matches.length === 0) {
+    showAssistantMessage(`Nenhuma conta em aberto encontrada com "${text}".`);
+    return;
+  }
+  if (matches.length > 1) {
+    showAssistantMessage(`Mais de uma conta encontrada: ${matches.map(c => c.description).join(', ')}. Seja mais específica.`);
+    return;
+  }
+  const cost = matches[0];
+  const { error } = await db(
+    () => sb.from('cost_items').update({ is_paid: true }).eq('id', cost.id),
+    'Erro ao dar baixa na conta'
+  );
+  if (error) return;
+  showAssistantMessage(`Pago: ${cost.description}.`);
 }
 
 // ── Comandos /financeiro e /agenda ──
