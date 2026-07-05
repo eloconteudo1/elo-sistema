@@ -457,18 +457,8 @@
       <label>Senha</label>
       <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <div class="login-field" id="login-confirm-field" style="display:none;">
-      <label>Confirmar senha</label>
-      <input type="password" id="login-confirm" placeholder="••••••••" />
-    </div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" id="login-btn" onclick="handleLogin()">Entrar</button>
-    <div style="text-align:center;margin-top:16px;">
-      <button id="toggle-mode-btn" onclick="toggleLoginMode()"
-        style="background:none;border:none;color:var(--text-dim);font-family:inherit;font-size:12px;cursor:pointer;text-decoration:underline;">
-        Primeiro acesso? Criar conta
-      </button>
-    </div>
   </div>
 </div>
 
@@ -1333,7 +1323,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.33 · ELO Comunicação · Atualizado em 05/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.34 · ELO Comunicação · Atualizado em 05/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1403,7 +1393,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.33</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.34</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">05/07/2026</span></span>
   </footer>
@@ -1967,38 +1957,12 @@ document.addEventListener('click', e => {
 // ════════════════════════════════════════════════════════════════
 // AUTH
 // ════════════════════════════════════════════════════════════════
-let _loginMode = 'signin'; // 'signin' | 'signup'
-
-function toggleLoginMode() {
-  _loginMode = _loginMode === 'signin' ? 'signup' : 'signin';
-  const isSignup = _loginMode === 'signup';
-  document.getElementById('login-title').textContent = isSignup ? 'Criar conta' : 'Entrar na sua conta';
-  document.getElementById('login-btn').textContent = isSignup ? 'Criar conta' : 'Entrar';
-  document.getElementById('toggle-mode-btn').textContent = isSignup ? 'Já tem conta? Entrar' : 'Primeiro acesso? Criar conta';
-  document.getElementById('login-confirm-field').style.display = isSignup ? '' : 'none';
-  document.getElementById('login-error').style.display = 'none';
-}
-
 async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-btn');
   const errEl = document.getElementById('login-error');
   if (!email || !password) { showLoginError('Preencha e-mail e senha.'); return; }
-
-  if (_loginMode === 'signup') {
-    const confirm = document.getElementById('login-confirm').value;
-    if (password !== confirm) { showLoginError('As senhas não coincidem.'); return; }
-    if (password.length < 6) { showLoginError('A senha deve ter pelo menos 6 caracteres.'); return; }
-    btn.disabled = true; btn.textContent = 'Criando conta...'; errEl.style.display='none';
-    const { error } = await sb.auth.signUp({ email, password });
-    if (error) { showLoginError(error.message); btn.disabled=false; btn.textContent='Criar conta'; return; }
-    showToast('Conta criada! Verifique seu e-mail se necessário.','ok');
-    // Tenta logar direto
-    await sb.auth.signInWithPassword({ email, password });
-    return;
-  }
-
   btn.disabled = true; btn.textContent = 'Entrando...'; errEl.style.display='none';
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) { showLoginError('E-mail ou senha incorretos.'); btn.disabled=false; btn.textContent='Entrar'; }
@@ -3773,13 +3737,6 @@ function renderClientGrid() {
         expandedHtml += `</div>`;
       }
       if (c.contract_start) expandedHtml += `<div><div class="cl-detail-label">Início do contrato</div><div class="cl-detail-val">${c.contract_start}</div></div>`;
-      if (c.instagram_login) expandedHtml += `<div><div class="cl-detail-label">Instagram</div><div class="cl-detail-val">${c.instagram_login}</div></div>`;
-      if (c.drive_link || c.photos_link) {
-        expandedHtml += `<div style="display:flex;gap:10px;flex-wrap:wrap;">`;
-        if (c.drive_link) expandedHtml += `<a href="${c.drive_link}" target="_blank" style="font-size:12px;font-weight:700;color:var(--purple);background:rgba(74,41,118,.08);padding:5px 12px;border-radius:10px;text-decoration:none;">📁 Drive</a>`;
-        if (c.photos_link) expandedHtml += `<a href="${c.photos_link}" target="_blank" style="font-size:12px;font-weight:700;color:var(--purple);background:rgba(74,41,118,.08);padding:5px 12px;border-radius:10px;text-decoration:none;">📷 Photos</a>`;
-        expandedHtml += `</div>`;
-      }
       if (c.notes) expandedHtml += `<div><div class="cl-detail-label">Observações</div><div style="font-size:13px;color:var(--text-dim);line-height:1.5;">${esc(c.notes)}</div></div>`;
       if (c.birthday) expandedHtml += `<div><div class="cl-detail-label">Aniversário</div><div class="cl-detail-val">🎂 ${c.birthday}</div></div>`;
       expandedHtml += `</div>`;
@@ -3924,8 +3881,6 @@ function openClientModal(id) {
       <div class="modal-tabs">
         <button class="modal-tab active" id="ctab-geral"      onclick="switchClientTab('geral')">Geral</button>
         <button class="modal-tab"        id="ctab-financeiro" onclick="switchClientTab('financeiro')">Financeiro</button>
-        <button class="modal-tab"        id="ctab-acesso"     onclick="switchClientTab('acesso')">Acesso</button>
-        <button class="modal-tab"        id="ctab-links"      onclick="switchClientTab('links')">Links</button>
       </div>
       <div id="client-tab-content"></div>
       <div class="modal-footer">
@@ -3967,14 +3922,6 @@ function collectClientTabData() {
       _clientData.contract_value  = parseFloat(get('cf-value')||'0') || 0;
       _clientData.due_day         = parseInt(get('cf-due-day')||'0') || null;
       _clientData.payment_method  = get('cf-pay-method');
-      break;
-    case 'acesso':
-      _clientData.instagram_login    = get('cf-ig-login');
-      _clientData.instagram_password = get('cf-ig-pass');
-      break;
-    case 'links':
-      _clientData.drive_link  = get('cf-drive');
-      _clientData.photos_link = get('cf-photos');
       break;
   }
 }
@@ -4034,7 +3981,7 @@ function renderClientTabContent() {
       </div>
       <div class="field-group">
         <label class="field-label">Observações / Combinado</label>
-        <textarea class="field-input" id="cf-notes" rows="3" placeholder="Informações adicionais, combinados, etc..." style="resize:vertical;">${esc(v('notes'))}</textarea>
+        <textarea class="field-input" id="cf-notes" rows="6" placeholder="Informações adicionais, combinados, etc..." style="resize:vertical;">${esc(v('notes'))}</textarea>
       </div>
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-dim);font-weight:600;margin-top:4px;">
         <input type="checkbox" id="cf-internal" ${d.is_internal?'checked':''} style="width:16px;height:16px;cursor:pointer;" />
@@ -4063,26 +4010,6 @@ function renderClientTabContent() {
           ${PAY_METHODS.map(p=>`<option value="${p}"${v('payment_method')===p?' selected':''}>${p}</option>`).join('')}
         </select>
       </div>`;
-  } else if (_clientModalTab === 'acesso') {
-    html = `
-      <div class="field-group">
-        <label class="field-label">Instagram — Login</label>
-        <input class="field-input" id="cf-ig-login" placeholder="@usuario ou e-mail" value="${esc(v('instagram_login'))}" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Instagram — Senha</label>
-        <input class="field-input" type="password" id="cf-ig-pass" placeholder="••••••••" value="${esc(v('instagram_password'))}" />
-      </div>`;
-  } else if (_clientModalTab === 'links') {
-    html = `
-      <div class="field-group">
-        <label class="field-label">Link do Drive</label>
-        <input class="field-input" id="cf-drive" type="url" placeholder="https://drive.google.com/..." value="${esc(v('drive_link'))}" />
-      </div>
-      <div class="field-group">
-        <label class="field-label">Link das Fotos</label>
-        <input class="field-input" id="cf-photos" type="url" placeholder="https://..." value="${esc(v('photos_link'))}" />
-      </div>`;
   }
   document.getElementById('client-tab-content').innerHTML = html;
 }
@@ -4109,10 +4036,6 @@ async function saveClient(id) {
     contract_value: _clientData.contract_value||0,
     due_day: _clientData.due_day||null,
     payment_method: _clientData.payment_method||null,
-    instagram_login: _clientData.instagram_login||null,
-    instagram_password: _clientData.instagram_password||null,
-    drive_link: _clientData.drive_link||null,
-    photos_link: _clientData.photos_link||null,
     is_active: true,
   };
 

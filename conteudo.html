@@ -699,6 +699,13 @@ const sb = supabase.createClient(
   'https://vatkfkdnflbdfomglvme.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhdGtma2RuZmxiZGZvbWdsdm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDIzMDUsImV4cCI6MjA5NzcxODMwNX0.DhcxD1Z9HERL4128bKrIIZ8KajcYK5hny8zLxBwHmGM'
 );
+// ── Gating de login (S21) ──
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (!session) window.location.href = 'index.html';
+});
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || !session) window.location.href = 'index.html';
+});
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, m =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -735,6 +742,22 @@ async function db(queryFn, errorMsg) {
     showToast((errorMsg || 'Erro inesperado') + ': ' + e.message, 'err');
     return { data: null, error: e, count: null };
   }
+}
+
+function openConfirmModal(title, msg, onConfirm) {
+  let el = document.getElementById('_confirm-overlay');
+  if (!el) { el = document.createElement('div'); el.id = '_confirm-overlay'; document.body.appendChild(el); }
+  el.className = 'modal-overlay open';
+  el.innerHTML = `<div class="modal-box" style="max-width:380px;" onclick="event.stopPropagation()">
+    <div style="padding:20px 24px 0;font-size:16px;font-weight:700;color:var(--text)">${title}</div>
+    <p style="padding:12px 24px;font-size:14px;color:var(--text-dim);margin:0">${msg}</p>
+    <div style="display:flex;gap:10px;padding:16px 24px;justify-content:flex-end">
+      <button class="btn-cancel-modal" onclick="document.getElementById('_confirm-overlay').className='modal-overlay'">Cancelar</button>
+      <button class="btn-usar-modal" style="background:#DC2626;" onclick="window._confirmFn&&window._confirmFn();document.getElementById('_confirm-overlay').className='modal-overlay'">Confirmar</button>
+    </div>
+  </div>`;
+  el.onclick = e => { if (e.target === el) el.className = 'modal-overlay'; };
+  window._confirmFn = onConfirm;
 }
 
 // ── Estado global ──
@@ -1148,15 +1171,16 @@ async function saveEdit(){
 
 // ── Deletar ──
 async function deletePost(p){
-  if(!confirm(`Excluir "${p.title}"?`)) return; // fallback aceitável por não existir openConfirmModal aqui
-  const { error } = await db(() => sb.from('inspiration_posts').delete().eq('id', p.id), 'Erro ao excluir post');
-  if(error){ return; }
-  allPosts = allPosts.filter(x => x.id !== p.id);
-  totalCount--;
-  renderPosts(true);
-  updateBancoMeta();
-  showToast('Post excluído','ok');
-  loadKPIs();
+  openConfirmModal('Excluir post', `Excluir "${esc(p.title)}"?`, async () => {
+    const { error } = await db(() => sb.from('inspiration_posts').delete().eq('id', p.id), 'Erro ao excluir post');
+    if(error){ return; }
+    allPosts = allPosts.filter(x => x.id !== p.id);
+    totalCount--;
+    renderPosts(true);
+    updateBancoMeta();
+    showToast('Post excluído','ok');
+    loadKPIs();
+  });
 }
 
 // ── Util ──
