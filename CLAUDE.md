@@ -336,6 +336,16 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - **Footer:** `#version-number` com id, `#build-date` com data `28/06/2026`, `#sobre-version` com versão e data
 - **`conteudo.html`:** topbar substituída pela padrão do sistema (`.elo-topbar`, logo, mesmos tabs, relógio)
 
+**Sessão S21 — Segurança: gating, signup removido, Instagram/Drive/Links eliminados (V3.34)**
+- `conteudo.html`: gating de login via `sb.auth.getSession` + `onAuthStateChange` → redirect para `index.html` se anon
+- `index.html`: signup removido da UI — `#toggle-mode-btn`, `#login-confirm-field`, `toggleLoginMode()`, branch `isSignup`/`signUp` eliminados; apenas `signInWithPassword` permanece
+- `index.html`: abas **Acesso** e **Links** removidas do modal de cliente — `#ctab-acesso`, `#ctab-links`, campos `cf-ig-login/pass`, `cf-drive/photos`, `collectClientTabData` cases, `renderClientTabContent` branches, payload `saveClient`
+- `index.html`: card expandido de cliente sem linha Instagram e sem botões Drive/Photos
+- `index.html`: `#cf-notes` rows 3→6 (campo principal de contexto do cliente)
+- `conteudo.html`: `openConfirmModal` portado (usa CSS existente `.modal-overlay`/`.modal-box`); `deletePost` usa modal estilizado, não `confirm()` nativo
+- SQL pendente (Helô roda manual): RLS nas 14 tabelas + migração Instagram→notes + DROP colunas
+- Versão 3.34, data 05/07/2026
+
 **Sessão S-CONSOLIDA — Assistente ELO restaurado + fix custos recorrentes (V3.30)**
 - Transplante cirúrgico do painel Assistente ELO da branch órfã `claude/caveman-mode-3j2e8f` (V3.29) para `main` (V3.28)
 - HTML: `<aside id="home-right-sidebar">` substituído pelos 4 blocos: `assistant-header-card`, `para-hoje-card`, `atencao-card`, `fala-comigo-card`
@@ -409,6 +419,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S19b | ~~Sessão 19b: Financeiro status PAGO/ABERTO/VENCIDO/PERDIDO + custos recorrentes (is_recurring) + fix T.clients→FIN.clients~~ | **Concluído** |
 | S20 | ~~Sessão 20: db() completo + conteudo.html + CDN fixado 2.110.0~~ | **Concluído** |
 | S-CONSOLIDA | ~~Sessão S-CONSOLIDA: Assistente ELO restaurado (transplante branch órfã) + fix autoCarryRecurringCosts~~ | **Concluído** |
+| S21 | ~~Sessão S21: RLS-ready code — gating conteudo.html, signup removido, abas Acesso/Links removidas, openConfirmModal portado~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
