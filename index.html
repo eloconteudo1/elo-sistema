@@ -623,12 +623,11 @@
         </div>
 
         <!-- Right sidebar -->
-        <aside id="home-right-sidebar" style="overflow-y:auto;position:sticky;top:20px;display:flex;flex-direction:column;gap:16px;">
+        <aside id="home-right-sidebar" style="display:flex;flex-direction:column;gap:16px;">
 
           <!-- BLOCO 1 — ASSISTENTE -->
           <div class="right-card" id="assistant-header-card" style="padding:14px 16px;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-size:28px;line-height:1;">☀️</span>
               <div style="flex:1;">
                 <div id="assistant-greeting" style="font-size:16px;font-weight:800;color:var(--deep);">ALOU, Helô!</div>
               </div>
@@ -639,30 +638,25 @@
           <!-- BLOCO 2 — PARA HOJE -->
           <div class="right-card" id="para-hoje-card">
             <div class="sec-label" style="margin-bottom:12px;">Para hoje</div>
-            <div style="display:flex;gap:12px;">
-              <div id="para-hoje-timeline" style="flex:1;"></div>
-              <div id="para-hoje-chips" style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;"></div>
-            </div>
-            <div id="para-hoje-vertodos" style="margin-top:10px;"></div>
+            <div id="para-hoje-timeline"></div>
+            <div id="para-hoje-vertodos" style="margin-top:12px;"></div>
           </div>
 
-          <!-- BLOCO 3 — ATENÇÃO -->
+          <!-- BLOCO 3 — FALA COMIGO, BB -->
+          <div class="right-card" id="fala-comigo-card">
+            <div class="sec-label" style="margin-bottom:10px;">Fala comigo, bb</div>
+            <div id="assistant-history" style="min-height:80px;max-height:160px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;"></div>
+            <div style="display:flex;gap:6px;align-items:flex-end;">
+              <textarea id="assistant-input" class="elo-input" placeholder="/comando..." rows="2" style="flex:1;font-family:inherit;padding:10px 12px;font-size:13px;resize:none;line-height:1.4;border-radius:12px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+              <button onclick="submitAssistantCommand()" style="padding:10px 16px;border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;align-self:flex-end;">↵</button>
+            </div>
+          </div>
+
+          <!-- BLOCO 4 — ATENÇÃO -->
           <div class="right-card" id="atencao-card">
             <div class="sec-label" style="margin-bottom:14px;">Atenção</div>
-            <div id="atencao-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-              <div id="atencao-financeiro"></div>
-              <div id="atencao-agenda"></div>
-            </div>
-          </div>
-
-          <!-- BLOCO 4 — FALA COMIGO, BB -->
-          <div class="right-card" id="fala-comigo-card">
-            <div class="sec-label" style="margin-bottom:8px;">Fala comigo, bb</div>
-            <div id="assistant-history" style="max-height:80px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;"></div>
-            <div style="display:flex;gap:6px;">
-              <input id="assistant-input" class="elo-input" type="text" placeholder="/comando..." style="flex:1;font-family:inherit;padding:8px 10px;font-size:12px;" onkeydown="if(event.key==='Enter'){event.preventDefault();submitAssistantCommand();}">
-              <button onclick="submitAssistantCommand()" style="padding:8px 14px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">↵</button>
-            </div>
+            <div id="atencao-lista"></div>
+            <div id="atencao-rodape" style="display:flex;gap:8px;margin-top:14px;"></div>
           </div>
 
         </aside>
@@ -1339,7 +1333,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.31 · ELO Comunicação · Atualizado em 04/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.32 · ELO Comunicação · Atualizado em 04/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1409,7 +1403,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.31</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.32</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">04/07/2026</span></span>
   </footer>
@@ -3055,23 +3049,6 @@ function renderParaHoje(data) {
     purple: 'var(--purple)', orange: 'var(--orange)', green: 'var(--green)',
     blue: 'var(--blue)', red: 'var(--pink)'
   };
-  const chipsEl = document.getElementById('para-hoje-chips');
-  if (chipsEl) {
-    chipsEl.innerHTML = `
-      <div style="background:var(--surface2);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
-        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--purple);margin-bottom:1px;">FAZER</div>
-        <div style="font-size:15px;font-weight:800;color:var(--deep);">${data.fazer}</div>
-      </div>
-      <div style="background:var(--surface2);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
-        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--orange);margin-bottom:1px;">FAZENDO</div>
-        <div style="font-size:15px;font-weight:800;color:var(--orange);">${data.fazendo}</div>
-      </div>
-      <div style="background:rgba(196,114,90,.12);border-radius:8px;padding:6px 10px;text-align:center;min-width:54px;">
-        <div style="font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--coral);margin-bottom:1px;">ATRASADO</div>
-        <div style="font-size:15px;font-weight:800;color:var(--coral);">${data.atrasado}</div>
-      </div>
-    `;
-  }
   const timelineEl = document.getElementById('para-hoje-timeline');
   if (timelineEl) {
     timelineEl.innerHTML = data.items.slice(0, 5).map(it => `
@@ -3084,58 +3061,61 @@ function renderParaHoje(data) {
   }
   const verTodosEl = document.getElementById('para-hoje-vertodos');
   if (verTodosEl) {
-    verTodosEl.innerHTML = `<span onclick="navigateTo('calendario')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </span>`;
+    verTodosEl.innerHTML = `<button onclick="navigateTo('calendario')" style="padding:5px 14px;border:none;border-radius:8px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">ver +</button>`;
   }
 }
 
 // ── Render: Atenção ──
-function renderFinanceiroResumo(items) {
-  const statusColor = { ok:'var(--green)', warning:'var(--orange)', info:'var(--blue)', danger:'var(--pink)' };
-  const el = document.getElementById('atencao-financeiro');
-  if (!el) return;
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-      <span style="font-size:14px;">💰</span>
-      <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--purple);">FINANCEIRO</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-      ${items.slice(0,4).map(it => `
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
-          <span style="width:6px;height:6px;border-radius:50%;background:${statusColor[it.status] || 'var(--lavender)'};flex-shrink:0;"></span>
-          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(it.title)}</span>
-          <span style="color:${statusColor[it.status] || 'var(--text-dim)'};font-weight:700;white-space:nowrap;">${esc(it.due)}</span>
-        </div>
-      `).join('')}
-    </div>
-    <div onclick="navigateTo('financeiro')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </div>
-  `;
-}
-
-function renderAgendaResumo(items) {
-  const el = document.getElementById('atencao-agenda');
-  if (!el) return;
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-      <span style="font-size:14px;">📅</span>
-      <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--purple);">AGENDA</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-      ${items.slice(0,4).map(it => `
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;">
-          <span style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${esc(it.title)}</span>
-          <span style="color:var(--text-dim);font-weight:700;white-space:nowrap;">${esc(it.time)}</span>
-        </div>
-      `).join('')}
-    </div>
-    <div onclick="navigateTo('calendario')" style="font-size:11px;font-weight:700;color:var(--purple);cursor:pointer;">ver + </div>
-  `;
-}
-
+// ── Render: Atenção (lista unificada) ──
 function renderAtencao(data) {
   data = data || getAtencaoData();
-  renderFinanceiroResumo(data.financeiro);
-  renderAgendaResumo(data.agenda);
+  const listaEl = document.getElementById('atencao-lista');
+  const rodapeEl = document.getElementById('atencao-rodape');
+  if (!listaEl) return;
+  const urgencyKey = { danger: 0, ok: 1, warning: 2, info: 3 };
+  const pillFin = {
+    danger:  { label: 'ATRASADO', bg: 'rgba(196,114,90,.18)', color: 'var(--coral)' },
+    ok:      { label: 'HOJE',     bg: 'rgba(47,185,137,.15)', color: 'var(--green)' },
+    warning: { label: 'AMANHÃ',   bg: 'rgba(224,122,58,.15)', color: 'var(--orange)' },
+    info:    { label: '',         bg: 'rgba(59,130,246,.12)', color: 'var(--blue)' }
+  };
+  const finItems = (data.financeiro || []).map(it => ({
+    _type: 'fin', title: it.title, due: it.due, status: it.status,
+    sortKey: urgencyKey[it.status] ?? 3
+  }));
+  const agendaItems = (data.agenda || []).map(it => ({
+    _type: 'agenda', title: it.title, time: it.time, sortKey: 4
+  }));
+  const allItems = [...finItems, ...agendaItems].sort((a, b) => a.sortKey - b.sortKey);
+  listaEl.innerHTML = allItems.slice(0, 7).map(it => {
+    if (it._type === 'fin') {
+      const pill = pillFin[it.status] || pillFin.info;
+      const pillLabel = pill.label || esc(it.due);
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.06);">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--coral);flex-shrink:0;"></span>
+          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</span>
+          <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:${pill.bg};color:${pill.color};white-space:nowrap;flex-shrink:0;">${pillLabel}</span>
+        </div>`;
+    } else {
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.06);">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0;"></span>
+          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</span>
+          <span style="font-size:10px;font-weight:700;color:var(--text-dim);white-space:nowrap;flex-shrink:0;">${esc(it.time)}</span>
+        </div>`;
+    }
+  }).join('');
+  if (rodapeEl) {
+    rodapeEl.innerHTML = `
+      <button onclick="navigateTo('financeiro')" style="flex:1;padding:7px 0;border:none;border-radius:10px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Ver Financeiro</button>
+      <button onclick="navigateTo('calendario')" style="flex:1;padding:7px 0;border:none;border-radius:10px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Ver Agenda</button>
+    `;
+  }
 }
+// Aliases retrocompatíveis
+function renderFinanceiroResumo() { renderAtencao(); }
+function renderAgendaResumo() { renderAtencao(); }
 
 // ── Assistente: Parser de comandos ──
 function submitAssistantCommand() {
@@ -3236,23 +3216,23 @@ async function handleAnotaCommand(text) {
 
 // ── Comandos /financeiro e /agenda ──
 function openFinanceiroResumo() {
-  const el = document.getElementById('atencao-financeiro');
+  const el = document.getElementById('atencao-card');
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.style.outline = '2px solid var(--coral)';
     setTimeout(() => { el.style.outline = 'none'; }, 1500);
   }
-  showAssistantMessage('Resumo financeiro em destaque.');
+  showAssistantMessage('Atenção em destaque. Use "Ver Financeiro" para detalhes.');
 }
 
 function openAgendaResumo() {
-  const el = document.getElementById('atencao-agenda');
+  const el = document.getElementById('atencao-card');
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     el.style.outline = '2px solid var(--coral)';
     setTimeout(() => { el.style.outline = 'none'; }, 1500);
   }
-  showAssistantMessage('Agenda em destaque.');
+  showAssistantMessage('Atenção em destaque. Use "Ver Agenda" para detalhes.');
 }
 
 // ── Comando /desviei ──
