@@ -346,6 +346,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - SQL pendente (Helô roda manual): RLS nas 14 tabelas + migração Instagram→notes + DROP colunas
 - Versão 3.34, data 05/07/2026
 
+**Sessão RADAR-A1 — Schema + CSS base do Radar (V3.36)**
+- SQL: `ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false`
+- SQL: `ALTER TABLE scheduled_tasks ADD COLUMN IF NOT EXISTS duration_minutes integer`
+- SQL: `ALTER TABLE appointments ADD COLUMN IF NOT EXISTS duration_minutes integer`
+- SQL: `CREATE TABLE important_dates (id, date, label, category, created_at)` com RLS + policy `elo_authenticated_all`
+- CSS: 89 linhas adicionadas após `.cal-panel` — prefixo `radar-` em todas as classes para zero colisão com `.cal-*` existentes
+- Classes cobertas: `.radar-legend`, `.radar-day-detail`, `.radar-tabs/tab/panel`, `.radar-task-item`, `.radar-notas-*`, `.radar-prox-*`, `.radar-timeline-*`, `.radar-carga-*`, `.radar-datas-*`, `.radar-type-*`
+- Nenhum HTML visível alterado, nenhuma função JS tocada — zero risco de regressão
+- SQL pendente (Helô roda manual no Supabase SQL Editor)
+- Versão 3.36, data 06/07/2026
+
 **Sessão S-CONSOLIDA — Assistente ELO restaurado + fix custos recorrentes (V3.30)**
 - Transplante cirúrgico do painel Assistente ELO da branch órfã `claude/caveman-mode-3j2e8f` (V3.29) para `main` (V3.28)
 - HTML: `<aside id="home-right-sidebar">` substituído pelos 4 blocos: `assistant-header-card`, `para-hoje-card`, `atencao-card`, `fala-comigo-card`
@@ -420,6 +431,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S20 | ~~Sessão 20: db() completo + conteudo.html + CDN fixado 2.110.0~~ | **Concluído** |
 | S-CONSOLIDA | ~~Sessão S-CONSOLIDA: Assistente ELO restaurado (transplante branch órfã) + fix autoCarryRecurringCosts~~ | **Concluído** |
 | S21 | ~~Sessão S21: RLS-ready code — gating conteudo.html, signup removido, abas Acesso/Links removidas, openConfirmModal portado~~ | **Concluído** |
+| RADAR-A1 | ~~RADAR-A1: Schema (notes.is_done, duration_minutes, important_dates) + CSS base do Radar~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
