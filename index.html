@@ -613,40 +613,54 @@
         </div>
 
         <!-- Right sidebar -->
-        <aside id="home-right-sidebar" style="display:flex;flex-direction:column;gap:16px;">
+        <aside id="home-right-sidebar" style="display:flex;flex-direction:column;gap:12px;">
 
-          <!-- BLOCO 1 — ASSISTENTE -->
-          <div class="right-card" id="assistant-header-card" style="padding:14px 16px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div style="flex:1;">
-                <div id="assistant-greeting" style="font-size:16px;font-weight:800;color:var(--deep);">ALOU, Helô!</div>
+          <!-- BLOCO 1 — ASSISTENTE (hero com destaque) -->
+          <div id="assistant-hero" style="border-radius:22px;padding:16px 18px;color:#fff;position:relative;overflow:hidden;background:linear-gradient(145deg,var(--deep) 0%,var(--deep2) 100%);box-shadow:0 10px 26px rgba(29,13,49,.32);">
+            <div style="position:absolute;right:-36px;top:-36px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(196,114,90,.4),transparent 70%);"></div>
+            <div style="position:relative;z-index:1;">
+              <div style="font-size:9px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--lavender);margin-bottom:7px;display:flex;align-items:center;gap:5px;">
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--coral);box-shadow:0 0 6px var(--coral);display:inline-block;"></span>
+                Assistente ELO
               </div>
-              <button onclick="handleEstouAqui()" style="padding:8px 16px;border:none;border-radius:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .15s;">Estou aqui</button>
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="4.2" stroke="#F0EBF8" stroke-width="1.6"/>
+                  <g stroke="#D4866E" stroke-width="1.6" stroke-linecap="round">
+                    <line x1="12" y1="2.5" x2="12" y2="4.8"/><line x1="12" y1="19.2" x2="12" y2="21.5"/>
+                    <line x1="2.5" y1="12" x2="4.8" y2="12"/><line x1="19.2" y1="12" x2="21.5" y2="12"/>
+                    <line x1="5.3" y1="5.3" x2="6.9" y2="6.9"/><line x1="17.1" y1="17.1" x2="18.7" y2="18.7"/>
+                    <line x1="5.3" y1="18.7" x2="6.9" y2="17.1"/><line x1="17.1" y1="6.9" x2="18.7" y2="5.3"/>
+                  </g>
+                </svg>
+                <div id="assistant-greeting" style="font-size:18px;font-weight:900;letter-spacing:-.3px;">ALOU, Helô!</div>
+              </div>
+              <div id="assistant-datetime" style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:11px;"></div>
+              <button onclick="handleEstouAqui()" style="width:100%;border:none;border-radius:12px;padding:10px;background:var(--coral);color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;">Estou aqui</button>
             </div>
           </div>
 
-          <!-- BLOCO 2 — PARA HOJE -->
-          <div class="right-card" id="para-hoje-card">
-            <div class="sec-label" style="margin-bottom:12px;">Para hoje</div>
-            <div id="para-hoje-timeline"></div>
-            <div id="para-hoje-vertodos" style="margin-top:12px;"></div>
-          </div>
-
-          <!-- BLOCO 3 — FALA COMIGO, BB -->
-          <div class="right-card" id="fala-comigo-card">
-            <div class="sec-label" style="margin-bottom:10px;">Fala comigo, bb</div>
-            <div id="assistant-history" style="min-height:80px;max-height:160px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;"></div>
-            <div style="display:flex;gap:6px;align-items:flex-end;">
-              <textarea id="assistant-input" class="elo-input" placeholder="/comando..." rows="2" style="flex:1;font-family:inherit;padding:10px 12px;font-size:13px;resize:none;line-height:1.4;border-radius:12px;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
-              <button onclick="submitAssistantCommand()" style="padding:10px 16px;border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;align-self:flex-end;">↵</button>
+          <!-- BLOCO 2 — PARA HOJE (altura fixa, até 6 itens) -->
+          <div class="right-card" id="para-hoje-card" style="height:220px;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span class="sec-label">Para hoje</span>
+              <button onclick="navigateTo('calendario')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
             </div>
+            <div id="para-hoje-progress"></div>
+            <div id="para-hoje-timeline" style="flex:1;overflow:hidden;"></div>
           </div>
 
-          <!-- BLOCO 4 — ATENÇÃO -->
-          <div class="right-card" id="atencao-card">
-            <div class="sec-label" style="margin-bottom:14px;">Atenção</div>
-            <div id="atencao-lista"></div>
-            <div id="atencao-rodape" style="display:flex;gap:8px;margin-top:14px;"></div>
+          <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
+          <div class="right-card" id="fala-comigo-card" style="flex:1;display:flex;flex-direction:column;min-height:180px;">
+            <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
+            <div id="assistant-history" style="max-height:90px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;"></div>
+            <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
+              <textarea id="assistant-input" class="elo-input" placeholder="Digite um comando...
+Ex: /ia estou aqui" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+                <button onclick="submitAssistantCommand()" style="border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:12px;font-weight:800;padding:8px 16px;cursor:pointer;">Enviar</button>
+              </div>
+            </div>
           </div>
 
         </aside>
@@ -1323,7 +1337,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.34 · ELO Comunicação · Atualizado em 05/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.35 · ELO Comunicação · Atualizado em 05/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1393,7 +1407,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.34</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.35</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">05/07/2026</span></span>
   </footer>
@@ -2969,117 +2983,117 @@ function renderTodayActivities() {
 // HOME — RIGHT SIDEBAR (Assistente ELO)
 // ════════════════════════════════════════════════════════════════
 function renderRightSidebar() {
+  renderAssistantHero();
   renderParaHoje();
-  renderAtencao();
 }
 
-// ── Dados mockados (substituir por queries reais em sessão futura) ──
-function getParaHojeData() {
+// ── getRadarData(): fonte única de dados do dia (mata o mock) ──
+// Lê o estado T já carregado por loadHomeData() — sem query nova.
+function getRadarData() {
+  const now = new Date();
+  const todayDate = todayStr();
+  const taskItems = (T.scheduledTasks || [])
+    .filter(t => t.scheduled_date === todayDate)
+    .map(t => ({
+      _type: 'task',
+      id: t.id,
+      time: t.scheduled_time || null,
+      title: t.title,
+      priority: t.priority || 'media',
+      is_done: !!t.is_done,
+      sortTime: t.scheduled_time || '23:59'
+    }));
+  const apptItems = (T.appointments || [])
+    .filter(a => {
+      const d = new Date(a.scheduled_at);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    })
+    .map(a => {
+      const d = new Date(a.scheduled_at);
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      return {
+        _type: 'appt',
+        id: a.id,
+        time: `${hh}:${mm}`,
+        title: a.title,
+        priority: 'compromisso',
+        is_done: !!a.is_done,
+        sortTime: `${hh}:${mm}`
+      };
+    });
+  const allItems = [...taskItems, ...apptItems].sort((a, b) => a.sortTime.localeCompare(b.sortTime));
+  const doneCount = allItems.filter(i => i.is_done).length;
+  const totalCount = allItems.length;
+  const nowHHMM = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let currentItem = null;
+  if (T.activeEntry) {
+    currentItem = { title: T.activeEntry.task_name || 'Tarefa em andamento', isTimer: true };
+  }
+  const nextItem = allItems.find(i => !i.is_done && i.sortTime >= nowHHMM && i.sortTime !== '23:59') ||
+                    allItems.find(i => !i.is_done && i.sortTime === '23:59');
+  const overdueTasks = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && t.scheduled_date < todayDate)
+    .map(t => ({ title: t.title, date: t.scheduled_date }));
   return {
-    fazer: 10,
-    fazendo: 2,
-    atrasado: 20,
-    items: [
-      { time: "10:00", title: "Planejamento Bruna", color: "purple" },
-      { time: "11:30", title: "Revisar SXMED", color: "orange" },
-      { time: "14:00", title: "Resposta clientes", color: "green" },
-      { time: "15:30", title: "Briefing campanha", color: "blue" },
-      { time: "16:30", title: "Analisar métricas", color: "red" }
-    ]
+    items: allItems,
+    doneCount,
+    totalCount,
+    currentItem,
+    nextItem,
+    overdueTasks,
+    paymentAlerts: T.paymentAlerts || []
   };
 }
 
-function getAtencaoData() {
-  return {
-    financeiro: [
-      { type: "receber", title: "Receber Bruna", due: "hoje", status: "ok" },
-      { type: "pagar", title: "Pagar contador", due: "amanhã", status: "warning" },
-      { type: "receber", title: "Receber SXMED", due: "dia 10", status: "info" },
-      { type: "pagar", title: "Conta ferramenta", due: "atrasado", status: "danger" }
-    ],
-    agenda: [
-      { time: "10:00", title: "Reunião Bruna" },
-      { time: "11:30", title: "Revisar SXMED" },
-      { time: "14:00", title: "Resposta clientes" },
-      { time: "15:30", title: "Briefing campanha" }
-    ]
-  };
+// ── Render: Hero (dia/data/hora ao vivo) ──
+function renderAssistantHero() {
+  const dtEl = document.getElementById('assistant-datetime');
+  if (!dtEl) return;
+  const now = new Date();
+  const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const diaSemana = dias[now.getDay()];
+  const dataStr = dbDateToDisplay(todayStr());
+  const hora = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  dtEl.innerHTML = `<b>${diaSemana}</b><span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span>${dataStr}<span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span><b>${hora}</b>`;
 }
 
-// ── Render: Para Hoje ──
-function renderParaHoje(data) {
-  data = data || getParaHojeData();
-  const colorMap = {
-    purple: 'var(--purple)', orange: 'var(--orange)', green: 'var(--green)',
-    blue: 'var(--blue)', red: 'var(--pink)'
-  };
+// ── Render: Para Hoje (dados reais via getRadarData) ──
+function renderParaHoje() {
+  const data = getRadarData();
+  const progressEl = document.getElementById('para-hoje-progress');
   const timelineEl = document.getElementById('para-hoje-timeline');
-  if (timelineEl) {
-    timelineEl.innerHTML = data.items.slice(0, 5).map(it => `
-      <div style="display:flex;gap:8px;align-items:center;padding:5px 0;">
-        <span style="width:7px;height:7px;border-radius:50%;background:${colorMap[it.color] || 'var(--lavender)'};flex-shrink:0;"></span>
-        <div style="font-size:12px;font-weight:700;color:var(--text-dim);width:38px;flex-shrink:0;">${esc(it.time)}</div>
-        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+  if (!timelineEl) return;
+  const pctDone = data.totalCount ? Math.round((data.doneCount / data.totalCount) * 100) : 0;
+  if (progressEl) {
+    progressEl.innerHTML = `
+      <div style="display:flex;height:6px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:5px;">
+        <div style="height:100%;background:var(--green);width:${pctDone}%;"></div>
       </div>
-    `).join('');
+      <div style="display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;color:var(--text-dim);margin-bottom:7px;">
+        <span><b style="color:var(--text);">${data.doneCount} feita${data.doneCount===1?'':'s'}</b> de ${data.totalCount}</span>
+      </div>`;
   }
-  const verTodosEl = document.getElementById('para-hoje-vertodos');
-  if (verTodosEl) {
-    verTodosEl.innerHTML = `<button onclick="navigateTo('calendario')" style="padding:5px 14px;border:none;border-radius:8px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">ver +</button>`;
+  if (data.totalCount === 0) {
+    timelineEl.innerHTML = `<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
+    return;
   }
-}
-
-// ── Render: Atenção ──
-// ── Render: Atenção (lista unificada) ──
-function renderAtencao(data) {
-  data = data || getAtencaoData();
-  const listaEl = document.getElementById('atencao-lista');
-  const rodapeEl = document.getElementById('atencao-rodape');
-  if (!listaEl) return;
-  const urgencyKey = { danger: 0, ok: 1, warning: 2, info: 3 };
-  const pillFin = {
-    danger:  { label: 'ATRASADO', bg: 'rgba(196,114,90,.18)', color: 'var(--coral)' },
-    ok:      { label: 'HOJE',     bg: 'rgba(47,185,137,.15)', color: 'var(--green)' },
-    warning: { label: 'AMANHÃ',   bg: 'rgba(224,122,58,.15)', color: 'var(--orange)' },
-    info:    { label: '',         bg: 'rgba(59,130,246,.12)', color: 'var(--blue)' }
-  };
-  const finItems = (data.financeiro || []).map(it => ({
-    _type: 'fin', title: it.title, due: it.due, status: it.status,
-    sortKey: urgencyKey[it.status] ?? 3
-  }));
-  const agendaItems = (data.agenda || []).map(it => ({
-    _type: 'agenda', title: it.title, time: it.time, sortKey: 4
-  }));
-  const allItems = [...finItems, ...agendaItems].sort((a, b) => a.sortKey - b.sortKey);
-  listaEl.innerHTML = allItems.slice(0, 7).map(it => {
-    if (it._type === 'fin') {
-      const pill = pillFin[it.status] || pillFin.info;
-      const pillLabel = pill.label || esc(it.due);
-      return `
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.06);">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--coral);flex-shrink:0;"></span>
-          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</span>
-          <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:${pill.bg};color:${pill.color};white-space:nowrap;flex-shrink:0;">${pillLabel}</span>
-        </div>`;
-    } else {
-      return `
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.06);">
-          <span style="width:7px;height:7px;border-radius:50%;background:var(--purple);flex-shrink:0;"></span>
-          <span style="flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</span>
-          <span style="font-size:10px;font-weight:700;color:var(--text-dim);white-space:nowrap;flex-shrink:0;">${esc(it.time)}</span>
-        </div>`;
-    }
+  const nowHHMM = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+  timelineEl.innerHTML = data.items.slice(0, 6).map(it => {
+    const isNow = !it.is_done && it.time && it.time <= nowHHMM && it === data.nextItem;
+    const markColor = it.is_done ? 'var(--green)' : isNow ? 'var(--coral)' : it.priority === 'alta' ? '#DC2626' : 'var(--lavender)';
+    const titleStyle = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);font-weight:600;' : 'font-weight:700;';
+    const tag = isNow ? `<span style="font-size:7.5px;font-weight:900;letter-spacing:.4px;color:var(--coral);margin-left:4px;">AGORA</span>` : '';
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(74,41,118,.06);">
+        <span style="width:34px;flex-shrink:0;font-size:10px;font-weight:800;color:${isNow?'var(--coral)':'var(--text-dim)'};">${esc(it.time || '')}</span>
+        <span style="width:7px;height:7px;border-radius:50%;background:${markColor};flex-shrink:0;"></span>
+        <span style="flex:1;font-size:11.5px;${titleStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</span>
+      </div>`;
   }).join('');
-  if (rodapeEl) {
-    rodapeEl.innerHTML = `
-      <button onclick="navigateTo('financeiro')" style="flex:1;padding:7px 0;border:none;border-radius:10px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Ver Financeiro</button>
-      <button onclick="navigateTo('calendario')" style="flex:1;padding:7px 0;border:none;border-radius:10px;background:var(--deep);color:#fff;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;">Ver Agenda</button>
-    `;
-  }
 }
-// Aliases retrocompatíveis
-function renderFinanceiroResumo() { renderAtencao(); }
-function renderAgendaResumo() { renderAtencao(); }
+renderAssistantHero();
+setInterval(renderAssistantHero, 60000);
 
 // ── Assistente: Parser de comandos ──
 function submitAssistantCommand() {
@@ -3130,6 +3144,8 @@ function handleAssistantCommand(input) {
       return handleAnotaCommand(payload);
     case '/tarefa':
       return handleTarefaCommand(payload);
+    case '/plano':
+      return handlePlanoCommand(payload);
     case '/recebido':
       return handleRecebidoCommand(payload);
     case '/pago':
@@ -3150,7 +3166,7 @@ function handleAssistantCommand(input) {
 }
 
 function showAssistantHelp() {
-  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /tarefa [hora] [texto] [!prioridade] · /recebido [cliente] · /pago [conta] · /financeiro · /agenda · /desviei · /voltei');
+  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /tarefa [hora] [texto] [!prioridade] · /plano (várias tarefas, uma por linha) · /recebido [cliente] · /pago [conta] · /financeiro · /agenda · /desviei · /voltei');
 }
 
 // ── Comando /ia e botão "Estou aqui" ──
@@ -3159,14 +3175,31 @@ function handleEstouAqui() {
 }
 
 function handleIACommand(payload) {
+  const data = getRadarData();
   const contexto = {
     hora_atual: new Date().toISOString(),
-    para_hoje: getParaHojeData(),
-    atencao: getAtencaoData(),
+    radar: data,
     payload: payload
   };
   console.log('[Assistente ELO] handleIACommand — pacote de contexto:', contexto);
-  showAssistantMessage('IA ainda não conectada. Comando registrado: "' + payload + '".');
+  const partes = [];
+  if (data.currentItem) {
+    partes.push(`Agora: ${data.currentItem.title}${data.currentItem.isTimer ? ' (no timer)' : ''}.`);
+  } else if (data.nextItem) {
+    partes.push(`Nada no timer agora.`);
+  }
+  if (data.nextItem && data.nextItem !== data.currentItem) {
+    partes.push(`Depois: ${data.nextItem.title}${data.nextItem.time ? ' às ' + data.nextItem.time : ''}.`);
+  }
+  if (data.overdueTasks.length > 0) {
+    partes.push(`Atrasado: ${data.overdueTasks.length} tarefa${data.overdueTasks.length===1?'':'s'} pendente${data.overdueTasks.length===1?'':'s'}.`);
+  }
+  if (data.paymentAlerts.length > 0) {
+    const vencidos = data.paymentAlerts.filter(a => a.type === 'vencido').length;
+    if (vencidos > 0) partes.push(`${vencidos} pagamento${vencidos===1?'':'s'} vencido${vencidos===1?'':'s'} — ver Financeiro.`);
+  }
+  if (partes.length === 0) partes.push('Tudo tranquilo por aqui. Nada pendente hoje.');
+  showAssistantMessage(partes.join(' '));
 }
 
 // ── Comando /anota ──
@@ -3213,6 +3246,45 @@ async function handleTarefaCommand(text) {
   if (error) return;
   T.scheduledTasks.unshift(data);
   showAssistantMessage(`Tarefa criada: "${titulo}"${hora ? ' às ' + hora : ''}.`);
+}
+
+// ── Comando /plano — cria várias scheduled_tasks de uma vez (bulk) ──
+async function handlePlanoCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /plano seguido de uma tarefa por linha. Ex:\n10:00 Planejamento Bruna\n14:00 Reunião Mariana !alta\nResponder orçamento Fontaine');
+    return;
+  }
+  const linhas = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (linhas.length === 0) {
+    showAssistantMessage('Nenhuma linha encontrada.');
+    return;
+  }
+  const payloads = linhas.map(linha => {
+    const m = linha.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
+    const hora = m?.[1] || null;
+    const titulo = (m?.[2] || linha).trim();
+    const prioridade = (m?.[3] || 'media').toLowerCase();
+    return {
+      scheduled_date: todayStr(),
+      scheduled_time: hora,
+      title: titulo,
+      priority: prioridade,
+      is_done: false,
+      user_id: 1
+    };
+  }).filter(p => p.title);
+  if (payloads.length === 0) {
+    showAssistantMessage('Não consegui interpretar nenhuma linha.');
+    return;
+  }
+  const { data, error } = await db(
+    () => sb.from('scheduled_tasks').insert(payloads).select(),
+    'Erro ao criar tarefas do plano'
+  );
+  if (error) return;
+  T.scheduledTasks = [...(data || []), ...T.scheduledTasks];
+  renderParaHoje();
+  showAssistantMessage(`Plano registrado: ${payloads.length} tarefa${payloads.length===1?'':'s'} criada${payloads.length===1?'':'s'} hoje.`);
 }
 
 async function handleRecebidoCommand(text) {
@@ -3326,6 +3398,14 @@ async function handleDesvieiCommand() {
     return;
   }
 
+  // Valida ANTES de tocar no timer — se faltar cliente/tarefa, nada é perdido
+  const eloClient = T.clients.find(c => c.is_internal === true);
+  const tempoPerdidoTask = T.tasks.find(t => t.name === 'Tempo Perdido');
+  if (!eloClient || !tempoPerdidoTask) {
+    showAssistantMessage('Não encontrei o cliente ELO ou a tarefa "Tempo Perdido". Verifique Config > Tarefas.');
+    return;
+  }
+
   if (T.activeEntry) {
     T._desvioContextoAnterior = {
       client_id: T.activeEntry.client_id,
@@ -3335,14 +3415,6 @@ async function handleDesvieiCommand() {
     await stopTimer();
   } else {
     T._desvioContextoAnterior = null;
-  }
-
-  const eloClient = T.clients.find(c => c.is_internal === true);
-  const tempoPerdidoTask = T.tasks.find(t => t.name === 'Tempo Perdido');
-
-  if (!eloClient || !tempoPerdidoTask) {
-    showAssistantMessage('Não encontrei o cliente ELO ou a tarefa "Tempo Perdido". Verifique Config > Tarefas.');
-    return;
   }
 
   T.selectedClientId = eloClient.id;
@@ -3384,15 +3456,14 @@ async function handleVolteiCommand() {
     hora_atual: new Date().toISOString(),
     tarefa_anterior: T._desvioContextoAnterior || null,
     tempo_perdido_min: tempoPerdidoMin,
-    para_hoje_restante: getParaHojeData(),
-    atencao: getAtencaoData()
+    radar: getRadarData()
   };
   console.log('[Assistente ELO] handleVolteiCommand — pacote de contexto:', contexto);
 
   handleIACommand('voltei');
 
   const msg = T._desvioContextoAnterior
-    ? `Bem-vinda de volta! Tempo perdido: ${tempoPerdidoMin ?? 0}min. "${esc(T._desvioContextoAnterior.task_name)}" selecionada — clique em Iniciar para retomar.`
+    ? `Bem-vinda de volta! Tempo perdido: ${tempoPerdidoMin ?? 0}min. "${T._desvioContextoAnterior.task_name}" selecionada — clique em Iniciar para retomar.`
     : 'Bem-vinda de volta! Selecione uma tarefa para continuar.';
   showAssistantMessage(msg);
 
