@@ -742,13 +742,13 @@
           <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
           <div class="right-card" id="fala-comigo-card" style="flex:1;display:flex;flex-direction:column;min-height:180px;">
             <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
-            <div id="assistant-history" style="max-height:90px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;"></div>
             <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
-              <textarea id="assistant-input" class="elo-input" placeholder="/ia — situação atual
-/tarefa 10:00 Nome da tarefa
-/anota [anotação]
-/ajuda — ver todos os comandos" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
-              <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+              <textarea id="assistant-input" class="elo-input" placeholder="/ia — situação atual&#10;/tarefa 10:00 Nome da tarefa&#10;/anota [anotação]&#10;/ajuda — ver todos os comandos" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:6px;">
+                <div style="display:flex;gap:6px;">
+                  <button onclick="handleDesvieiCommand()" style="border:1.5px solid var(--orange);border-radius:10px;background:rgba(224,122,58,.08);color:var(--orange);font-family:inherit;font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer;">⚡ Desviei</button>
+                  <button onclick="handleVolteiCommand()" style="border:1.5px solid var(--green);border-radius:10px;background:rgba(47,185,137,.08);color:var(--green);font-family:inherit;font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer;">↩ Voltei</button>
+                </div>
                 <button onclick="submitAssistantCommand()" style="border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:12px;font-weight:800;padding:8px 16px;cursor:pointer;">Enviar</button>
               </div>
             </div>
@@ -1350,7 +1350,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.36 · ELO Comunicação · Atualizado em 06/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.37 · ELO Comunicação · Atualizado em 06/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1420,7 +1420,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.36</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.37</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">06/07/2026</span></span>
   </footer>
@@ -1486,15 +1486,36 @@
           <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Cliente (opcional)</label>
           <select id="nrm-appt-client" class="elo-select" style="width:100%;"></select>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (opcional)</label>
+            <select id="nrm-appt-duration" class="elo-select" style="width:100%;">
+              <option value="">Sem duração</option>
+              <option value="30">30 min</option>
+              <option value="60">1h</option>
+              <option value="90">1h 30min</option>
+              <option value="120">2h</option>
+              <option value="180">3h</option>
+              <option value="240">4h</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
+            <select id="nrm-appt-alert" class="elo-select" style="width:100%;">
+              <option value="">Sem alerta</option>
+              <option value="5">5 min</option>
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="60">1 hora</option>
+              <option value="1440">1 dia antes</option>
+            </select>
+          </div>
+        </div>
         <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
-          <select id="nrm-appt-alert" class="elo-select" style="width:100%;">
-            <option value="">Sem alerta</option>
-            <option value="5">5 min</option>
-            <option value="15">15 min</option>
-            <option value="30">30 min</option>
-            <option value="60">1 hora</option>
-          </select>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text-dim);">
+            <input type="checkbox" id="nrm-appt-remind-day" style="width:15px;height:15px;accent-color:var(--purple);">
+            Lembrar 1 dia antes (alarme às 9h)
+          </label>
         </div>
         <div style="margin-bottom:12px;">
           <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Notas</label>
@@ -1526,14 +1547,29 @@
             <option value="alta">Alta</option>
           </select>
         </div>
-        <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
-          <select id="nrm-task-alert" class="elo-select" style="width:100%;">
-            <option value="">Sem alerta</option>
-            <option value="5">5 min</option>
-            <option value="15">15 min</option>
-            <option value="30">30 min</option>
-          </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (opcional)</label>
+            <select id="nrm-task-duration" class="elo-select" style="width:100%;">
+              <option value="">Sem duração</option>
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">1h</option>
+              <option value="90">1h 30min</option>
+              <option value="120">2h</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
+            <select id="nrm-task-alert" class="elo-select" style="width:100%;">
+              <option value="">Sem alerta</option>
+              <option value="5">5 min</option>
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="1440">1 dia antes</option>
+            </select>
+          </div>
         </div>
         <div style="margin-bottom:12px;">
           <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Notas</label>
@@ -3263,6 +3299,11 @@ function renderParaHoje() {
     const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
     const sub = [tipoLabel, durLabel].filter(Boolean).join(' · ');
     const tag = isNow ? `<span style="font-size:7px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.1);padding:2px 6px;border-radius:8px;margin-left:5px;white-space:nowrap;">AGORA</span>` : '';
+    const editBtn = !it.is_done
+      ? `<button data-id="${it.id}" data-type="${it._type}" onclick="paraHojeEdit(this)"
+           style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;border-radius:6px;color:var(--text-dim);font-size:12px;line-height:1;opacity:.6;transition:opacity .15s;"
+           title="Editar" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">✏</button>`
+      : '';
     return `
       <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.05);">
         <span style="width:34px;flex-shrink:0;font-size:10px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
@@ -3271,8 +3312,22 @@ function renderParaHoje() {
           <div style="font-size:11.5px;${titleDim}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
           ${sub ? `<div style="font-size:9.5px;color:var(--text-dim);margin-top:1px;">${sub}</div>` : ''}
         </div>
+        ${editBtn}
       </div>`;
   }).join('');
+}
+function paraHojeEdit(btn) {
+  const id = Number(btn.dataset.id);
+  const type = btn.dataset.type; // 'task' | 'appt'
+  if (!id) return;
+  if (type === 'task') {
+    const item = (T.scheduledTasks || []).find(t => t.id === id);
+    if (item && !CAL.scheduledTasks.find(t => t.id === id)) CAL.scheduledTasks.push(item);
+  } else {
+    const item = (T.appointments || []).find(a => a.id === id);
+    if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
+  }
+  openCalEditModal(id, type === 'task' ? 'scheduled_task' : 'appointment');
 }
 renderAssistantHero();
 setInterval(renderAssistantHero, 60000);
@@ -3282,29 +3337,12 @@ function submitAssistantCommand() {
   const input = document.getElementById('assistant-input');
   if (!input) return;
   const value = input.value;
-  if (value.trim()) {
-    const el = document.getElementById('assistant-history');
-    if (el) {
-      const cmd = document.createElement('div');
-      cmd.style.cssText = 'font-size:11px;color:var(--purple);font-weight:700;padding:2px 0;';
-      cmd.textContent = '> ' + value.trim();
-      el.appendChild(cmd);
-      while (el.children.length > 10) el.removeChild(el.firstChild);
-    }
-  }
   handleAssistantCommand(value);
   input.value = '';
 }
 
 function showAssistantMessage(msg) {
-  const el = document.getElementById('assistant-history');
-  if (!el) return;
-  const bubble = document.createElement('div');
-  bubble.style.cssText = 'font-size:11px;color:var(--text-dim);background:var(--surface2);padding:6px 10px;border-radius:8px;line-height:1.4;';
-  bubble.textContent = msg;
-  el.appendChild(bubble);
-  while (el.children.length > 5) el.removeChild(el.firstChild);
-  el.scrollTop = el.scrollHeight;
+  showToast(msg, 'ok');
 }
 
 function handleAssistantCommand(input) {
@@ -4626,6 +4664,12 @@ function openNovoRegistro(tab, day) {
 
 function closeNovoRegistro() {
   document.getElementById('novo-registro-modal').style.display = 'none';
+  const apptDur = document.getElementById('nrm-appt-duration');
+  if (apptDur) apptDur.value = '';
+  const apptRem = document.getElementById('nrm-appt-remind-day');
+  if (apptRem) apptRem.checked = false;
+  const taskDur = document.getElementById('nrm-task-duration');
+  if (taskDur) taskDur.value = '';
 }
 
 function setNrmTab(btn) {
@@ -4797,6 +4841,8 @@ async function _nrmSaveAppt() {
   const date = document.getElementById('nrm-appt-date').value;
   const time = document.getElementById('nrm-appt-time').value;
   const alertMin = document.getElementById('nrm-appt-alert').value;
+  const durMin = document.getElementById('nrm-appt-duration')?.value;
+  const remindDay = document.getElementById('nrm-appt-remind-day')?.checked;
   const desc = document.getElementById('nrm-appt-desc').value.trim();
   const clientId = document.getElementById('nrm-appt-client').value;
   const parts = date.split('/');
@@ -4807,6 +4853,8 @@ async function _nrmSaveAppt() {
   if (isNaN(ts)) { showToast('Data inválida', 'err'); return; }
   const payload = { title, description: desc || null, scheduled_at: ts, client_id: clientId ? Number(clientId) : null };
   if (alertMin) payload.alert_minutes_before = Number(alertMin);
+  if (durMin) payload.duration_minutes = parseInt(durMin);
+  if (remindDay && !alertMin) payload.alert_minutes_before = 1440;
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (_nrmEditingApptId) {
@@ -4834,6 +4882,7 @@ async function _nrmSaveTask() {
   const time = document.getElementById('nrm-task-time').value;
   const priority = document.getElementById('nrm-task-priority').value;
   const alertMin = document.getElementById('nrm-task-alert').value;
+  const durMin = document.getElementById('nrm-task-duration')?.value;
   const desc = document.getElementById('nrm-task-desc').value.trim();
   const parts = date.split('/');
   if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)', 'err'); return; }
@@ -4841,6 +4890,7 @@ async function _nrmSaveTask() {
   const dbDate = `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
   const payload = { title, description: desc || null, scheduled_date: dbDate, priority, scheduled_time: time || null };
   if (alertMin) payload.alert_minutes_before = Number(alertMin);
+  if (durMin) payload.duration_minutes = parseInt(durMin);
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (_nrmEditingTaskId) {
@@ -4929,6 +4979,7 @@ function openCalEditModal(id, type) {
     document.getElementById('nrm-appt-title').value = item.title || '';
     document.getElementById('nrm-appt-desc').value = item.description || '';
     document.getElementById('nrm-appt-alert').value = item.alert_minutes_before ? String(item.alert_minutes_before) : '';
+    if (document.getElementById('nrm-appt-duration')) document.getElementById('nrm-appt-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
     const sel = document.getElementById('nrm-appt-client');
     sel.innerHTML = '<option value="">— selecione —</option>' +
       (T.clients||[]).filter(c=>c.is_active && !c.is_internal)
@@ -4941,6 +4992,7 @@ function openCalEditModal(id, type) {
     document.getElementById('nrm-task-desc').value = item.description || '';
     document.getElementById('nrm-task-priority').value = item.priority || 'media';
     document.getElementById('nrm-task-alert').value = item.alert_minutes_before ? String(item.alert_minutes_before) : '';
+    if (document.getElementById('nrm-task-duration')) document.getElementById('nrm-task-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
   }
 
   document.getElementById('nrm-title').textContent = type === 'appointment' ? 'Editar compromisso' : 'Editar tarefa';
@@ -5895,9 +5947,9 @@ async function autoCarryRecurringCosts() {
   );
   if (!prevCosts || prevCosts.length === 0) return;
 
-  // Copia individualmente cada recorrente ainda ausente no mês atual (match por description)
+  // Compara apenas contra os recorrentes já existentes no mês atual
   const existentes = new Set(
-    FIN.costs.map(c => (c.description || '').trim().toLowerCase())
+    FIN.costs.filter(c => c.is_recurring).map(c => (c.description || '').trim().toLowerCase())
   );
   const toInsert = prevCosts
     .filter(c => !existentes.has((c.description || '').trim().toLowerCase()))
@@ -7232,27 +7284,29 @@ function renderRadarGrid() {
   let html = diasSem.map(d =>
     `<div style="text-align:center;font-size:9px;font-weight:800;color:var(--text-dim);padding-bottom:6px;">${d}</div>`
   ).join('');
-  for (let i = 0; i < firstDay; i++) { html += `<div></div>`; }
+  for (let i = 0; i < firstDay; i++) { html += `<div style="min-height:56px;"></div>`; }
   for (let day = 1; day <= daysInMonth; day++) {
     const ds = `${RADAR.year}-${String(RADAR.month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday = ds === todayDate;
     const isSelected = RADAR.selectedDay === ds;
     const urge = urgMap[ds];
     const dotColor = urge ? urgColor[urge] : null;
-    let bg = 'transparent';
-    let border = 'none';
+    let bg = 'var(--surface)';
+    let border = '1px solid rgba(74,41,118,.07)';
     let color = 'var(--text)';
-    if (isToday) { bg = 'var(--coral)'; color = '#fff'; }
+    let fw = '700';
+    if (isToday) { bg = 'var(--coral)'; color = '#fff'; border = 'none'; fw = '900'; }
     if (isSelected && !isToday) { border = '2px solid var(--purple)'; bg = 'var(--surface2)'; }
     html += `<div onclick="radarSelectDay('${ds}',this)"
-      style="position:relative;text-align:center;padding:6px 2px;border-radius:8px;cursor:pointer;
+      style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+             padding:8px 4px 18px;border-radius:10px;cursor:pointer;
              background:${bg};border:${border};color:${color};
-             font-size:11.5px;font-weight:${isToday?'900':'600'};
-             transition:background .15s;"
-      onmouseover="if(!this.style.background||this.style.background==='transparent')this.style.background='var(--bg2)'"
-      onmouseout="if(this.style.background==='var(--bg2)')this.style.background='transparent'">
-      ${day}
-      ${dotColor ? `<span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
+             font-size:13px;font-weight:${fw};min-height:56px;
+             transition:background .15s,border-color .15s;"
+      onmouseover="if(this.style.background==='var(--surface)')this.style.background='var(--bg2)'"
+      onmouseout="if(this.style.background==='var(--bg2)')this.style.background='var(--surface)'">
+      <span>${day}</span>
+      ${dotColor ? `<span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
     </div>`;
   }
   grid.innerHTML = html;
@@ -7323,6 +7377,9 @@ function renderPanelGeral() {
             <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${dbDateToDisplay(t.scheduled_date)}</div>
           </div>
           <span class="radar-task-tag atrasada">Atrasada</span>
+          <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
+            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
         </div>`;
       });
       afazer.slice(0, 8).forEach(t => {
@@ -7333,6 +7390,9 @@ function renderPanelGeral() {
             <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${t.scheduled_date === todayDate ? 'hoje' : dbDateToDisplay(t.scheduled_date)}${t.scheduled_time ? ' · ' + t.scheduled_time : ''}</div>
           </div>
           <span class="radar-task-tag afazer">${t.scheduled_date === todayDate ? 'Hoje' : 'A fazer'}</span>
+          <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
+            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
         </div>`;
       });
       if (atrasadas.length > 10) html += `<div style="font-size:10.5px;color:var(--text-dim);padding:6px 0;">+${atrasadas.length - 10} atrasadas...</div>`;
@@ -7418,7 +7478,26 @@ async function radarToggleNota(id, rowEl) {
   if (error) return;
   RADAR.notes = RADAR.notes.map(n => n.id === id ? { ...n, is_done: newDone } : n);
   T.notes = RADAR.notes;
-  rowEl.classList.toggle('done', newDone);
+  if (newDone) {
+    rowEl.style.transition = 'opacity .3s';
+    rowEl.style.opacity = '0';
+    setTimeout(() => { rowEl.remove(); }, 300);
+  } else {
+    rowEl.classList.remove('done');
+  }
+}
+function radarEditTask(btn) {
+  const id = Number(btn.dataset.id);
+  const type = btn.dataset.type; // 'scheduled_task' | 'appointment'
+  if (!id) return;
+  if (type === 'scheduled_task') {
+    const item = (T.scheduledTasks || []).find(t => t.id === id);
+    if (item && !CAL.scheduledTasks.find(t => t.id === id)) CAL.scheduledTasks.push(item);
+  } else {
+    const item = (T.appointments || []).find(a => a.id === id);
+    if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
+  }
+  openCalEditModal(id, type);
 }
 function renderPanelHoje() {
   loadRadarPanelData();
