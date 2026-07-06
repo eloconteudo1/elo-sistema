@@ -744,8 +744,10 @@
             <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
             <div id="assistant-history" style="max-height:90px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;"></div>
             <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
-              <textarea id="assistant-input" class="elo-input" placeholder="Digite um comando...
-Ex: /ia estou aqui" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+              <textarea id="assistant-input" class="elo-input" placeholder="/ia — situação atual
+/tarefa 10:00 Nome da tarefa
+/anota [anotação]
+/ajuda — ver todos os comandos" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
               <div style="display:flex;justify-content:flex-end;margin-top:8px;">
                 <button onclick="submitAssistantCommand()" style="border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:12px;font-weight:800;padding:8px 16px;cursor:pointer;">Enviar</button>
               </div>
@@ -1348,7 +1350,7 @@ Ex: /ia estou aqui" style="flex:1;font-family:inherit;padding:12px 14px;font-siz
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.35 · ELO Comunicação · Atualizado em 05/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.36 · ELO Comunicação · Atualizado em 06/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1418,9 +1420,9 @@ Ex: /ia estou aqui" style="flex:1;font-family:inherit;padding:12px 14px;font-siz
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.35</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.36</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">05/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">06/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3232,14 +3234,19 @@ function renderParaHoje() {
   const progressEl = document.getElementById('para-hoje-progress');
   const timelineEl = document.getElementById('para-hoje-timeline');
   if (!timelineEl) return;
+  const minutesWorked = (T.todayEntries || []).reduce((s, e) => s + (e.duration_minutes || 0), 0);
+  const goalMin = (T.settings && T.settings.daily_goal_minutes) || 480;
   const pctDone = data.totalCount ? Math.round((data.doneCount / data.totalCount) * 100) : 0;
   if (progressEl) {
+    const horaStr = fMin(minutesWorked);
+    const metaStr = fMin(goalMin);
     progressEl.innerHTML = `
-      <div style="display:flex;height:6px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:5px;">
-        <div style="height:100%;background:var(--green);width:${pctDone}%;"></div>
+      <div style="display:flex;height:5px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:6px;">
+        <div style="height:100%;background:var(--green);width:${pctDone}%;transition:width .4s;"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:9.5px;font-weight:700;color:var(--text-dim);margin-bottom:7px;">
-        <span><b style="color:var(--text);">${data.doneCount} feita${data.doneCount===1?'':'s'}</b> de ${data.totalCount}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:9.5px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">
+        <span><b style="color:var(--text);">${data.doneCount} feita${data.doneCount===1?'':'s'}</b> · ${data.totalCount - data.doneCount} restante${(data.totalCount-data.doneCount)===1?'':'s'}</span>
+        <span style="color:var(--text);font-weight:800;">${horaStr} / ${metaStr}</span>
       </div>`;
   }
   if (data.totalCount === 0) {
@@ -3249,14 +3256,21 @@ function renderParaHoje() {
   const nowHHMM = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
   timelineEl.innerHTML = data.items.slice(0, 6).map(it => {
     const isNow = !it.is_done && it.time && it.time <= nowHHMM && it === data.nextItem;
-    const markColor = it.is_done ? 'var(--green)' : isNow ? 'var(--coral)' : it.priority === 'alta' ? '#DC2626' : 'var(--lavender)';
-    const titleStyle = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);font-weight:600;' : 'font-weight:700;';
-    const tag = isNow ? `<span style="font-size:7.5px;font-weight:900;letter-spacing:.4px;color:var(--coral);margin-left:4px;">AGORA</span>` : '';
+    const markColor = it.is_done ? 'var(--green)' : isNow ? 'var(--coral)' : it.priority === 'alta' ? '#DC2626' : it._type === 'appt' ? 'var(--blue)' : 'var(--lavender)';
+    const titleDim = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);' : '';
+    const timeColor = isNow ? 'var(--coral)' : 'var(--text-dim)';
+    const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
+    const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
+    const sub = [tipoLabel, durLabel].filter(Boolean).join(' · ');
+    const tag = isNow ? `<span style="font-size:7px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.1);padding:2px 6px;border-radius:8px;margin-left:5px;white-space:nowrap;">AGORA</span>` : '';
     return `
-      <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(74,41,118,.06);">
-        <span style="width:34px;flex-shrink:0;font-size:10px;font-weight:800;color:${isNow?'var(--coral)':'var(--text-dim)'};">${esc(it.time || '')}</span>
-        <span style="width:7px;height:7px;border-radius:50%;background:${markColor};flex-shrink:0;"></span>
-        <span style="flex:1;font-size:11.5px;${titleStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</span>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.05);">
+        <span style="width:34px;flex-shrink:0;font-size:10px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
+        <span style="width:7px;height:7px;border-radius:50%;background:${markColor};flex-shrink:0;margin-top:4px;"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11.5px;${titleDim}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
+          ${sub ? `<div style="font-size:9.5px;color:var(--text-dim);margin-top:1px;">${sub}</div>` : ''}
+        </div>
       </div>`;
   }).join('');
 }
@@ -7109,6 +7123,482 @@ async function cfgImportPagamentos() {
   showToast(`Importados: ${ok} pagamento(s)${err?` · ${err} erro(s)`:''}`, err?'warn':'ok');
 }
 
+// ════════════════════════════════════════════════════════════════
+// RADAR
+// ════════════════════════════════════════════════════════════════
+const RADAR = {
+  month: new Date().getMonth(),
+  year: new Date().getFullYear(),
+  selectedDay: null,
+  tab: 'geral',
+  tasks: [],
+  appts: [],
+  notes: [],
+  importantDates: []
+};
+async function initRadar() {
+  RADAR.tasks = T.scheduledTasks || [];
+  RADAR.appts = T.appointments || [];
+  RADAR.notes = T.notes || [];
+  const { data: idData } = await db(
+    () => sb.from('important_dates').select('*').order('date', { ascending: true }),
+    'Erro ao carregar datas importantes'
+  );
+  RADAR.importantDates = idData || [];
+  renderRadarGrid();
+  setRadarTab(RADAR.tab, document.querySelector(`.radar-tab[data-rtab="${RADAR.tab}"]`));
+}
+function loadRadarPanelData() {
+  RADAR.tasks = T.scheduledTasks || [];
+  RADAR.appts = T.appointments || [];
+  RADAR.notes = T.notes || [];
+}
+function radarGoToday() {
+  const now = new Date();
+  RADAR.month = now.getMonth();
+  RADAR.year = now.getFullYear();
+  RADAR.selectedDay = null;
+  renderRadarGrid();
+  radarCloseDetail();
+}
+function radarPrevMonth() {
+  if (RADAR.month === 0) { RADAR.month = 11; RADAR.year--; }
+  else { RADAR.month--; }
+  RADAR.selectedDay = null;
+  renderRadarGrid();
+  radarCloseDetail();
+}
+function radarNextMonth() {
+  if (RADAR.month === 11) { RADAR.month = 0; RADAR.year++; }
+  else { RADAR.month++; }
+  RADAR.selectedDay = null;
+  renderRadarGrid();
+  radarCloseDetail();
+}
+function setRadarTab(tab, el) {
+  RADAR.tab = tab;
+  document.querySelectorAll('.radar-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.radar-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('radar-panel-' + tab);
+  if (panel) panel.classList.add('active');
+  const subs = {
+    geral: 'O que exige atenção agora',
+    hoje: 'Linha do dia de hoje',
+    semana: 'Carga e compromissos dos próximos 7 dias',
+    mes: 'Visão mensal'
+  };
+  const subEl = document.getElementById('radar-sub');
+  if (subEl) subEl.textContent = subs[tab] || '';
+  loadRadarPanelData();
+  if (tab === 'geral')   renderPanelGeral();
+  if (tab === 'hoje')    renderPanelHoje();
+  if (tab === 'semana')  renderPanelSemana();
+  if (tab === 'mes')     renderPanelMes();
+}
+function renderRadarGrid() {
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const labelEl = document.getElementById('radar-month-label');
+  if (labelEl) labelEl.textContent = `${meses[RADAR.month]} ${RADAR.year}`;
+  const grid = document.getElementById('radar-cal-grid');
+  if (!grid) return;
+  const todayDate = todayStr();
+  const firstDay = new Date(RADAR.year, RADAR.month, 1).getDay();
+  const daysInMonth = new Date(RADAR.year, RADAR.month + 1, 0).getDate();
+  const urgMap = {};
+  const addUrg = (dateStr, urge) => {
+    const rank = { atrasada: 4, hoje: 3, afazer: 2, informativo: 1 };
+    if (!urgMap[dateStr] || rank[urge] > rank[urgMap[dateStr]]) urgMap[dateStr] = urge;
+  };
+  (RADAR.tasks || []).forEach(t => {
+    if (!t.scheduled_date) return;
+    if (t.is_done) return;
+    const u = t.scheduled_date < todayDate ? 'atrasada'
+            : t.scheduled_date === todayDate ? 'hoje'
+            : 'afazer';
+    addUrg(t.scheduled_date, u);
+  });
+  (RADAR.appts || []).forEach(a => {
+    const d = new Date(a.scheduled_at);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const u = ds < todayDate ? 'informativo' : ds === todayDate ? 'hoje' : 'afazer';
+    addUrg(ds, u);
+  });
+  (RADAR.importantDates || []).forEach(imp => {
+    if (imp.date) addUrg(imp.date, 'informativo');
+  });
+  const urgColor = { atrasada: '#DC2626', hoje: 'var(--orange)', afazer: 'var(--purple)', informativo: 'var(--blue)' };
+  const diasSem = ['D','S','T','Q','Q','S','S'];
+  let html = diasSem.map(d =>
+    `<div style="text-align:center;font-size:9px;font-weight:800;color:var(--text-dim);padding-bottom:6px;">${d}</div>`
+  ).join('');
+  for (let i = 0; i < firstDay; i++) { html += `<div></div>`; }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${RADAR.year}-${String(RADAR.month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = ds === todayDate;
+    const isSelected = RADAR.selectedDay === ds;
+    const urge = urgMap[ds];
+    const dotColor = urge ? urgColor[urge] : null;
+    let bg = 'transparent';
+    let border = 'none';
+    let color = 'var(--text)';
+    if (isToday) { bg = 'var(--coral)'; color = '#fff'; }
+    if (isSelected && !isToday) { border = '2px solid var(--purple)'; bg = 'var(--surface2)'; }
+    html += `<div onclick="radarSelectDay('${ds}',this)"
+      style="position:relative;text-align:center;padding:6px 2px;border-radius:8px;cursor:pointer;
+             background:${bg};border:${border};color:${color};
+             font-size:11.5px;font-weight:${isToday?'900':'600'};
+             transition:background .15s;"
+      onmouseover="if(!this.style.background||this.style.background==='transparent')this.style.background='var(--bg2)'"
+      onmouseout="if(this.style.background==='var(--bg2)')this.style.background='transparent'">
+      ${day}
+      ${dotColor ? `<span style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+function radarSelectDay(ds, el) {
+  RADAR.selectedDay = ds;
+  renderRadarGrid();
+  const detail = document.getElementById('radar-day-detail');
+  const titleEl = document.getElementById('radar-day-detail-title');
+  const bodyEl = document.getElementById('radar-day-detail-body');
+  if (!detail || !titleEl || !bodyEl) return;
+  const [y, m, d] = ds.split('-');
+  const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const dow = new Date(parseInt(y), parseInt(m)-1, parseInt(d)).getDay();
+  titleEl.textContent = `${diasSem[dow]}, ${d}/${m}/${y}`;
+  const tasksDay = (RADAR.tasks || []).filter(t => t.scheduled_date === ds);
+  const apptsDay = (RADAR.appts || []).filter(a => {
+    const ad = new Date(a.scheduled_at);
+    return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
+  });
+  const impDay = (RADAR.importantDates || []).filter(i => i.date === ds);
+  const allItems = [
+    ...apptsDay.map(a => {
+      const ad = new Date(a.scheduled_at);
+      return { time: `${String(ad.getHours()).padStart(2,'0')}:${String(ad.getMinutes()).padStart(2,'0')}`, title: a.title, type: 'appt', done: !!a.is_done };
+    }),
+    ...tasksDay.map(t => ({ time: t.scheduled_time || '', title: t.title, type: 'task', done: !!t.is_done, priority: t.priority })),
+    ...impDay.map(i => ({ time: '', title: i.label, type: 'info', done: false }))
+  ].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+  if (allItems.length === 0) {
+    bodyEl.innerHTML = `<div class="radar-day-detail-empty">Nenhum item neste dia.</div>`;
+  } else {
+    const dotColor = { appt: 'var(--blue)', task: 'var(--purple)', info: 'var(--lavender)' };
+    const prioColors = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)' };
+    bodyEl.innerHTML = allItems.map(it => {
+      const dc = it.type === 'task' && it.priority ? (prioColors[it.priority] || dotColor.task) : dotColor[it.type];
+      const strike = it.done ? 'text-decoration:line-through;color:var(--text-dim);' : '';
+      return `<div class="radar-day-detail-item">
+        <span class="radar-day-detail-time">${esc(it.time)}</span>
+        <span class="radar-day-detail-dot" style="background:${dc};"></span>
+        <span class="radar-day-detail-name" style="${strike}">${esc(it.title)}</span>
+      </div>`;
+    }).join('');
+  }
+  detail.classList.add('open');
+}
+function radarCloseDetail() {
+  const detail = document.getElementById('radar-day-detail');
+  if (detail) detail.classList.remove('open');
+  RADAR.selectedDay = null;
+}
+function renderPanelGeral() {
+  loadRadarPanelData();
+  const todayDate = todayStr();
+  const atrasadas = (RADAR.tasks || []).filter(t => !t.is_done && t.scheduled_date < todayDate);
+  const afazer = (RADAR.tasks || []).filter(t => !t.is_done && t.scheduled_date >= todayDate);
+  const tarefasEl = document.getElementById('radar-tarefas-list');
+  if (tarefasEl) {
+    if (atrasadas.length === 0 && afazer.length === 0) {
+      tarefasEl.innerHTML = `<div class="radar-day-detail-empty">Nenhuma tarefa pendente. 🎉</div>`;
+    } else {
+      let html = '';
+      atrasadas.slice(0, 10).forEach(t => {
+        html += `<div class="radar-task-item">
+          <span class="radar-task-dot atrasada"></span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${dbDateToDisplay(t.scheduled_date)}</div>
+          </div>
+          <span class="radar-task-tag atrasada">Atrasada</span>
+        </div>`;
+      });
+      afazer.slice(0, 8).forEach(t => {
+        html += `<div class="radar-task-item">
+          <span class="radar-task-dot afazer"></span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${t.scheduled_date === todayDate ? 'hoje' : dbDateToDisplay(t.scheduled_date)}${t.scheduled_time ? ' · ' + t.scheduled_time : ''}</div>
+          </div>
+          <span class="radar-task-tag afazer">${t.scheduled_date === todayDate ? 'Hoje' : 'A fazer'}</span>
+        </div>`;
+      });
+      if (atrasadas.length > 10) html += `<div style="font-size:10.5px;color:var(--text-dim);padding:6px 0;">+${atrasadas.length - 10} atrasadas...</div>`;
+      tarefasEl.innerHTML = html;
+    }
+  }
+  renderRadarNotas();
+  const proxEl = document.getElementById('radar-proximos-list');
+  if (proxEl) {
+    const nowTs = Date.now();
+    const maxTs = nowTs + 7 * 86400000;
+    const proximos = (RADAR.appts || [])
+      .filter(a => a.scheduled_at >= nowTs && a.scheduled_at <= maxTs)
+      .sort((a, b) => a.scheduled_at - b.scheduled_at)
+      .slice(0, 8);
+    if (proximos.length === 0) {
+      proxEl.innerHTML = `<div class="radar-day-detail-empty">Sem compromissos nos próximos 7 dias.</div>`;
+    } else {
+      const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      proxEl.innerHTML = proximos.map(a => {
+        const d = new Date(a.scheduled_at);
+        const dow = diasSem[d.getDay()];
+        const day = String(d.getDate()).padStart(2,'0');
+        const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        return `<div class="radar-prox-item">
+          <div class="radar-prox-date">
+            <div class="radar-prox-dow">${dow}</div>
+            <div class="radar-prox-day">${day}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="radar-prox-title">${esc(a.title)}</div>
+            <div class="radar-prox-sub">${hhmm}${a.duration_minutes ? ' · ' + fMin(a.duration_minutes) : ''}</div>
+          </div>
+          <span class="radar-prox-chevron">›</span>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+function renderRadarNotas() {
+  const el = document.getElementById('radar-notas-list');
+  if (!el) return;
+  const notas = (RADAR.notes || []).slice(0, 20);
+  if (notas.length === 0) {
+    el.innerHTML = `<div class="radar-day-detail-empty">Sem anotações.</div>`;
+    return;
+  }
+  el.innerHTML = notas.map(n => {
+    const done = !!n.is_done;
+    return `<div class="radar-nota-item${done?' done':''}" onclick="radarToggleNota(${n.id},this)">
+      <div class="radar-nota-check"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="radar-nota-text">${esc(n.content)}</div>
+        <div class="radar-nota-time">${n.created_at ? new Date(n.created_at).toLocaleDateString('pt-BR') : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function radarSaveNota() {
+  const input = document.getElementById('radar-nota-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const { data, error } = await db(
+    () => sb.from('notes').insert({ content: text, is_done: false }).select().single(),
+    'Erro ao salvar anotação'
+  );
+  if (error) return;
+  input.value = '';
+  RADAR.notes = [data, ...RADAR.notes];
+  T.notes = RADAR.notes;
+  renderRadarNotas();
+  showToast('Anotação salva', 'ok');
+}
+async function radarToggleNota(id, rowEl) {
+  const nota = (RADAR.notes || []).find(n => n.id === id);
+  if (!nota) return;
+  const newDone = !nota.is_done;
+  const { error } = await db(
+    () => sb.from('notes').update({ is_done: newDone }).eq('id', id),
+    'Erro ao atualizar anotação'
+  );
+  if (error) return;
+  RADAR.notes = RADAR.notes.map(n => n.id === id ? { ...n, is_done: newDone } : n);
+  T.notes = RADAR.notes;
+  rowEl.classList.toggle('done', newDone);
+}
+function renderPanelHoje() {
+  loadRadarPanelData();
+  const todayDate = todayStr();
+  const bodyEl = document.getElementById('radar-timeline-body');
+  if (!bodyEl) return;
+  const now = new Date();
+  const nowHHMM = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const tasksHoje = (RADAR.tasks || []).filter(t => t.scheduled_date === todayDate);
+  const apptsHoje = (RADAR.appts || []).filter(a => {
+    const d = new Date(a.scheduled_at);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` === todayDate;
+  });
+  const allItems = [
+    ...apptsHoje.map(a => {
+      const d = new Date(a.scheduled_at);
+      const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return { time: hhmm, title: a.title, done: !!a.is_done, type: 'appt', dur: a.duration_minutes };
+    }),
+    ...tasksHoje.map(t => ({ time: t.scheduled_time || '23:59', title: t.title, done: !!t.is_done, type: 'task', priority: t.priority, dur: t.duration_minutes }))
+  ].sort((a, b) => a.time.localeCompare(b.time));
+  if (allItems.length === 0) {
+    bodyEl.innerHTML = `<div class="radar-day-detail-empty">Nada agendado para hoje. Use /plano ou /tarefa.</div>`;
+    return;
+  }
+  const prioColor = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)', compromisso: 'var(--blue)' };
+  let html = '';
+  let agoraInserted = false;
+  allItems.forEach(it => {
+    if (!agoraInserted && it.time > nowHHMM) {
+      agoraInserted = true;
+      html += `<div class="radar-timeline-agora">
+        <div class="radar-timeline-agora-line"></div>
+        <div class="radar-timeline-agora-time">${nowHHMM}</div>
+        <div class="radar-timeline-agora-dot"></div>
+        <span class="radar-timeline-agora-pill">AGORA</span>
+      </div>`;
+    }
+    const color = it.type === 'appt' ? 'var(--blue)' : (prioColor[it.priority] || 'var(--purple)');
+    const strike = it.done ? 'opacity:.5;' : '';
+    const statusLabel = it.done ? 'Feito' : it.type === 'appt' ? 'Compromisso' : (it.priority === 'alta' ? 'Alta prioridade' : '');
+    const durText = it.dur ? fMin(it.dur) : '';
+    html += `<div class="radar-timeline-item" style="${strike}">
+      <div class="radar-timeline-time">${esc(it.time === '23:59' ? '' : it.time)}</div>
+      <div class="radar-timeline-dot" style="background:${color};left:-4px;"></div>
+      <div class="radar-timeline-card">
+        <div>
+          <div class="rt-title">${esc(it.title)}</div>
+          ${durText ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${durText}</div>` : ''}
+        </div>
+        ${statusLabel ? `<span class="rt-status">${statusLabel}</span>` : ''}
+      </div>
+    </div>`;
+  });
+  if (!agoraInserted) {
+    html += `<div class="radar-timeline-agora">
+      <div class="radar-timeline-agora-line"></div>
+      <div class="radar-timeline-agora-time">${nowHHMM}</div>
+      <div class="radar-timeline-agora-dot"></div>
+      <span class="radar-timeline-agora-pill">AGORA</span>
+    </div>`;
+  }
+  bodyEl.innerHTML = html;
+}
+function renderPanelSemana() {
+  loadRadarPanelData();
+  const cargaEl = document.getElementById('radar-carga-body');
+  const apptsEl = document.getElementById('radar-semana-appts');
+  if (!cargaEl || !apptsEl) return;
+  const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const now = new Date(); now.setHours(0,0,0,0);
+  let cargaHtml = '';
+  const maxItems = 6;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getTime() + i * 86400000);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const count = (RADAR.tasks || []).filter(t => t.scheduled_date === ds && !t.is_done).length
+                + (RADAR.appts || []).filter(a => {
+                    const ad = new Date(a.scheduled_at);
+                    return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
+                  }).length;
+    const pct = Math.min(100, Math.round((count / maxItems) * 100));
+    const color = count === 0 ? 'var(--lavender)' : count <= 2 ? 'var(--green)' : count <= 5 ? 'var(--orange)' : '#DC2626';
+    const label = count === 0 ? 'livre' : count <= 2 ? `${count} item${count>1?'s':''}` : count <= 5 ? `${count} itens — cheio` : `${count} itens — sobrecarga`;
+    const isToday = i === 0;
+    cargaHtml += `<div class="radar-carga-row">
+      <div class="radar-carga-day">
+        <span class="d">${diasSem[d.getDay()]}</span>
+        <span class="n" style="${isToday?'color:var(--coral);':''}">${d.getDate()}</span>
+      </div>
+      <div class="radar-carga-track">
+        <div class="radar-carga-fill" style="width:${pct}%;background:${color};"></div>
+      </div>
+      <span class="radar-carga-label">${label}</span>
+    </div>`;
+  }
+  cargaEl.innerHTML = cargaHtml;
+  const maxTs = now.getTime() + 7 * 86400000;
+  const apptsWeek = (RADAR.appts || [])
+    .filter(a => a.scheduled_at >= now.getTime() && a.scheduled_at < maxTs)
+    .sort((a, b) => a.scheduled_at - b.scheduled_at);
+  if (apptsWeek.length === 0) {
+    apptsEl.innerHTML = `<div class="radar-day-detail-empty">Sem compromissos esta semana.</div>`;
+  } else {
+    apptsEl.innerHTML = apptsWeek.map(a => {
+      const d = new Date(a.scheduled_at);
+      const dow = diasSem[d.getDay()];
+      const day = String(d.getDate()).padStart(2,'0');
+      const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      return `<div class="radar-prox-item">
+        <div class="radar-prox-date">
+          <div class="radar-prox-dow">${dow}</div>
+          <div class="radar-prox-day">${day}</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="radar-prox-title">${esc(a.title)}</div>
+          <div class="radar-prox-sub">${hhmm}${a.duration_minutes ? ' · ' + fMin(a.duration_minutes) : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+function renderPanelMes() {
+  loadRadarPanelData();
+  const apptsEl = document.getElementById('radar-mes-appts');
+  const datasEl = document.getElementById('radar-datas-list');
+  const mesStart = new Date(RADAR.year, RADAR.month, 1).getTime();
+  const mesEnd = new Date(RADAR.year, RADAR.month + 1, 1).getTime();
+  const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const mesesAbrev = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  if (apptsEl) {
+    const apptsMes = (RADAR.appts || [])
+      .filter(a => a.scheduled_at >= mesStart && a.scheduled_at < mesEnd)
+      .sort((a, b) => a.scheduled_at - b.scheduled_at);
+    if (apptsMes.length === 0) {
+      apptsEl.innerHTML = `<div class="radar-day-detail-empty">Sem compromissos neste mês.</div>`;
+    } else {
+      apptsEl.innerHTML = apptsMes.map(a => {
+        const d = new Date(a.scheduled_at);
+        const dow = diasSem[d.getDay()];
+        const day = String(d.getDate()).padStart(2,'0');
+        const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        return `<div class="radar-prox-item">
+          <div class="radar-prox-date">
+            <div class="radar-prox-dow">${dow}</div>
+            <div class="radar-prox-day">${day}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div class="radar-prox-title">${esc(a.title)}</div>
+            <div class="radar-prox-sub">${hhmm}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+  if (datasEl) {
+    const datas = (RADAR.importantDates || [])
+      .filter(i => {
+        const [y, m] = i.date.split('-');
+        return parseInt(y) === RADAR.year && parseInt(m)-1 === RADAR.month;
+      });
+    if (datas.length === 0) {
+      datasEl.innerHTML = `<div class="radar-day-detail-empty">Sem datas importantes neste mês.</div>`;
+    } else {
+      datasEl.innerHTML = datas.map(i => {
+        const [y, m, d] = i.date.split('-');
+        return `<div class="radar-datas-item">
+          <div class="radar-datas-badge">
+            <span class="num" style="color:var(--coral);">${parseInt(d)}</span>
+            <span class="mon">${mesesAbrev[parseInt(m)-1]}</span>
+          </div>
+          <div>
+            <div class="radar-datas-title">${esc(i.label)}</div>
+            ${i.category ? `<div style="font-size:10px;color:var(--text-dim);">${esc(i.category)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
 async function cfgExportBackup() {
   try {
     const [cl, tk, te, pay, costs] = await Promise.all([
