@@ -127,7 +127,7 @@
     .sec-label { font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:rgba(46,27,78,.55); }
 
     /* ── Home page ── */
-    #home-grid { display:grid; grid-template-columns:280px minmax(0,1fr) 320px; gap:20px; align-items:start; }
+    #home-grid { display:grid; grid-template-columns:260px minmax(0,1fr) 360px; gap:20px; align-items:start; }
     .home-card { background:rgba(255,255,255,.88); border:var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
 
     /* Client selector */
@@ -287,10 +287,10 @@
     .radar-panel { display:none; }
     .radar-panel.active { display:block; }
 
-    .radar-task-item { display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.05); }
-    .radar-task-item:last-child { border-bottom:none; }
-    .radar-task-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; margin-top:4px; }
-    .radar-task-dot.atrasada { border:2px solid #DC2626; background:transparent; }
+    .radar-task-item { display:flex; gap:10px; align-items:center; padding:9px 10px; border-radius:10px; margin-bottom:4px; background:var(--bg); transition:background .15s; cursor:default; }
+    .radar-task-item:hover { background:var(--bg2); }
+    .radar-task-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .radar-task-dot.atrasada { background:#DC2626; box-shadow:0 0 6px rgba(220,38,38,.35); }
     .radar-task-dot.afazer { background:var(--purple); }
     .radar-task-tag { font-size:8.5px; font-weight:800; padding:2px 7px; border-radius:10px; text-transform:uppercase; margin-left:auto; flex-shrink:0; }
     .radar-task-tag.atrasada { background:#FDE8E8; color:#DC2626; }
@@ -309,8 +309,8 @@
     .radar-nota-text { font-size:12px; font-weight:600; color:var(--text); line-height:1.4; }
     .radar-nota-time { font-size:10px; color:var(--text-dim); margin-top:2px; font-weight:600; }
 
-    .radar-prox-item { display:flex; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.05); cursor:pointer; }
-    .radar-prox-item:last-child { border-bottom:none; }
+    .radar-prox-item { display:flex; gap:12px; align-items:center; padding:9px 10px; border-radius:10px; margin-bottom:4px; background:var(--bg); cursor:pointer; transition:background .15s; }
+    .radar-prox-item:hover { background:var(--surface2); }
     .radar-prox-date { text-align:center; flex-shrink:0; width:38px; }
     .radar-prox-dow { font-size:9px; font-weight:800; color:var(--text-dim); text-transform:uppercase; }
     .radar-prox-day { font-size:14px; font-weight:900; color:var(--deep); }
@@ -395,7 +395,7 @@
     .cfg-task-row:hover { box-shadow:0 4px 20px rgba(46,24,71,.12); }
 
     /* ── Responsive ── */
-    @media (max-width:1100px) { #home-grid { grid-template-columns:260px 1fr 300px; } }
+    @media (max-width:1100px) { #home-grid { grid-template-columns:240px 1fr 320px; } }
     @media (max-width:900px) { #home-grid { grid-template-columns:1fr; } #page-container { padding:16px 12px; } }
 
     /* ── Mobile (≤768px / iPhone 14 = 390px) ── */
@@ -729,14 +729,14 @@
             </div>
           </div>
 
-          <!-- BLOCO 2 — PARA HOJE (altura fixa, até 6 itens) -->
-          <div class="right-card" id="para-hoje-card" style="height:220px;display:flex;flex-direction:column;">
+          <!-- BLOCO 2 — PARA HOJE -->
+          <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:380px;display:flex;flex-direction:column;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <span class="sec-label">Para hoje</span>
               <button onclick="navigateTo('radar')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
             </div>
             <div id="para-hoje-progress"></div>
-            <div id="para-hoje-timeline" style="flex:1;overflow:hidden;"></div>
+            <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
           </div>
 
           <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
@@ -1350,7 +1350,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.37 · ELO Comunicação · Atualizado em 06/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.38 · ELO Comunicação · Atualizado em 06/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1420,7 +1420,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.37</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.38</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">06/07/2026</span></span>
   </footer>
@@ -1770,14 +1770,7 @@ function playReminderBeep() {
   } catch(e) {}
 }
 function fireReminderNotification(rem) {
-  playReminderBeep();
-  showToast(`🔔 ${rem.title || 'Lembrete'}`, 'warn');
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(rem.title || 'Lembrete ELO', {
-      body: rem.description || 'Lembrete ELO',
-      icon: 'logo-elo.png',
-    });
-  }
+  showAlarmBanner(rem.title || 'Lembrete', rem.description || '');
 }
 function remGetLastFired(id) {
   try { return JSON.parse(localStorage.getItem('elo_rem_lastfired')||'{}')[id] || 0; } catch(e) { return 0; }
@@ -3272,62 +3265,65 @@ function renderParaHoje() {
   if (!timelineEl) return;
   const minutesWorked = (T.todayEntries || []).reduce((s, e) => s + (e.duration_minutes || 0), 0);
   const goalMin = (T.settings && T.settings.daily_goal_minutes) || 480;
-  const pctDone = data.totalCount ? Math.round((data.doneCount / data.totalCount) * 100) : 0;
+  const total = data.totalCount || 0;
+  const done = data.doneCount || 0;
+  const pctDone = total ? Math.round((done / total) * 100) : 0;
   if (progressEl) {
     const horaStr = fMin(minutesWorked);
     const metaStr = fMin(goalMin);
     progressEl.innerHTML = `
-      <div style="display:flex;height:5px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:6px;">
+      <div style="height:5px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:6px;">
         <div style="height:100%;background:var(--green);width:${pctDone}%;transition:width .4s;"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:9.5px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">
-        <span><b style="color:var(--text);">${data.doneCount} feita${data.doneCount===1?'':'s'}</b> · ${data.totalCount - data.doneCount} restante${(data.totalCount-data.doneCount)===1?'':'s'}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;color:var(--text-dim);margin-bottom:10px;">
+        <span><b style="color:var(--text);">${done} feita${done===1?'':'s'}</b> · ${total - done} restante${(total-done)===1?'':'s'}</span>
         <span style="color:var(--text);font-weight:800;">${horaStr} / ${metaStr}</span>
       </div>`;
   }
-  if (data.totalCount === 0) {
-    timelineEl.innerHTML = `<div style="font-size:12px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
+  if (total === 0) {
+    timelineEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
     return;
   }
   const nowHHMM = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
-  timelineEl.innerHTML = data.items.slice(0, 6).map(it => {
+  timelineEl.innerHTML = data.items.map(it => {
     const isNow = !it.is_done && it.time && it.time <= nowHHMM && it === data.nextItem;
     const markColor = it.is_done ? 'var(--green)' : isNow ? 'var(--coral)' : it.priority === 'alta' ? '#DC2626' : it._type === 'appt' ? 'var(--blue)' : 'var(--lavender)';
-    const titleDim = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);' : '';
+    const titleStyle = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);' : 'color:var(--text);';
     const timeColor = isNow ? 'var(--coral)' : 'var(--text-dim)';
     const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
     const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
     const sub = [tipoLabel, durLabel].filter(Boolean).join(' · ');
-    const tag = isNow ? `<span style="font-size:7px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.1);padding:2px 6px;border-radius:8px;margin-left:5px;white-space:nowrap;">AGORA</span>` : '';
-    const editBtn = !it.is_done
-      ? `<button data-id="${it.id}" data-type="${it._type}" onclick="paraHojeEdit(this)"
-           style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;border-radius:6px;color:var(--text-dim);font-size:12px;line-height:1;opacity:.6;transition:opacity .15s;"
-           title="Editar" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">✏</button>`
-      : '';
+    const tag = isNow ? `<span style="font-size:8px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.12);padding:2px 7px;border-radius:8px;margin-left:6px;white-space:nowrap;">AGORA</span>` : '';
+    const checkColor = it.is_done ? 'var(--green)' : 'rgba(74,41,118,.15)';
+    const checkIcon = it.is_done ? '✓' : '';
+    const completeBtn = `<button
+      data-id="${it.id}" data-type="${it._type}"
+      onclick="paraHojeComplete(this)"
+      style="flex-shrink:0;width:20px;height:20px;border-radius:50%;
+             border:2px solid ${checkColor};background:${it.is_done ? 'var(--green)' : 'transparent'};
+             color:#fff;font-size:10px;font-weight:900;cursor:pointer;
+             display:grid;place-items:center;transition:all .15s;margin-top:2px;"
+      title="${it.is_done ? 'Marcar como pendente' : 'Concluir'}">${checkIcon}</button>`;
     return `
-      <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(74,41,118,.05);">
-        <span style="width:34px;flex-shrink:0;font-size:10px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
-        <span style="width:7px;height:7px;border-radius:50%;background:${markColor};flex-shrink:0;margin-top:4px;"></span>
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);">
+        ${completeBtn}
+        <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:11.5px;${titleDim}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
-          ${sub ? `<div style="font-size:9.5px;color:var(--text-dim);margin-top:1px;">${sub}</div>` : ''}
+          <div style="font-size:13px;font-weight:700;${titleStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
+          ${sub ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${sub}</div>` : ''}
         </div>
-        ${editBtn}
       </div>`;
   }).join('');
 }
-function paraHojeEdit(btn) {
+function paraHojeComplete(btn) {
   const id = Number(btn.dataset.id);
-  const type = btn.dataset.type; // 'task' | 'appt'
+  const type = btn.dataset.type;
   if (!id) return;
   if (type === 'task') {
-    const item = (T.scheduledTasks || []).find(t => t.id === id);
-    if (item && !CAL.scheduledTasks.find(t => t.id === id)) CAL.scheduledTasks.push(item);
-  } else {
-    const item = (T.appointments || []).find(a => a.id === id);
-    if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
+    completeTask(id);
+  } else if (type === 'appt') {
+    completeAppt(id);
   }
-  openCalEditModal(id, type === 'task' ? 'scheduled_task' : 'appointment');
 }
 renderAssistantHero();
 setInterval(renderAssistantHero, 60000);
@@ -7417,7 +7413,7 @@ function renderPanelGeral() {
         const dow = diasSem[d.getDay()];
         const day = String(d.getDate()).padStart(2,'0');
         const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        return `<div class="radar-prox-item">
+        return `<div class="radar-prox-item" data-id="${a.id}" data-type="appointment" onclick="radarProxClick(this)">
           <div class="radar-prox-date">
             <div class="radar-prox-dow">${dow}</div>
             <div class="radar-prox-day">${day}</div>
@@ -7488,7 +7484,7 @@ async function radarToggleNota(id, rowEl) {
 }
 function radarEditTask(btn) {
   const id = Number(btn.dataset.id);
-  const type = btn.dataset.type; // 'scheduled_task' | 'appointment'
+  const type = btn.dataset.type;
   if (!id) return;
   if (type === 'scheduled_task') {
     const item = (T.scheduledTasks || []).find(t => t.id === id);
@@ -7498,6 +7494,13 @@ function radarEditTask(btn) {
     if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
   }
   openCalEditModal(id, type);
+}
+function radarProxClick(div) {
+  const id = Number(div.dataset.id);
+  if (!id) return;
+  const item = (T.appointments || []).find(a => a.id === id);
+  if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
+  openCalEditModal(id, 'appointment');
 }
 function renderPanelHoje() {
   loadRadarPanelData();
