@@ -1350,7 +1350,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.38 · ELO Comunicação · Atualizado em 06/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.39 · ELO Comunicação · Atualizado em 07/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1420,9 +1420,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.38</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.39</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">06/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">07/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -5366,14 +5366,14 @@ async function loadFinData() {
     db(() => sb.from('monthly_payments').select('*').eq('month', FIN.month).eq('year', FIN.year).order('client_id'), 'Erro ao carregar pagamentos'),
     db(() => sb.from('cost_items').select('*').eq('month', FIN.month).eq('year', FIN.year).order('id'), 'Erro ao carregar custos'),
     db(() => sb.from('clients').select('id,name,due_day,contract_value,payment_method,color').eq('is_active', true).eq('is_internal', false), 'Erro ao carregar clientes'),
-    db(() => sb.from('settings').select('revenue_goal,hourly_rate,daily_goal_minutes').eq('id',1).single(), 'Erro ao carregar configurações'),
+    db(() => sb.from('settings').select('revenue_goal,hourly_rate_min,daily_goal_minutes').eq('id',1).single(), 'Erro ao carregar configurações'),
   ]);
   FIN.payments = pm.data || [];
   FIN.costs    = ci.data || [];
   FIN.clients  = cl.data || [];
   if (sg.data) {
     T.settings.revenue_goal = sg.data.revenue_goal || 0;
-    T.settings.hourly_rate  = sg.data.hourly_rate  || 0;
+    T.settings.hourly_rate_min = sg.data.hourly_rate_min || 0;
   }
 
   // Auto-gera entradas mensais para clientes que ainda não têm registro no mês
@@ -7276,11 +7276,30 @@ function renderRadarGrid() {
     if (imp.date) addUrg(imp.date, 'informativo');
   });
   const urgColor = { atrasada: '#DC2626', hoje: 'var(--orange)', afazer: 'var(--purple)', informativo: 'var(--blue)' };
+  // Mapa de itens por dia — até 2 chips de texto por célula
+  const first3 = (s) => (s || '').split(/\s+/).slice(0, 3).join(' ');
+  const itemMap = {};
+  const addItem = (dateStr, label, kind) => {
+    if (!itemMap[dateStr]) itemMap[dateStr] = [];
+    itemMap[dateStr].push({ label: first3(label), kind });
+  };
+  (RADAR.appts || []).forEach(a => {
+    const d = new Date(a.scheduled_at);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    addItem(ds, a.title, 'appt');
+  });
+  (RADAR.tasks || []).forEach(t => {
+    if (!t.scheduled_date) return;
+    addItem(t.scheduled_date, t.title, t.is_done ? 'done' : 'task');
+  });
+  (RADAR.importantDates || []).forEach(imp => {
+    if (imp.date) addItem(imp.date, imp.label, 'info');
+  });
   const diasSem = ['D','S','T','Q','Q','S','S'];
   let html = diasSem.map(d =>
     `<div style="text-align:center;font-size:9px;font-weight:800;color:var(--text-dim);padding-bottom:6px;">${d}</div>`
   ).join('');
-  for (let i = 0; i < firstDay; i++) { html += `<div style="min-height:56px;"></div>`; }
+  for (let i = 0; i < firstDay; i++) { html += `<div style="min-height:84px;"></div>`; }
   for (let day = 1; day <= daysInMonth; day++) {
     const ds = `${RADAR.year}-${String(RADAR.month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const isToday = ds === todayDate;
@@ -7293,16 +7312,33 @@ function renderRadarGrid() {
     let fw = '700';
     if (isToday) { bg = 'var(--coral)'; color = '#fff'; border = 'none'; fw = '900'; }
     if (isSelected && !isToday) { border = '2px solid var(--purple)'; bg = 'var(--surface2)'; }
+    const dayItems = itemMap[ds] || [];
+    const chipKindStyle = {
+      appt: `background:rgba(59,130,246,.12);color:var(--blue);`,
+      task: `background:rgba(74,41,118,.10);color:var(--purple);`,
+      done: `background:rgba(46,27,78,.06);color:var(--text-dim);text-decoration:line-through;`,
+      info: `background:rgba(191,168,217,.25);color:var(--purple);`
+    };
+    const chipTodayStyle = `background:rgba(255,255,255,.22);color:#fff;`;
+    const chipsHtml = dayItems.slice(0, 2).map(it =>
+      `<span style="display:block;width:100%;box-sizing:border-box;font-size:9px;font-weight:700;line-height:1.25;
+        padding:2px 4px;border-radius:5px;margin-top:2px;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+        ${isToday ? chipTodayStyle : chipKindStyle[it.kind]}">${esc(it.label)}</span>`
+    ).join('');
+    const moreHtml = dayItems.length > 2
+      ? `<span style="display:block;font-size:8px;font-weight:800;margin-top:2px;color:${isToday ? 'rgba(255,255,255,.75)' : 'var(--text-dim)'};text-align:left;">+${dayItems.length - 2}</span>`
+      : '';
     html += `<div onclick="radarSelectDay('${ds}',this)"
-      style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-             padding:8px 4px 18px;border-radius:10px;cursor:pointer;
+      style="position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+             padding:6px 5px 6px;border-radius:10px;cursor:pointer;
              background:${bg};border:${border};color:${color};
-             font-size:13px;font-weight:${fw};min-height:56px;
+             font-size:13px;font-weight:${fw};min-height:84px;overflow:hidden;
              transition:background .15s,border-color .15s;"
       onmouseover="if(this.style.background==='var(--surface)')this.style.background='var(--bg2)'"
       onmouseout="if(this.style.background==='var(--bg2)')this.style.background='var(--surface)'">
-      <span>${day}</span>
-      ${dotColor ? `<span style="position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
+      <span style="display:flex;align-items:center;justify-content:center;gap:4px;">${day}${dotColor ? `<span style="width:6px;height:6px;border-radius:50%;background:${dotColor};display:inline-block;"></span>` : ''}</span>
+      ${chipsHtml}${moreHtml}
     </div>`;
   }
   grid.innerHTML = html;
