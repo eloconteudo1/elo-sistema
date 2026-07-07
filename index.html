@@ -469,7 +469,12 @@
     .note-check-btn { width:18px; height:18px; border-radius:50%; border:2px solid var(--green); background:none; cursor:pointer; flex-shrink:0; margin-top:2px; transition:background .15s, border-color .15s; padding:0; }
     .note-check-btn:hover { background:var(--green); border-color:var(--green); }
     .note-item-preview { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; color:var(--text); line-height:1.5; white-space:normal; word-break:break-word; cursor:pointer; background:#f9f8fc; border-left:3px solid var(--purple); border-radius:8px; padding:8px 10px; }
-    .note-item-preview strong { font-weight:800; color:var(--deep); display:block; margin-bottom:1px; }
+    .note-item-preview strong { font-weight:400; color:var(--text); display:inline; }
+    .note-item-actions { display:none; gap:4px; flex-shrink:0; }
+    .note-item:hover .note-item-actions { display:flex; }
+    .note-action-btn { background:none; border:none; cursor:pointer; font-size:12px; padding:2px 5px; border-radius:6px; color:var(--text-dim); transition:background .12s; }
+    .note-action-btn:hover { background:var(--bg2); }
+    .ph-item:hover .ph-actions { display:flex !important; }
     .note-item-preview:hover { opacity:.8; }
     .note-item-date { font-size:10px; color:var(--text-dim); opacity:.65; }
     .note-item-body { flex:1; min-width:0; }
@@ -739,7 +744,16 @@
             <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
           </div>
 
-          <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
+          <!-- BLOCO 3 — NOTAS RÁPIDAS -->
+          <div class="right-card" id="notes-home-card" style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span class="sec-label" style="font-size:12px;font-weight:700;letter-spacing:.6px;">Anotações</span>
+              <button onclick="openNovoRegistro('nota')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ nova</button>
+            </div>
+            <div id="notes-list" style="display:flex;flex-direction:column;gap:0;max-height:220px;overflow-y:auto;"></div>
+          </div>
+
+          <!-- BLOCO 4 — FALA COMIGO, BB (ocupa o resto da tela) -->
           <div class="right-card" id="fala-comigo-card" style="flex:1;display:flex;flex-direction:column;min-height:180px;">
             <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
             <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
@@ -1350,7 +1364,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.39 · ELO Comunicação · Atualizado em 07/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.40 · ELO Comunicação · Atualizado em 07/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1420,7 +1434,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.39</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.40</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">07/07/2026</span></span>
   </footer>
@@ -2279,7 +2293,7 @@ async function initHome() {
       else if (btn.dataset.action === 'del-entry') deleteEntry(id);
     });
   }
-  // Event delegation for notes list (delete)
+  // Event delegation for notes list
   const notesList = document.getElementById('notes-list');
   if (notesList && !notesList._delegated) {
     notesList._delegated = true;
@@ -2291,7 +2305,28 @@ async function initHome() {
         openNoteModal(id);
         return;
       }
-      // Concluir (bolinha)
+      // Editar nota
+      const editBtn = ev.target.closest('[data-edit-note]');
+      if (editBtn) {
+        const id = Number(editBtn.dataset.editNote);
+        openNoteModal(id);
+        return;
+      }
+      // Excluir nota
+      const delBtn = ev.target.closest('[data-delete-note]');
+      if (delBtn) {
+        const id = Number(delBtn.dataset.deleteNote);
+        openConfirmModal('Excluir anotação?', 'Esta anotação será removida permanentemente.', async () => {
+          const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao excluir nota');
+          if (error) return;
+          T.notes = T.notes.filter(n => n.id !== id);
+          renderNotesList();
+          if (document.getElementById('cal-notes-list')) renderCalNotes();
+          showToast('Anotação excluída', 'ok');
+        });
+        return;
+      }
+      // Concluir (bolinha verde)
       const checkBtn = ev.target.closest('[data-complete-note]');
       if (checkBtn) {
         const id = Number(checkBtn.dataset.completeNote);
@@ -2846,17 +2881,16 @@ function renderNotesList() {
   list.innerHTML = T.notes.map(note => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const escaped = esc(note.content);
-    const firstSpace = escaped.indexOf(' ');
-    const titulo = firstSpace === -1 ? escaped : escaped.slice(0, firstSpace);
-    const resto = firstSpace === -1 ? '' : escaped.slice(firstSpace).replace(/\n/g,'<br>');
+    const preview = esc(note.content).replace(/\n/g,'<br>');
     return `<div class="note-item" data-note-item-id="${note.id}">
       <button class="note-check-btn" data-complete-note="${note.id}" title="Concluir"></button>
       <div class="note-item-body" style="flex:1;min-width:0;">
-        <div class="note-item-preview" data-open-note="${note.id}">
-          <strong>${titulo}</strong>${resto}
-        </div>
+        <div class="note-item-preview" data-open-note="${note.id}">${preview}</div>
         <div class="note-item-date">${dateStr}</div>
+      </div>
+      <div class="note-item-actions">
+        <button class="note-action-btn" data-edit-note="${note.id}" title="Editar">✏️</button>
+        <button class="note-action-btn" data-delete-note="${note.id}" title="Excluir">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -3184,6 +3218,8 @@ function renderTodayActivities() {
 function renderRightSidebar() {
   renderAssistantHero();
   renderParaHoje();
+  paraHojeSetupActions();
+  renderNotesList();
 }
 
 // ── getRadarData(): fonte única de dados do dia (mata o mock) ──
@@ -3304,14 +3340,20 @@ function renderParaHoje() {
              color:#fff;font-size:10px;font-weight:900;cursor:pointer;
              display:grid;place-items:center;transition:all .15s;margin-top:2px;"
       title="${it.is_done ? 'Marcar como pendente' : 'Concluir'}">${checkIcon}</button>`;
+    const actionBtns = `
+      <div class="ph-actions" style="display:none;gap:2px;flex-shrink:0;">
+        <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
+        <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Excluir">🗑</button>
+      </div>`;
     return `
-      <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);">
+      <div class="ph-item" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);">
         ${completeBtn}
         <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:700;${titleStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
           ${sub ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${sub}</div>` : ''}
         </div>
+        ${actionBtns}
       </div>`;
   }).join('');
 }
@@ -3319,11 +3361,31 @@ function paraHojeComplete(btn) {
   const id = Number(btn.dataset.id);
   const type = btn.dataset.type;
   if (!id) return;
-  if (type === 'task') {
-    completeTask(id);
-  } else if (type === 'appt') {
-    completeAppt(id);
-  }
+  if (type === 'task') completeTask(id);
+  else if (type === 'appt') completeAppt(id);
+}
+
+function paraHojeSetupActions() {
+  const timeline = document.getElementById('para-hoje-timeline');
+  if (!timeline || timeline._phDelegated) return;
+  timeline._phDelegated = true;
+  timeline.addEventListener('click', function(ev) {
+    const editBtn = ev.target.closest('[data-ph-edit]');
+    if (editBtn) {
+      const id = Number(editBtn.dataset.phEdit);
+      const type = editBtn.dataset.phType;
+      if (type === 'task') openCalEditModal(id, 'task');
+      else openCalEditModal(id, 'appointment');
+      return;
+    }
+    const delBtn = ev.target.closest('[data-ph-del]');
+    if (delBtn) {
+      const id = Number(delBtn.dataset.phDel);
+      const type = delBtn.dataset.phType;
+      if (type === 'task') deleteTask(id);
+      else deleteAppt(id);
+    }
+  });
 }
 renderAssistantHero();
 setInterval(renderAssistantHero, 60000);
@@ -3360,6 +3422,8 @@ function handleAssistantCommand(input) {
       return handleAnotaCommand(payload);
     case '/tarefa':
       return handleTarefaCommand(payload);
+    case '/compromisso':
+      return handleCompromissoCommand(payload);
     case '/plano':
       return handlePlanoCommand(payload);
     case '/recebido':
@@ -3382,7 +3446,7 @@ function handleAssistantCommand(input) {
 }
 
 function showAssistantHelp() {
-  showAssistantMessage('Comandos: /ia estou aqui · /anota [texto] · /tarefa [hora] [texto] [!prioridade] · /plano (várias tarefas, uma por linha) · /recebido [cliente] · /pago [conta] · /financeiro · /agenda · /desviei · /voltei');
+  showAssistantMessage('Comandos: /ia · /anota [texto] · /tarefa [hora] [texto] [!prior] · /compromisso [hora] [título] · /plano (várias linhas) · /recebido [cliente] · /pago [conta] · /desviei · /voltei');
 }
 
 // ── Comando /ia e botão "Estou aqui" ──
@@ -3416,6 +3480,31 @@ function handleIACommand(payload) {
   }
   if (partes.length === 0) partes.push('Tudo tranquilo por aqui. Nada pendente hoje.');
   showAssistantMessage(partes.join(' '));
+}
+
+// ── Comando /compromisso ──
+async function handleCompromissoCommand(text) {
+  if (!text) {
+    showAssistantMessage('Uso: /compromisso HH:MM Título · Ex: /compromisso 14:00 Reunião Mariana');
+    return;
+  }
+  const m = text.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
+  const hora = m?.[1] || null;
+  const titulo = (m?.[2] || text).trim();
+  if (!titulo) { showAssistantMessage('Informe o título do compromisso.'); return; }
+  const hoje = new Date();
+  const [hh, mm] = hora ? hora.split(':').map(Number) : [hoje.getHours(), hoje.getMinutes()];
+  const ts = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), hh, mm).getTime();
+  const payload = { title: titulo, scheduled_at: ts, is_done: false };
+  const { data, error } = await db(
+    () => sb.from('appointments').insert(payload).select().single(),
+    'Erro ao salvar compromisso'
+  );
+  if (error) return;
+  T.appointments.push(data);
+  CAL.appointments.push(data);
+  renderRightSidebar();
+  showAssistantMessage(`Compromisso criado: "${titulo}"${hora ? ' às ' + hora : ' para hoje'}.`);
 }
 
 // ── Comando /anota ──
@@ -4648,7 +4737,12 @@ function openNovoRegistro(tab, day) {
   document.getElementById('nrm-notif-form-title').textContent = 'Novo alarme';
   document.getElementById('nrm-rem-cancel-btn').style.display = 'none';
   document.getElementById('nrm-rem-save-btn').textContent = 'Salvar alarme';
-  renderNrmRemList();
+  if (!CAL.reminders || CAL.reminders.length === 0) {
+    db(() => sb.from('reminders').select('id,name,icon,type,interval_minutes,daily_time,daily_times,once_at,is_active'), 'Erro ao carregar alarmes')
+      .then(res => { CAL.reminders = res.data || []; renderNrmRemList(); });
+  } else {
+    renderNrmRemList();
+  }
 
   const tabMap = { appt:'nrm-appt', task:'nrm-task', notif:'nrm-notif', nota:'nrm-nota' };
   const targetTab = tabMap[tab] || 'nrm-appt';
@@ -4859,16 +4953,20 @@ async function _nrmSaveAppt() {
     if (error) return;
     const idx = CAL.appointments.findIndex(a => a.id === _nrmEditingApptId);
     if (idx !== -1) CAL.appointments[idx] = { ...CAL.appointments[idx], ...payload };
+    const tidx = T.appointments.findIndex(a => a.id === _nrmEditingApptId);
+    if (tidx !== -1) T.appointments[tidx] = { ...T.appointments[tidx], ...payload };
     showToast('Compromisso atualizado!', 'ok');
   } else {
     const { data, error } = await db(() => sb.from('appointments').insert(payload).select().single(), 'Erro ao salvar compromisso');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) return;
     CAL.appointments.push(data);
+    T.appointments.push(data);
     showToast('Compromisso salvo!', 'ok');
   }
   closeNovoRegistro();
   renderCalPage();
+  renderRightSidebar();
 }
 
 async function _nrmSaveTask() {
@@ -4895,6 +4993,8 @@ async function _nrmSaveTask() {
     if (error) return;
     const idx = CAL.scheduledTasks.findIndex(t => t.id === _nrmEditingTaskId);
     if (idx !== -1) CAL.scheduledTasks[idx] = { ...CAL.scheduledTasks[idx], ...payload };
+    const tidx = T.scheduledTasks.findIndex(t => t.id === _nrmEditingTaskId);
+    if (tidx !== -1) T.scheduledTasks[tidx] = { ...T.scheduledTasks[tidx], ...payload };
     showToast('Tarefa atualizada!', 'ok');
   } else {
     payload.is_done = false; payload.user_id = 1;
@@ -4902,10 +5002,12 @@ async function _nrmSaveTask() {
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) return;
     CAL.scheduledTasks.push(data);
+    T.scheduledTasks.push(data);
     showToast('Tarefa salva!', 'ok');
   }
   closeNovoRegistro();
   renderCalPage();
+  renderRightSidebar();
 }
 
 async function _nrmSaveNota() {
