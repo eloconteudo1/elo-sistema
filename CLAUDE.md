@@ -346,6 +346,16 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - SQL pendente (Helô roda manual): RLS nas 14 tabelas + migração Instagram→notes + DROP colunas
 - Versão 3.34, data 05/07/2026
 
+**Sessão S-URGENTE — Radar células com texto + fix Financeiro settings (V3.39)**
+- `renderRadarGrid()`: células 56px → 84px; mapa `itemMap` por dia com compromissos, tarefas e datas importantes
+- Função `first3(s)` extrai 3 primeiras palavras do título para chip
+- Até 2 chips por célula (azul=appt, roxo=task, tachado=done, lavanda=info); "+N" quando sobram itens
+- Célula de HOJE (coral): chips usam estilo branco translúcido `rgba(255,255,255,.22)` para legibilidade
+- Dot de urgência migrado: era `position:absolute` no fundo, agora inline ao lado do número do dia
+- Fix `loadFinData`: query `hourly_rate` → `hourly_rate_min`; `T.settings.hourly_rate` → `T.settings.hourly_rate_min`
+- Eliminado toast "Erro ao carregar configurações" que aparecia a cada abertura do Financeiro
+- Versão 3.39, data 07/07/2026
+
 **Sessão RADAR-A1 — Schema + CSS base do Radar (V3.36)**
 - SQL: `ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false`
 - SQL: `ALTER TABLE scheduled_tasks ADD COLUMN IF NOT EXISTS duration_minutes integer`
@@ -432,6 +442,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S-CONSOLIDA | ~~Sessão S-CONSOLIDA: Assistente ELO restaurado (transplante branch órfã) + fix autoCarryRecurringCosts~~ | **Concluído** |
 | S21 | ~~Sessão S21: RLS-ready code — gating conteudo.html, signup removido, abas Acesso/Links removidas, openConfirmModal portado~~ | **Concluído** |
 | RADAR-A1 | ~~RADAR-A1: Schema (notes.is_done, duration_minutes, important_dates) + CSS base do Radar~~ | **Concluído** |
+| S-URGENTE | ~~S-URGENTE: Radar células com texto (84px, chips 3 palavras, +N) + fix query hourly_rate Financeiro~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
