@@ -444,6 +444,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | RADAR-A1 | ~~RADAR-A1: Schema (notes.is_done, duration_minutes, important_dates) + CSS base do Radar~~ | **Concluído** |
 | S-URGENTE | ~~S-URGENTE: Radar células com texto (84px, chips 3 palavras, +N) + fix query hourly_rate Financeiro~~ | **Concluído** |
 | S-FIX-E2A | ~~S-FIX-E2A: Editar/excluir universal no Radar (todas as listas) + tipografia font-weight:600~~ | **Concluído** |
+| S-FIX-E2B | ~~S-FIX-E2B: Gráfico de carga Chart.js, fundo do calendário var(--off), detalhe do Mês no painel direito~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |

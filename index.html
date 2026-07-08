@@ -1020,7 +1020,7 @@
               <div style="margin-bottom:14px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Carga dos próximos 7 dias</span>
               </div>
-              <div id="radar-carga-body"><div class="radar-day-detail-empty">Carregando...</div></div>
+              <div style="position:relative;height:230px;"><canvas id="radar-carga-chart"></canvas></div>
               <div class="radar-legend" style="margin-top:12px;padding-top:10px;">
                 <div class="radar-legend-item"><span class="radar-legend-dot" style="background:var(--green);"></span>tranquilo</div>
                 <div class="radar-legend-item"><span class="radar-legend-dot" style="background:var(--orange);"></span>cheio</div>
@@ -1038,6 +1038,13 @@
 
           <!-- PAINEL MÊS -->
           <div class="radar-panel" id="radar-panel-mes">
+            <div class="radar-day-detail-card" id="radar-mes-day-detail-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
+              <div style="margin-bottom:14px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Detalhe do dia</span>
+              </div>
+              <div class="radar-day-detail-title" id="radar-mes-day-detail-title"></div>
+              <div id="radar-mes-day-detail-body"></div>
+            </div>
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
               <div style="margin-bottom:14px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Compromissos do mês</span>
@@ -1364,7 +1371,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.42 · ELO Comunicação · Atualizado em 08/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.43 · ELO Comunicação · Atualizado em 08/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1434,7 +1441,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.42</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.43</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">08/07/2026</span></span>
   </footer>
@@ -4078,6 +4085,7 @@ function getClientPayment(clientId) {
 }
 
 let clExpandedCards = new Set();
+let radarCargaChartInstance = null;
 function toggleClientExpand(id) {
   if (clExpandedCards.has(id)) clExpandedCards.delete(id);
   else clExpandedCards.add(id);
@@ -7408,6 +7416,8 @@ function setRadarTab(tab, el) {
   };
   const subEl = document.getElementById('radar-sub');
   if (subEl) subEl.textContent = subs[tab] || '';
+  radarCloseDetail();
+  renderRadarGrid();
   loadRadarPanelData();
   if (tab === 'geral')   renderPanelGeral();
   if (tab === 'hoje')    renderPanelHoje();
@@ -7476,7 +7486,7 @@ function renderRadarGrid() {
     const isSelected = RADAR.selectedDay === ds;
     const urge = urgMap[ds];
     const dotColor = urge ? urgColor[urge] : null;
-    let bg = 'var(--surface)';
+    let bg = 'var(--off)';
     let border = '1px solid rgba(74,41,118,.07)';
     let color = 'var(--text)';
     let fw = '700';
@@ -7505,8 +7515,8 @@ function renderRadarGrid() {
              background:${bg};border:${border};color:${color};
              font-size:13px;font-weight:${fw};min-height:84px;overflow:hidden;
              transition:background .15s,border-color .15s;"
-      onmouseover="if(this.style.background==='var(--surface)')this.style.background='var(--bg2)'"
-      onmouseout="if(this.style.background==='var(--bg2)')this.style.background='var(--surface)'">
+      onmouseover="if(this.style.background==='var(--off)')this.style.background='var(--bg2)'"
+      onmouseout="if(this.style.background==='var(--bg2)')this.style.background='var(--off)'">
       <span style="display:flex;align-items:center;justify-content:center;gap:4px;">${day}${dotColor ? `<span style="width:6px;height:6px;border-radius:50%;background:${dotColor};display:inline-block;"></span>` : ''}</span>
       ${chipsHtml}${moreHtml}
     </div>`;
@@ -7516,9 +7526,10 @@ function renderRadarGrid() {
 function radarSelectDay(ds, el) {
   RADAR.selectedDay = ds;
   renderRadarGrid();
-  const detail = document.getElementById('radar-day-detail');
-  const titleEl = document.getElementById('radar-day-detail-title');
-  const bodyEl = document.getElementById('radar-day-detail-body');
+  const inMes = RADAR.tab === 'mes';
+  const detail = document.getElementById(inMes ? 'radar-mes-day-detail-card' : 'radar-day-detail');
+  const titleEl = document.getElementById(inMes ? 'radar-mes-day-detail-title' : 'radar-day-detail-title');
+  const bodyEl = document.getElementById(inMes ? 'radar-mes-day-detail-body' : 'radar-day-detail-body');
   if (!detail || !titleEl || !bodyEl) return;
   const [y, m, d] = ds.split('-');
   const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -7561,11 +7572,14 @@ function radarSelectDay(ds, el) {
       </div>`;
     }).join('');
   }
-  detail.classList.add('open');
+  if (inMes) { detail.style.display = 'block'; }
+  else { detail.classList.add('open'); }
 }
 function radarCloseDetail() {
   const detail = document.getElementById('radar-day-detail');
   if (detail) detail.classList.remove('open');
+  const mesDetail = document.getElementById('radar-mes-day-detail-card');
+  if (mesDetail) mesDetail.style.display = 'none';
   RADAR.selectedDay = null;
 }
 function renderPanelGeral() {
@@ -7791,13 +7805,13 @@ function renderPanelHoje() {
 }
 function renderPanelSemana() {
   loadRadarPanelData();
-  const cargaEl = document.getElementById('radar-carga-body');
   const apptsEl = document.getElementById('radar-semana-appts');
-  if (!cargaEl || !apptsEl) return;
+  if (!apptsEl) return;
   const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const now = new Date(); now.setHours(0,0,0,0);
-  let cargaHtml = '';
-  const maxItems = 6;
+  const labels = [];
+  const counts = [];
+  const barColors = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(now.getTime() + i * 86400000);
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -7806,22 +7820,35 @@ function renderPanelSemana() {
                     const ad = new Date(a.scheduled_at);
                     return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
                   }).length;
-    const pct = Math.min(100, Math.round((count / maxItems) * 100));
-    const color = count === 0 ? 'var(--lavender)' : count <= 2 ? 'var(--green)' : count <= 5 ? 'var(--orange)' : '#DC2626';
-    const label = count === 0 ? 'livre' : count <= 2 ? `${count} item${count>1?'s':''}` : count <= 5 ? `${count} itens — cheio` : `${count} itens — sobrecarga`;
-    const isToday = i === 0;
-    cargaHtml += `<div class="radar-carga-row">
-      <div class="radar-carga-day">
-        <span class="d">${diasSem[d.getDay()]}</span>
-        <span class="n" style="${isToday?'color:var(--coral);':''}">${d.getDate()}</span>
-      </div>
-      <div class="radar-carga-track">
-        <div class="radar-carga-fill" style="width:${pct}%;background:${color};"></div>
-      </div>
-      <span class="radar-carga-label">${label}</span>
-    </div>`;
+    const color = count === 0 ? '#BFA8D9' : count <= 2 ? '#2FB989' : count <= 5 ? '#E07A3A' : '#DC2626';
+    labels.push(`${diasSem[d.getDay()]} ${d.getDate()}`);
+    counts.push(count);
+    barColors.push(color);
   }
-  cargaEl.innerHTML = cargaHtml;
+  const canvas = document.getElementById('radar-carga-chart');
+  if (canvas) {
+    if (radarCargaChartInstance) radarCargaChartInstance.destroy();
+    radarCargaChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ data: counts, backgroundColor: barColors, borderRadius: 6, maxBarThickness: 26 }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.raw} item${ctx.raw === 1 ? '' : 's'}` } }
+        },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { display: false } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  }
   const maxTs = now.getTime() + 7 * 86400000;
   const apptsWeek = (RADAR.appts || [])
     .filter(a => a.scheduled_at >= now.getTime() && a.scheduled_at < maxTs)
