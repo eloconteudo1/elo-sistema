@@ -1364,7 +1364,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.40 · ELO Comunicação · Atualizado em 07/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.41 · ELO Comunicação · Atualizado em 08/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1434,9 +1434,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.40</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.41</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">07/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">08/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3522,22 +3522,44 @@ async function handleAnotaCommand(text) {
   }
 }
 
+// Extrai data (DD/MM/AAAA), hora (HH:MM) e prioridade (!alta/!media/!baixa) de uma linha,
+// em qualquer ordem. O que sobrar é o título. Ano é obrigatório na data pra não ter ambiguidade de virada de ano.
+function parseAssistantLine(text) {
+  let rest = (text || '').trim();
+  let dataDb = null;
+  const dateMatch = rest.match(/\b(\d{1,2}\/\d{1,2}\/\d{4})\b/);
+  if (dateMatch) {
+    dataDb = inputToDbDate(dateMatch[1]);
+    rest = (rest.slice(0, dateMatch.index) + rest.slice(dateMatch.index + dateMatch[1].length)).replace(/\s+/g, ' ').trim();
+  }
+  let hora = null;
+  const timeMatch = rest.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  if (timeMatch) {
+    hora = timeMatch[0].length === 4 ? '0' + timeMatch[0] : timeMatch[0];
+    rest = (rest.slice(0, timeMatch.index) + rest.slice(timeMatch.index + timeMatch[0].length)).replace(/\s+/g, ' ').trim();
+  }
+  let prioridade = 'media';
+  const prioMatch = rest.match(/!(\s*)(alta|media|baixa)\s*$/i);
+  if (prioMatch) {
+    prioridade = prioMatch[2].toLowerCase();
+    rest = rest.slice(0, prioMatch.index).trim();
+  }
+  return { data: dataDb, hora, titulo: rest.trim(), prioridade };
+}
+
 // ── Comandos /tarefa /recebido /pago ──
 async function handleTarefaCommand(text) {
   if (!text) {
     showAssistantMessage('Uso: /tarefa [hora] [texto] [!alta|!media|!baixa]');
     return;
   }
-  const m = text.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
-  const hora = m?.[1] || null;
-  const titulo = (m?.[2] || text).trim();
-  const prioridade = (m?.[3] || 'media').toLowerCase();
+  const { data: dataDb, hora, titulo, prioridade } = parseAssistantLine(text);
   if (!titulo) {
     showAssistantMessage('Não entendi o texto da tarefa.');
     return;
   }
   const payload = {
-    scheduled_date: todayStr(),
+    scheduled_date: dataDb || todayStr(),
     scheduled_time: hora,
     title: titulo,
     priority: prioridade,
@@ -3550,7 +3572,8 @@ async function handleTarefaCommand(text) {
   );
   if (error) return;
   T.scheduledTasks.unshift(data);
-  showAssistantMessage(`Tarefa criada: "${titulo}"${hora ? ' às ' + hora : ''}.`);
+  const quandoLabel = dataDb ? dbDateToDisplay(dataDb) : 'hoje';
+  showAssistantMessage(`Tarefa criada: "${titulo}"${hora ? ' às ' + hora : ''} — ${quandoLabel}.`);
 }
 
 // ── Comando /plano — cria várias scheduled_tasks de uma vez (bulk) ──
@@ -3565,12 +3588,9 @@ async function handlePlanoCommand(text) {
     return;
   }
   const payloads = linhas.map(linha => {
-    const m = linha.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
-    const hora = m?.[1] || null;
-    const titulo = (m?.[2] || linha).trim();
-    const prioridade = (m?.[3] || 'media').toLowerCase();
+    const { data: dataDb, hora, titulo, prioridade } = parseAssistantLine(linha);
     return {
-      scheduled_date: todayStr(),
+      scheduled_date: dataDb || todayStr(),
       scheduled_time: hora,
       title: titulo,
       priority: prioridade,
@@ -3704,10 +3724,10 @@ async function handleDesvieiCommand() {
   }
 
   // Valida ANTES de tocar no timer — se faltar cliente/tarefa, nada é perdido
-  const eloClient = T.clients.find(c => c.is_internal === true);
+  const eloClient = T.clients.find(c => normalizeStr(c.name) === normalizeStr('Heloiza'));
   const tempoPerdidoTask = T.tasks.find(t => t.name === 'Tempo Perdido');
   if (!eloClient || !tempoPerdidoTask) {
-    showAssistantMessage('Não encontrei o cliente ELO ou a tarefa "Tempo Perdido". Verifique Config > Tarefas.');
+    showAssistantMessage('Não encontrei o cliente Heloiza ou a tarefa "Tempo Perdido". Verifique Clientes / Config > Tarefas.');
     return;
   }
 
@@ -3893,11 +3913,13 @@ function renderFinancialCard() {
 // SCHEDULED TASKS — CRUD
 // ════════════════════════════════════════════════════════════════
 async function completeTask(id) {
-  const { error } = await db(() => sb.from('scheduled_tasks').update({ is_done:true }).eq('id',id), 'Erro ao concluir tarefa');
+  const t = (T.scheduledTasks || []).find(x => x.id === id);
+  const newDone = !(t && t.is_done);
+  const { error } = await db(() => sb.from('scheduled_tasks').update({ is_done:newDone }).eq('id',id), 'Erro ao atualizar tarefa');
   if (error) return;
-  T.scheduledTasks = T.scheduledTasks.map(t=>t.id===id?{...t,is_done:true}:t);
+  T.scheduledTasks = T.scheduledTasks.map(x=>x.id===id?{...x,is_done:newDone}:x);
   renderRightSidebar();
-  showToast('Tarefa concluída ✓','ok');
+  showToast(newDone ? 'Tarefa concluída ✓' : 'Tarefa reaberta','ok');
 }
 
 async function deleteTask(id) {
@@ -3911,11 +3933,13 @@ async function deleteTask(id) {
 }
 
 async function completeAppt(id) {
-  const { error } = await db(() => sb.from('appointments').update({ is_done:true }).eq('id',id), 'Erro ao concluir compromisso');
+  const a0 = (T.appointments || []).find(x => x.id === id);
+  const newDone = !(a0 && a0.is_done);
+  const { error } = await db(() => sb.from('appointments').update({ is_done:newDone }).eq('id',id), 'Erro ao atualizar compromisso');
   if (error) return;
-  T.appointments = T.appointments.map(a=>a.id===id?{...a,is_done:true}:a);
+  T.appointments = T.appointments.map(a=>a.id===id?{...a,is_done:newDone}:a);
   renderRightSidebar();
-  showToast('Compromisso concluído ✓','ok');
+  showToast(newDone ? 'Compromisso concluído ✓' : 'Compromisso reaberto','ok');
 }
 
 async function deleteAppt(id) {
@@ -5059,9 +5083,9 @@ function saveCalEvent() { saveNovoRegistro(); }
 function openCalEditModal(id, type) {
   let item = null;
   if (type === 'appointment') {
-    item = CAL.appointments.find(a => a.id === id);
+    item = (T.appointments || []).find(a => a.id === id);
   } else {
-    item = CAL.scheduledTasks.find(t => t.id === id);
+    item = (T.scheduledTasks || []).find(t => t.id === id);
   }
   if (!item) { showToast('Item não encontrado', 'err'); return; }
 
@@ -6950,7 +6974,8 @@ async function cfgDeleteCat(id, name) {
     ? `A categoria "${name}" tem ${count} tarefa(s). Excluir irá remover a categoria, mas as tarefas serão mantidas sem categoria.`
     : `Excluir a categoria "${name}"?`;
   openConfirmModal('Excluir categoria?', msg, async () => {
-    await db(() => sb.from('categories').delete().eq('id', id), 'Erro ao excluir categoria');
+    const { error } = await db(() => sb.from('categories').delete().eq('id', id), 'Erro ao excluir categoria');
+    if (error) return;
     await cfgRenderCats();
     showToast('Categoria removida', 'ok');
   });
@@ -6970,8 +6995,9 @@ async function cfgRenderTasks() {
     return;
   }
   const favs = T.tasks.filter(t=>t.is_favorite);
+  const nonFav = T.tasks.filter(t=>!t.is_favorite);
   const bycat = {};
-  T.tasks.filter(t=>!t.is_favorite).forEach(t=>{
+  nonFav.forEach(t=>{
     if (!bycat[t.category]) bycat[t.category]=[];
     bycat[t.category].push(t);
   });
@@ -6979,8 +7005,15 @@ async function cfgRenderTasks() {
   if (favs.length) {
     html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">⭐ Favoritas</div><div style="display:flex;flex-direction:column;gap:6px">${favs.map(cfgTaskRowHTML).join('')}</div></div>`;
   }
-  for (const [cat, list] of Object.entries(bycat)) {
+  const catNames = _cfgCats.map(c => c.name);
+  for (const cat of catNames) {
+    const list = bycat[cat];
+    if (!list || !list.length) continue;
     html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">${esc(cat)}</div><div style="display:flex;flex-direction:column;gap:6px">${list.map(cfgTaskRowHTML).join('')}</div></div>`;
+  }
+  const orfas = nonFav.filter(t => !catNames.includes(t.category));
+  if (orfas.length) {
+    html += `<div><div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(46,27,78,.55);margin-bottom:6px">Sem categoria</div><div style="display:flex;flex-direction:column;gap:6px">${orfas.map(cfgTaskRowHTML).join('')}</div></div>`;
   }
   html += '</div>';
   el.innerHTML = html;
@@ -7006,11 +7039,17 @@ async function cfgToggleFav(id, isFav) {
 }
 
 async function cfgDeleteTask(id, name) {
-  openConfirmModal(`Remover a tarefa "${name}"?`, 'Esta tarefa será removida permanentemente.', async () => {
-    await db(() => sb.from('tasks').delete().eq('id', id), 'Erro ao remover tarefa');
+  openConfirmModal(`Remover a tarefa "${name}"?`, 'Esta tarefa será removida permanentemente. Lançamentos de tempo já feitos com ela são mantidos no histórico, só perdem o vínculo direto.', async () => {
+    const { error: nullErr } = await db(
+      () => sb.from('time_entries').update({ task_id: null }).eq('task_id', id),
+      'Erro ao desvincular lançamentos de tempo'
+    );
+    if (nullErr) return;
+    const { error } = await db(() => sb.from('tasks').delete().eq('id', id), 'Erro ao remover tarefa');
+    if (error) return;
     cfgRenderTasks();
     renderTaskTree();
-    showToast('Tarefa removida');
+    showToast('Tarefa removida', 'ok');
   });
 }
 
@@ -7057,7 +7096,6 @@ async function cfgSubmitTask(id) {
     name,
     category: document.getElementById('ctm-cat').value,
     is_favorite: document.getElementById('ctm-fav').checked,
-    is_active: true,
   };
   const btn = document.querySelector('#cfg-task-modal .elo-btn-primary');
   btn.disabled=true; btn.textContent='Salvando...';
@@ -7604,21 +7642,13 @@ async function radarSaveNota() {
 async function radarToggleNota(id, rowEl) {
   const nota = (RADAR.notes || []).find(n => n.id === id);
   if (!nota) return;
-  const newDone = !nota.is_done;
-  const { error } = await db(
-    () => sb.from('notes').update({ is_done: newDone }).eq('id', id),
-    'Erro ao atualizar anotação'
-  );
-  if (error) return;
-  RADAR.notes = RADAR.notes.map(n => n.id === id ? { ...n, is_done: newDone } : n);
+  rowEl.style.transition = 'opacity .3s';
+  rowEl.style.opacity = '0';
+  const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir anotação');
+  if (error) { rowEl.style.opacity = '1'; return; }
+  RADAR.notes = RADAR.notes.filter(n => n.id !== id);
   T.notes = RADAR.notes;
-  if (newDone) {
-    rowEl.style.transition = 'opacity .3s';
-    rowEl.style.opacity = '0';
-    setTimeout(() => { rowEl.remove(); }, 300);
-  } else {
-    rowEl.classList.remove('done');
-  }
+  setTimeout(() => { rowEl.remove(); }, 300);
 }
 function radarEditTask(btn) {
   const id = Number(btn.dataset.id);
