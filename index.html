@@ -1006,7 +1006,7 @@
             <!-- Próximos -->
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Próximos compromissos</span>
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Próximos na agenda</span>
               </div>
               <div id="radar-proximos-list"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
@@ -1040,7 +1040,7 @@
             </div>
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Compromissos da semana</span>
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda da semana</span>
               </div>
               <div id="radar-semana-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
@@ -1054,7 +1054,7 @@
             </div>
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
               <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Compromissos do mês</span>
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda do mês</span>
               </div>
               <div id="radar-mes-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
@@ -1378,7 +1378,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.44 · ELO Comunicação · Atualizado em 09/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.45 · ELO Comunicação · Atualizado em 09/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,7 +1448,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.44</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.45</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">09/07/2026</span></span>
   </footer>
@@ -1486,7 +1486,7 @@
     </div>
     <!-- Abas -->
     <div style="display:flex;padding:10px 22px 0;border-bottom:1px solid rgba(74,41,118,.10);flex-shrink:0;" id="nrm-tabs">
-      <button class="nrm-tab active" data-tab="nrm-appt" onclick="setNrmTab(this)">Compromisso</button>
+      <button class="nrm-tab active" data-tab="nrm-appt" onclick="setNrmTab(this)">Agenda</button>
       <button class="nrm-tab" data-tab="nrm-task" onclick="setNrmTab(this)">Tarefa</button>
       <button class="nrm-tab" data-tab="nrm-notif" onclick="setNrmTab(this)">Notificações</button>
       <button class="nrm-tab" data-tab="nrm-nota" onclick="setNrmTab(this)">Anotação</button>
@@ -1516,34 +1516,20 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div>
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (opcional)</label>
-            <select id="nrm-appt-duration" class="elo-select" style="width:100%;">
-              <option value="">Sem duração</option>
-              <option value="30">30 min</option>
-              <option value="60">1h</option>
-              <option value="90">1h 30min</option>
-              <option value="120">2h</option>
-              <option value="180">3h</option>
-              <option value="240">4h</option>
-            </select>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (minutos)</label>
+            <input id="nrm-appt-duration" type="number" min="0" step="5" class="elo-input" placeholder="Ex: 60" style="width:100%;" />
           </div>
           <div>
             <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
-            <select id="nrm-appt-alert" class="elo-select" style="width:100%;">
-              <option value="">Sem alerta</option>
-              <option value="5">5 min</option>
-              <option value="15">15 min</option>
-              <option value="30">30 min</option>
-              <option value="60">1 hora</option>
-              <option value="1440">1 dia antes</option>
-            </select>
+            <div style="display:flex;gap:6px;">
+              <input id="nrm-appt-alert-value" type="number" min="0" class="elo-input" placeholder="0" style="width:100%;" />
+              <select id="nrm-appt-alert-unit" class="elo-select" style="width:88px;flex-shrink:0;">
+                <option value="min">min</option>
+                <option value="h">horas</option>
+                <option value="d">dias</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text-dim);">
-            <input type="checkbox" id="nrm-appt-remind-day" style="width:15px;height:15px;accent-color:var(--purple);">
-            Lembrar 1 dia antes (alarme às 9h)
-          </label>
         </div>
         <div style="margin-bottom:12px;">
           <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Notas</label>
@@ -1607,45 +1593,43 @@
 
       <!-- ABA: NOTIFICAÇÕES -->
       <div id="nrm-notif" style="display:none;">
-        <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">Crie um alarme com nome, ícone e recorrência.</p>
-        <div style="background:var(--bg2);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
-          <p style="font-size:11px;font-weight:800;color:var(--deep);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;" id="nrm-notif-form-title">Novo alarme</p>
-          <div style="display:grid;grid-template-columns:1fr 60px;gap:8px;margin-bottom:10px;">
-            <div>
-              <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Nome</label>
-              <input id="nrm-rem-name" class="elo-input" placeholder="Ex: Pausa, Almoço, Água..." />
-            </div>
-            <div>
-              <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Ícone</label>
-              <input id="nrm-rem-icon" class="elo-input" placeholder="💧" style="text-align:center;" />
-            </div>
+        <p style="font-size:11px;font-weight:800;color:var(--deep);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;" id="nrm-notif-form-title">Novo alarme</p>
+        <div style="display:grid;grid-template-columns:1fr 60px;gap:8px;margin-bottom:12px;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Nome</label>
+            <input id="nrm-rem-name" class="elo-input" placeholder="Ex: Pausa, Almoço, Água..." />
           </div>
-          <div style="margin-bottom:10px;">
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Recorrência</label>
-            <div style="display:flex;gap:6px;">
-              <button id="nrm-type-interval" onclick="setNrmRemType('interval')" style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">A cada X min</button>
-              <button id="nrm-type-daily" onclick="setNrmRemType('daily')" style="flex:1;padding:7px 4px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">Todo dia</button>
-              <button id="nrm-type-once" onclick="setNrmRemType('once')" style="flex:1;padding:7px 4px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">Uma vez</button>
-            </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Ícone</label>
+            <input id="nrm-rem-icon" class="elo-input" placeholder="💧" style="text-align:center;" />
           </div>
-          <div id="nrm-rem-interval-row" style="margin-bottom:10px;">
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Intervalo</label>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <input id="nrm-rem-interval" type="number" value="30" min="1" class="elo-input" style="width:80px;" />
-              <span style="font-size:12px;color:var(--text-dim);">minutos</span>
-            </div>
-          </div>
-          <div id="nrm-rem-daily-row" style="display:none;margin-bottom:10px;">
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Horários (separados por vírgula)</label>
-            <input id="nrm-rem-daily-times" class="elo-input" placeholder="09:00, 12:00, 17:00" />
-          </div>
-          <div id="nrm-rem-once-row" style="display:none;margin-bottom:10px;">
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Data e horário</label>
-            <input id="nrm-rem-once-at" type="datetime-local" class="elo-input" />
-          </div>
-          <button onclick="saveNrmReminder()" style="width:100%;padding:9px;border-radius:10px;border:none;background:var(--coral);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" id="nrm-rem-save-btn">Salvar alarme</button>
-          <button onclick="cancelNrmReminderEdit()" id="nrm-rem-cancel-btn" style="display:none;width:100%;margin-top:6px;padding:7px;border-radius:10px;border:1.5px solid rgba(74,41,118,.15);background:transparent;color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Cancelar edição</button>
         </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Recorrência</label>
+          <div style="display:flex;gap:6px;">
+            <button id="nrm-type-interval" onclick="setNrmRemType('interval')" style="flex:1;padding:7px 4px;border-radius:8px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">A cada X min</button>
+            <button id="nrm-type-daily" onclick="setNrmRemType('daily')" style="flex:1;padding:7px 4px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">Todo dia</button>
+            <button id="nrm-type-once" onclick="setNrmRemType('once')" style="flex:1;padding:7px 4px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);background:transparent;color:var(--text-dim);cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">Uma vez</button>
+          </div>
+        </div>
+        <div id="nrm-rem-interval-row" style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Intervalo</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="nrm-rem-interval" type="number" value="30" min="1" class="elo-input" style="width:80px;" />
+            <span style="font-size:12px;color:var(--text-dim);">minutos</span>
+          </div>
+        </div>
+        <div id="nrm-rem-daily-row" style="display:none;margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Horários (separados por vírgula)</label>
+          <input id="nrm-rem-daily-times" class="elo-input" placeholder="09:00, 12:00, 17:00" />
+        </div>
+        <div id="nrm-rem-once-row" style="display:none;margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Data e horário</label>
+          <input id="nrm-rem-once-at" type="datetime-local" class="elo-input" />
+        </div>
+        <button onclick="saveNrmReminder()" style="width:100%;padding:9px;border-radius:10px;border:none;background:var(--coral);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" id="nrm-rem-save-btn">Salvar alarme</button>
+        <button onclick="cancelNrmReminderEdit()" id="nrm-rem-cancel-btn" style="display:none;width:100%;margin-top:6px;padding:7px;border-radius:10px;border:1.5px solid rgba(74,41,118,.15);background:transparent;color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Cancelar edição</button>
+        <div style="border-top:1px solid rgba(74,41,118,.08);margin:16px 0 10px;"></div>
         <div style="font-size:11px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Alarmes ativos</div>
         <div id="nrm-rem-list"></div>
       </div>
@@ -1661,7 +1645,7 @@
 
     </div>
     <!-- Footer -->
-    <div style="padding:12px 22px 20px;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;border-top:1px solid rgba(74,41,118,.07);">
+    <div id="nrm-footer" style="padding:12px 22px 20px;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;border-top:1px solid rgba(74,41,118,.07);">
       <button onclick="closeNovoRegistro()" style="padding:9px 18px;border-radius:10px;border:1.5px solid rgba(74,41,118,.15);background:transparent;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Cancelar</button>
       <button onclick="saveNovoRegistro()" id="nrm-save-btn" style="padding:9px 22px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--coral),var(--coral-light));color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">Salvar</button>
     </div>
@@ -1945,9 +1929,9 @@ async function renderMobileAgenda() {
     </button>
   </div>`;
 
-  // 1. Compromissos
+  // 1. Agenda
   html += `<div style="${cardS}">
-    <div style="${lblS}">Compromissos</div>`;
+    <div style="${lblS}">Agenda</div>`;
   if (upcoming.length) {
     upcoming.forEach(a => {
       const d = new Date(a.scheduled_at);
@@ -2050,7 +2034,7 @@ function openMobileNewItem() {
       </div>
       <div style="display:flex;border-bottom:1.5px solid rgba(74,41,118,.08);">
         <button id="mni-t-appt" onclick="mniTab('appt')"
-          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--coral);cursor:pointer;border-bottom:2px solid var(--coral);margin-bottom:-1.5px;">Compromisso</button>
+          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--coral);cursor:pointer;border-bottom:2px solid var(--coral);margin-bottom:-1.5px;">Agenda</button>
         <button id="mni-t-task" onclick="mniTab('task')"
           style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Tarefa</button>
         <button id="mni-t-rem" onclick="mniTab('rem')"
@@ -4731,6 +4715,19 @@ let _nrmEditingRemId = null;
 let _nrmEditingApptId = null;
 let _nrmEditingTaskId = null;
 
+function nrmAlertToMinutes(value, unit) {
+  const n = Number(value);
+  if (!n) return null;
+  if (unit === 'h') return n * 60;
+  if (unit === 'd') return n * 1440;
+  return n;
+}
+function nrmMinutesToAlertFields(minutes) {
+  if (!minutes) return { value: '', unit: 'min' };
+  if (minutes % 1440 === 0) return { value: String(minutes / 1440), unit: 'd' };
+  if (minutes % 60 === 0) return { value: String(minutes / 60), unit: 'h' };
+  return { value: String(minutes), unit: 'min' };
+}
 function openNovoRegistro(tab, day) {
   const modal = document.getElementById('novo-registro-modal');
   _nrmEditingRemId = null;
@@ -4753,7 +4750,8 @@ function openNovoRegistro(tab, day) {
   ['nrm-appt-title','nrm-appt-time','nrm-appt-desc'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('nrm-appt-alert').value = '';
+  document.getElementById('nrm-appt-alert-value').value = '';
+  document.getElementById('nrm-appt-alert-unit').value = 'min';
   ['nrm-task-title','nrm-task-time','nrm-task-desc'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
@@ -4795,8 +4793,10 @@ function closeNovoRegistro() {
   document.getElementById('novo-registro-modal').style.display = 'none';
   const apptDur = document.getElementById('nrm-appt-duration');
   if (apptDur) apptDur.value = '';
-  const apptRem = document.getElementById('nrm-appt-remind-day');
-  if (apptRem) apptRem.checked = false;
+  const apptAlertVal = document.getElementById('nrm-appt-alert-value');
+  if (apptAlertVal) apptAlertVal.value = '';
+  const apptAlertUnit = document.getElementById('nrm-appt-alert-unit');
+  if (apptAlertUnit) apptAlertUnit.value = 'min';
   const taskDur = document.getElementById('nrm-task-duration');
   if (taskDur) taskDur.value = '';
 }
@@ -4807,6 +4807,8 @@ function setNrmTab(btn) {
   ['nrm-appt','nrm-task','nrm-notif','nrm-nota'].forEach(id => {
     document.getElementById(id).style.display = id === btn.dataset.tab ? 'block' : 'none';
   });
+  const footer = document.getElementById('nrm-footer');
+  if (footer) footer.style.display = btn.dataset.tab === 'nrm-notif' ? 'none' : 'flex';
 }
 
 function setNrmRemType(type) {
@@ -4969,9 +4971,9 @@ async function _nrmSaveAppt() {
   if (!title) { showToast('Informe o título', 'err'); return; }
   const date = document.getElementById('nrm-appt-date').value;
   const time = document.getElementById('nrm-appt-time').value;
-  const alertMin = document.getElementById('nrm-appt-alert').value;
+  const alertVal = document.getElementById('nrm-appt-alert-value').value;
+  const alertUnit = document.getElementById('nrm-appt-alert-unit').value;
   const durMin = document.getElementById('nrm-appt-duration')?.value;
-  const remindDay = document.getElementById('nrm-appt-remind-day')?.checked;
   const desc = document.getElementById('nrm-appt-desc').value.trim();
   const clientId = document.getElementById('nrm-appt-client').value;
   const parts = date.split('/');
@@ -4981,9 +4983,9 @@ async function _nrmSaveAppt() {
   const ts = new Date(yyyy, mm-1, dd, hh||0, min||0).getTime();
   if (isNaN(ts)) { showToast('Data inválida', 'err'); return; }
   const payload = { title, description: desc || null, scheduled_at: ts, client_id: clientId ? Number(clientId) : null };
-  if (alertMin) payload.alert_minutes_before = Number(alertMin);
+  const alertMinutes = nrmAlertToMinutes(alertVal, alertUnit);
+  if (alertMinutes) payload.alert_minutes_before = alertMinutes;
   if (durMin) payload.duration_minutes = parseInt(durMin);
-  if (remindDay && !alertMin) payload.alert_minutes_before = 1440;
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   if (_nrmEditingApptId) {
@@ -5115,7 +5117,9 @@ function openCalEditModal(id, type) {
     document.getElementById('nrm-appt-time').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     document.getElementById('nrm-appt-title').value = item.title || '';
     document.getElementById('nrm-appt-desc').value = item.description || '';
-    document.getElementById('nrm-appt-alert').value = item.alert_minutes_before ? String(item.alert_minutes_before) : '';
+    const alertFields = nrmMinutesToAlertFields(item.alert_minutes_before);
+    document.getElementById('nrm-appt-alert-value').value = alertFields.value;
+    document.getElementById('nrm-appt-alert-unit').value = alertFields.unit;
     if (document.getElementById('nrm-appt-duration')) document.getElementById('nrm-appt-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
     const sel = document.getElementById('nrm-appt-client');
     sel.innerHTML = '<option value="">— selecione —</option>' +
