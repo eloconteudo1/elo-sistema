@@ -1376,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.46 · ELO Comunicação · Atualizado em 09/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.48 · ELO Comunicação · Atualizado em 09/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,7 +1446,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.46</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.48</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">09/07/2026</span></span>
   </footer>
@@ -1561,26 +1561,19 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div>
-            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (opcional)</label>
-            <select id="nrm-task-duration" class="elo-select" style="width:100%;">
-              <option value="">Sem duração</option>
-              <option value="15">15 min</option>
-              <option value="30">30 min</option>
-              <option value="45">45 min</option>
-              <option value="60">1h</option>
-              <option value="90">1h 30min</option>
-              <option value="120">2h</option>
-            </select>
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (minutos)</label>
+            <input id="nrm-task-duration" type="number" min="0" step="5" class="elo-input" placeholder="Ex: 60" style="width:100%;" />
           </div>
           <div>
             <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Alertar antes</label>
-            <select id="nrm-task-alert" class="elo-select" style="width:100%;">
-              <option value="">Sem alerta</option>
-              <option value="5">5 min</option>
-              <option value="15">15 min</option>
-              <option value="30">30 min</option>
-              <option value="1440">1 dia antes</option>
-            </select>
+            <div style="display:flex;gap:6px;">
+              <input id="nrm-task-alert-value" type="number" min="0" class="elo-input" placeholder="0" style="width:100%;" />
+              <select id="nrm-task-alert-unit" class="elo-select" style="width:88px;flex-shrink:0;">
+                <option value="min">min</option>
+                <option value="h">horas</option>
+                <option value="d">dias</option>
+              </select>
+            </div>
           </div>
         </div>
         <div style="margin-bottom:12px;">
@@ -4751,7 +4744,8 @@ function openNovoRegistro(tab, day) {
   ['nrm-task-title','nrm-task-time','nrm-task-desc'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('nrm-task-alert').value = '';
+  document.getElementById('nrm-task-alert-value').value = '';
+  document.getElementById('nrm-task-alert-unit').value = 'min';
   document.getElementById('nrm-task-priority').value = 'media';
   document.getElementById('nrm-nota-content').value = '';
   document.getElementById('nrm-nota-id').value = '';
@@ -5009,7 +5003,8 @@ async function _nrmSaveTask() {
   const date = document.getElementById('nrm-task-date').value;
   const time = document.getElementById('nrm-task-time').value;
   const priority = document.getElementById('nrm-task-priority').value;
-  const alertMin = document.getElementById('nrm-task-alert').value;
+  const alertVal = document.getElementById('nrm-task-alert-value').value;
+  const alertUnit = document.getElementById('nrm-task-alert-unit').value;
   const durMin = document.getElementById('nrm-task-duration')?.value;
   const desc = document.getElementById('nrm-task-desc').value.trim();
   const parts = date.split('/');
@@ -5017,7 +5012,8 @@ async function _nrmSaveTask() {
   const [dd, mm, yyyy] = parts.map(Number);
   const dbDate = `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
   const payload = { title, description: desc || null, scheduled_date: dbDate, priority, scheduled_time: time || null };
-  if (alertMin) payload.alert_minutes_before = Number(alertMin);
+  const alertMinutes = nrmAlertToMinutes(alertVal, alertUnit);
+  if (alertMinutes) payload.alert_minutes_before = alertMinutes;
   if (durMin) payload.duration_minutes = parseInt(durMin);
   const btn = document.getElementById('nrm-save-btn');
   btn.textContent = 'Salvando...'; btn.disabled = true;
@@ -5125,7 +5121,9 @@ function openCalEditModal(id, type) {
     document.getElementById('nrm-task-title').value = item.title || '';
     document.getElementById('nrm-task-desc').value = item.description || '';
     document.getElementById('nrm-task-priority').value = item.priority || 'media';
-    document.getElementById('nrm-task-alert').value = item.alert_minutes_before ? String(item.alert_minutes_before) : '';
+    const taskAlertFields = nrmMinutesToAlertFields(item.alert_minutes_before);
+    document.getElementById('nrm-task-alert-value').value = taskAlertFields.value;
+    document.getElementById('nrm-task-alert-unit').value = taskAlertFields.unit;
     if (document.getElementById('nrm-task-duration')) document.getElementById('nrm-task-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
   }
 
