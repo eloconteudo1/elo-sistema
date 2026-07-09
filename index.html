@@ -498,16 +498,14 @@
 <div id="elo-alarm-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
   background:linear-gradient(135deg,var(--coral),#a3503a);
   color:#fff;padding:0;box-shadow:0 8px 32px rgba(0,0,0,.35);animation:elo-alarm-slide 0.4s ease;">
-  <div style="max-width:700px;margin:0 auto;padding:20px 28px;display:flex;align-items:center;gap:18px;">
-    <div style="font-size:36px;flex-shrink:0;animation:elo-alarm-shake 0.5s infinite;">🔔</div>
-    <div style="flex:1;">
-      <div id="elo-alarm-title" style="font-size:17px;font-weight:900;margin-bottom:4px;"></div>
-      <div id="elo-alarm-desc" style="font-size:13px;opacity:.85;"></div>
-    </div>
+  <div style="max-width:700px;margin:0 auto;padding:22px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;">
+    <div style="font-size:30px;animation:elo-alarm-shake 0.5s infinite;">🔔</div>
+    <div id="elo-alarm-title" style="font-size:24px;font-weight:900;"></div>
+    <div id="elo-alarm-desc" style="font-size:14px;opacity:.85;"></div>
     <button onclick="dismissAlarmBanner()"
       style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:10px;
-             padding:10px 20px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
-             flex-shrink:0;transition:background .2s;"
+             padding:10px 24px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+             transition:background .2s;margin-top:6px;"
       onmouseover="this.style.background='rgba(255,255,255,.35)'"
       onmouseout="this.style.background='rgba(255,255,255,.2)'">
       OK
@@ -1378,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.45 · ELO Comunicação · Atualizado em 09/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.46 · ELO Comunicação · Atualizado em 09/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,7 +1446,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.45</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.46</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">09/07/2026</span></span>
   </footer>
@@ -4534,8 +4532,6 @@ function setCalTab(tab) {
   btnAl.style.background = !isCal ? '#fff' : 'transparent';
   btnAl.style.color = !isCal ? 'var(--deep)' : 'var(--text-dim)';
   btnAl.style.boxShadow = !isCal ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
-
-  if (!isCal) renderCalAlerts();
 }
 
 function renderCalPage() {
@@ -4903,7 +4899,6 @@ async function toggleNrmReminder(btn) {
   if (error) return;
   CAL.reminders = CAL.reminders.map(r => r.id === id ? {...r, is_active: newActive} : r);
   renderNrmRemList();
-  renderCalAlerts();
 }
 
 async function deleteNrmReminder(btn) {
@@ -4914,7 +4909,6 @@ async function deleteNrmReminder(btn) {
     CAL.reminders = CAL.reminders.filter(r => r.id !== id);
     showToast('Alarme excluído', 'ok');
     renderNrmRemList();
-    renderCalAlerts();
   });
 }
 
@@ -4955,7 +4949,6 @@ async function saveNrmReminder() {
   saveBtn.disabled = false;
   cancelNrmReminderEdit();
   renderNrmRemList();
-  renderCalAlerts();
 }
 
 async function saveNovoRegistro() {
@@ -5153,11 +5146,11 @@ function showAlarmBanner(title, desc) {
 
   // Barra de progresso: reseta e inicia
   const bar = document.getElementById('elo-alarm-progress-bar');
-  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(()=>{ bar.style.transition='width 5s linear'; bar.style.width='0%'; }, 50); }
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(()=>{ bar.style.transition='width 8s linear'; bar.style.width='0%'; }, 50); }
 
-  // Auto-dismiss após 5s
+  // Auto-dismiss após 8s
   clearTimeout(_alarmBannerTimeout);
-  _alarmBannerTimeout = setTimeout(dismissAlarmBanner, 5000);
+  _alarmBannerTimeout = setTimeout(dismissAlarmBanner, 8000);
 
   // Som
   playAlarmSound();
@@ -5445,14 +5438,12 @@ async function saveReminder() {
     showToast('Alarme criado!','ok');
   }
   closeReminderModal();
-  renderCalAlerts();
 }
 
 async function toggleReminder(id, isActive) {
   const { error } = await db(() => sb.from('reminders').update({ is_active:isActive }).eq('id', id), 'Erro ao atualizar alarme');
   if (error) return;
   CAL.reminders = CAL.reminders.map(r => r.id===id ? {...r,is_active:isActive} : r);
-  renderCalAlerts();
 }
 
 async function deleteReminder(id) {
@@ -5461,7 +5452,6 @@ async function deleteReminder(id) {
     if (error) return;
     CAL.reminders = CAL.reminders.filter(r=>r.id!==id);
     showToast('Alarme excluído','ok');
-    renderCalAlerts();
   });
 }
 
