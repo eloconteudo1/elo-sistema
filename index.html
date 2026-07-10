@@ -1376,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.49 · ELO Comunicação · Atualizado em 09/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.50 · ELO Comunicação · Atualizado em 09/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,7 +1446,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.49</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.50</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">09/07/2026</span></span>
   </footer>
@@ -2198,8 +2198,12 @@ document.addEventListener('keydown', e => {
 });
 
 async function getOrCreateUser(au) {
-  const { data, error } = await db(() => sb.from('users').select('*').eq('auth_id', au.id).maybeSingle(), 'Erro ao buscar usuário');
+  const { data, error } = await sb.from('users').select('*').eq('auth_id', au.id).maybeSingle();
   if (data) return data;
+  if (error && error.code !== 'PGRST116') {
+    showToast('Erro ao buscar usuário: ' + error.message, 'err');
+    return null;
+  }
   const name = au.user_metadata?.name || au.email?.split('@')[0] || 'Usuário';
   const { data: nu, error: e2 } = await db(() => sb.from('users').insert({ auth_id: au.id, name, email: au.email, role:'user' }).select().single(), 'Erro ao criar usuário');
   if (e2) return null;
@@ -2207,6 +2211,7 @@ async function getOrCreateUser(au) {
 }
 
 async function showApp(au) {
+  if (appUser && authUser?.id === au.id) return;
   authUser = au;
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='none';
