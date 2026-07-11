@@ -1376,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.54 · ELO Comunicação · Atualizado em 11/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.55 · ELO Comunicação · Atualizado em 11/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,7 +1446,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.54</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.55</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">11/07/2026</span></span>
   </footer>
@@ -1726,6 +1726,10 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function tsToLocalDateStr(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function dbDateToDisplay(s) {
   if (!s) return '';
   const [yyyy,mm,dd] = s.split('-');
@@ -1804,11 +1808,12 @@ async function checkPersonalReminders() {
     }
     if (rem.type === 'daily' && rem.daily_time) {
       const [h, m] = rem.daily_time.split(':').map(Number);
-      const todayStr = now.toISOString().split('T')[0];
-      const lastFiredDate = lastFired ? new Date(lastFired).toISOString().split('T')[0] : null;
+      // Data LOCAL, não UTC — toISOString() vira o dia às 21h em Umuarama (UTC-3) e fazia o lembrete disparar 2x
+      const todayLocalStr = todayStr();
+      const lastFiredDate = lastFired ? tsToLocalDateStr(lastFired) : null;
       const targetMinutes = h * 60 + m;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      if (lastFiredDate !== todayStr && nowMinutes >= targetMinutes) {
+      if (lastFiredDate !== todayLocalStr && nowMinutes >= targetMinutes) {
         fireReminderNotification(rem);
         remSetLastFired(rem.id, nowTs);
       }
