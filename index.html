@@ -1376,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.51 · ELO Comunicação · Atualizado em 10/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.52 · ELO Comunicação · Atualizado em 10/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,7 +1446,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.51</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.52</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">10/07/2026</span></span>
   </footer>
@@ -1678,26 +1678,27 @@ let _showAppInFlight = false; // trava síncrona — onAuthStateChange dispara 2
 
 // Timer state
 const T = {
-  clients: [], tasks: [], todayEntries: [],
+  clients: [], tasks: [], todayEntries: [], categories: [],
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
   settings: { daily_goal_minutes: 480 },
   notes: [],
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
-  expandedCats: new Set(['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO']),
+  expandedCats: new Set(), // populado com as categorias reais na primeira carga (ver loadHomeData) — não é mais lista fixa
+  _catsSeeded: false,
   elapsed: 0, timerInterval: null, isPaused: false,
   isRunning: false,
   stopInFlight: false, startInFlight: false, actionInProgress: false,
 };
 
-// Category config (from TimerPage.tsx)
+// Category config (from TimerPage.tsx) — mapa OPCIONAL de cor/ícone por nome conhecido.
+// Categoria que não está aqui (ex: "Pessoal", ou qualquer nova criada em Config) usa PALETTE — nunca deixa de renderizar.
 const CAT_CONFIG = {
   'ATENDIMENTO':    { color: '#2FB989', icon: '💬' },
   'GESTÃO ELO':     { color: '#3B82F6', icon: '📁' },
   'GESTÃO CLIENTE': { color: '#5C3D82', icon: '📋' },
   'CONTEÚDO':       { color: '#C4725A', icon: '✏️' },
 };
-const CAT_ORDER = ['ATENDIMENTO','GESTÃO ELO','GESTÃO CLIENTE','CONTEÚDO'];
 const PALETTE = ['#C4725A','#4A2976','#2FB989','#3B82F6','#E07A3A','#C4487A','#BFA8D9','#5C3D82'];
 
 // ════════════════════════════════════════════════════════════════
@@ -2343,7 +2344,7 @@ async function loadHomeData() {
   const todayTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const futureTs = todayTs + 60 * 86400000;
 
-  const [cl, tk, te, st, pa, sg, ap, no] = await Promise.all([
+  const [cl, tk, te, st, pa, sg, ap, no, cg] = await Promise.all([
     db(() => sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar clientes'),
     db(() => sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar tarefas'),
     db(() => sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}), 'Erro ao carregar atividades'),
@@ -2352,6 +2353,7 @@ async function loadHomeData() {
     db(() => sb.from('settings').select('*').eq('id',1).single(), 'Erro ao carregar configurações'),
     db(() => sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'), 'Erro ao carregar compromissos'),
     db(() => sb.from('notes').select('*').order('created_at',{ascending:false}).limit(20), 'Erro ao carregar anotações'),
+    db(() => sb.from('categories').select('*').order('sort_order',{ascending:true}), 'Erro ao carregar categorias'),
   ]);
   T.clients = cl.data||[];
   if (sg.data) T.settings = { ...T.settings, ...sg.data };
@@ -2361,6 +2363,14 @@ async function loadHomeData() {
   T.scheduledTasks = st.data||[];
   T.appointments = ap.data||[];
   T.notes = no.data||[];
+  T.categories = cg.data||[];
+  // Categoria é dado com CRUD (tabela categories) — nunca lista hardcoded. Expande todas as categorias
+  // reais só na primeira carga da sessão; depois disso respeita o que a Helô abriu/fechou manualmente.
+  if (!T._catsSeeded) {
+    const realCats = [...new Set(T.tasks.map(t => t.category).filter(Boolean))];
+    T.expandedCats = new Set(realCats);
+    T._catsSeeded = true;
+  }
 
   // Build payment alerts from unpaid payments
   const today = new Date(); today.setHours(0,0,0,0);
@@ -2565,6 +2575,20 @@ function renderTaskTree() {
     if (!tasksByCategory[t.category]) tasksByCategory[t.category] = [];
     tasksByCategory[t.category].push(t);
   }
+  // Ordena pelas categorias que EXISTEM nas tarefas (não por uma lista fixa) — usa sort_order da tabela
+  // categories quando bate o nome (via normalizeStr, tolera acento/maiúscula); sem match, vai pro fim, alfabética.
+  const catNames = Object.keys(tasksByCategory);
+  const sortOrderMap = {};
+  (T.categories||[]).forEach(c => { sortOrderMap[normalizeStr(c.name||'')] = c.sort_order ?? 999; });
+  catNames.sort((a,b) => {
+    const oa = sortOrderMap[normalizeStr(a)] ?? 999;
+    const ob = sortOrderMap[normalizeStr(b)] ?? 999;
+    return oa !== ob ? oa - ob : a.localeCompare(b,'pt-BR');
+  });
+  const catConfigFor = (catName, idx) => {
+    const key = Object.keys(CAT_CONFIG).find(k => normalizeStr(k) === normalizeStr(catName||''));
+    return key ? CAT_CONFIG[key] : { color: PALETTE[idx % PALETTE.length], icon: '📌' };
+  };
   const mkTaskBtn = (t, icon) => `
     <button class="task-btn${T.selectedTaskId===t.id?' selected':''}" onclick="selectTask(${t.id},'${t.name.replace(/'/g,"\\'")}')">
       <div class="task-icon">${icon}</div>
@@ -2579,22 +2603,22 @@ function renderTaskTree() {
         ⭐ FAVORITAS
         <span class="cat-toggle">${expanded?'▲':'▼'}</span>
       </div>
-      ${expanded ? favTasks.map(t => mkTaskBtn(t, (CAT_CONFIG[t.category]||{icon:'⭐'}).icon)).join('') : ''}
+      ${expanded ? favTasks.map(t => mkTaskBtn(t, catConfigFor(t.category, 0).icon)).join('') : ''}
     </div>`;
   }
-  for (const cat of CAT_ORDER) {
-    const cfg = CAT_CONFIG[cat] || { color:'#888', icon:'📌' };
+  catNames.forEach((cat, idx) => {
+    const cfg = catConfigFor(cat, idx);
     const catTasks = alpha(tasksByCategory[cat] || []);
     const expanded = T.expandedCats.has(cat);
     html += `<div>
-      <div class="cat-header" onclick="toggleCat('${cat}')">
+      <div class="cat-header" onclick="toggleCat('${cat.replace(/'/g,"\\'")}')">
         <div class="cat-dot" style="background:${cfg.color};"></div>
         ${esc(cat)}
         <span class="cat-toggle">${expanded?'▲':'▼'}</span>
       </div>
       ${expanded ? catTasks.map(t => mkTaskBtn(t, cfg.icon)).join('') : ''}
     </div>`;
-  }
+  });
   document.getElementById('task-tree').innerHTML = html;
 }
 
