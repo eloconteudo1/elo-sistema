@@ -1376,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.50 · ELO Comunicação · Atualizado em 09/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.51 · ELO Comunicação · Atualizado em 10/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,9 +1446,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.50</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.51</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">09/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">10/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1674,6 +1674,7 @@ async function db(queryFn, errorMsg) {
 // ════════════════════════════════════════════════════════════════
 let appUser = null;       // row from users table { id, name, email, ... }
 let authUser = null;      // supabase auth user
+let _showAppInFlight = false; // trava síncrona — onAuthStateChange dispara 2x no boot (INITIAL_SESSION + SIGNED_IN)
 
 // Timer state
 const T = {
@@ -2198,20 +2199,18 @@ document.addEventListener('keydown', e => {
 });
 
 async function getOrCreateUser(au) {
-  const { data, error } = await sb.from('users').select('*').eq('auth_id', au.id).maybeSingle();
-  if (data) return data;
-  if (error && error.code !== 'PGRST116') {
-    showToast('Erro ao buscar usuário: ' + error.message, 'err');
-    return null;
-  }
   const name = au.user_metadata?.name || au.email?.split('@')[0] || 'Usuário';
-  const { data: nu, error: e2 } = await db(() => sb.from('users').insert({ auth_id: au.id, name, email: au.email, role:'user' }).select().single(), 'Erro ao criar usuário');
-  if (e2) return null;
-  return nu;
+  const { data, error } = await db(() => sb.from('users')
+    .upsert({ auth_id: au.id, name, email: au.email, role: 'user' }, { onConflict: 'auth_id' })
+    .select().single(), 'Erro ao buscar/criar usuário');
+  if (error) return null;
+  return data;
 }
 
 async function showApp(au) {
   if (appUser && authUser?.id === au.id) return;
+  if (_showAppInFlight) return;
+  _showAppInFlight = true;
   authUser = au;
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('login-screen').style.display='none';
@@ -2220,6 +2219,7 @@ async function showApp(au) {
   document.getElementById('avatar-initial').textContent = initial;
   document.getElementById('avatar-email-label').textContent = au.email||'';
   appUser = await getOrCreateUser(au);
+  _showAppInFlight = false;
   initHome();
   startGlobalTimerTick();
   refreshTodayPill();
