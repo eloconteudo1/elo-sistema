@@ -1373,7 +1373,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.56 · ELO Comunicação · Atualizado em 12/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.57 · ELO Comunicação · Atualizado em 12/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1443,7 +1443,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.56</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.57</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">11/07/2026</span></span>
   </footer>
@@ -2036,6 +2036,8 @@ function openMobileNewItem() {
           style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Tarefa</button>
         <button id="mni-t-rem" onclick="mniTab('rem')"
           style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Lembrete</button>
+        <button id="mni-t-nota" onclick="mniTab('nota')"
+          style="flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;">Anotação</button>
       </div>
       <div id="mni-body" style="padding:16px 20px 4px;max-height:50vh;overflow-y:auto;"></div>
     </div>`;
@@ -2050,7 +2052,7 @@ function closeMobileNewItem() {
   document.getElementById('mobile-new-item-sheet')?.remove();
 }
 function mniTab(tab) {
-  ['appt','task','rem'].forEach(t => {
+  ['appt','task','rem','nota'].forEach(t => {
     const btn = document.getElementById(`mni-t-${t}`);
     if (!btn) return;
     const active = t === tab;
@@ -2092,7 +2094,7 @@ function mniTab(tab) {
       <label style="${L}">Cliente</label>
       <select id="mni-task-client" style="${S}"><option value="">Nenhum</option>${co}</select>
       <button style="${btnS}" onclick="saveMobileTask()">Salvar tarefa</button>`;
-  } else {
+  } else if (tab === 'rem') {
     body.innerHTML = `
       <label style="${L}">Tipo</label>
       <select id="mni-rem-type" style="${S}" onchange="mniRemToggle()">
@@ -2108,6 +2110,11 @@ function mniTab(tab) {
         <input id="mni-rem-mins" type="number" min="5" max="480" value="60" style="${S}" />
       </div>
       <button style="${btnS}" onclick="saveMobileReminder()">Salvar lembrete</button>`;
+  } else {
+    body.innerHTML = `
+      <label style="${L}">Anotação</label>
+      <textarea id="mni-nota-content" rows="5" placeholder="Escreva aqui..." style="${S}resize:vertical;font-family:inherit;"></textarea>
+      <button style="${btnS}" onclick="saveMobileNota()">Salvar anotação</button>`;
   }
 }
 function mniRemToggle() {
@@ -2162,6 +2169,16 @@ async function saveMobileReminder() {
   showToast('Lembrete salvo ✓','ok');
   closeMobileNewItem();
   renderMobileAgenda();
+}
+async function saveMobileNota() {
+  const content = document.getElementById('mni-nota-content')?.value.trim();
+  if (!content) { showToast('Escreva algo antes de salvar','warn'); return; }
+  const { data, error } = await db(() => sb.from('notes').insert({ content, is_done:false }).select().single(), 'Erro ao salvar anotação');
+  if (error) return;
+  T.notes.unshift(data);
+  showToast('Anotação salva ✓','ok');
+  closeMobileNewItem();
+  renderRightSidebar();
 }
 
 // ════════════════════════════════════════════════════════════════
