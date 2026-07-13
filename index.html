@@ -736,22 +736,14 @@
           <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:380px;display:flex;flex-direction:column;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <span class="sec-label">Para hoje</span>
+              <button onclick="openNovoRegistro('task')" style="font-size:10px;font-weight:800;color:var(--coral);background:rgba(196,114,90,.12);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ novo</button>
               <button onclick="navigateTo('radar')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
             </div>
             <div id="para-hoje-progress"></div>
             <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
           </div>
 
-          <!-- BLOCO 3 — NOTAS RÁPIDAS -->
-          <div class="right-card" id="notes-home-card" style="display:flex;flex-direction:column;gap:0;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span class="sec-label" style="font-size:12px;font-weight:700;letter-spacing:.6px;">Anotações</span>
-              <button onclick="openNovoRegistro('nota')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ nova</button>
-            </div>
-            <div id="notes-list" style="display:flex;flex-direction:column;gap:0;max-height:220px;overflow-y:auto;"></div>
-          </div>
-
-          <!-- BLOCO 4 — FALA COMIGO, BB (ocupa o resto da tela) -->
+          <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
           <div class="right-card" id="fala-comigo-card" style="flex:1;display:flex;flex-direction:column;min-height:180px;">
             <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
             <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
@@ -764,6 +756,15 @@
                 <button onclick="submitAssistantCommand()" style="border:none;border-radius:12px;background:var(--deep);color:#fff;font-family:inherit;font-size:12px;font-weight:800;padding:8px 16px;cursor:pointer;">Enviar</button>
               </div>
             </div>
+          </div>
+
+          <!-- BLOCO 4 — NOTAS RÁPIDAS -->
+          <div class="right-card" id="notes-home-card" style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span class="sec-label" style="font-size:12px;font-weight:700;letter-spacing:.6px;">Anotações</span>
+              <button onclick="openNovoRegistro('nota')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ nova</button>
+            </div>
+            <div id="notes-list" style="display:flex;flex-direction:column;gap:0;max-height:220px;overflow-y:auto;"></div>
           </div>
 
         </aside>
@@ -1373,7 +1374,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.57 · ELO Comunicação · Atualizado em 12/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.58 · ELO Comunicação · Atualizado em 12/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1443,9 +1444,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.57</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.58</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">11/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">12/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3477,10 +3478,6 @@ function handleAssistantCommand(input) {
       return handleRecebidoCommand(payload);
     case '/pago':
       return handlePagoCommand(payload);
-    case '/financeiro':
-      return openFinanceiroResumo();
-    case '/agenda':
-      return openAgendaResumo();
     case '/desviei':
       return handleDesvieiCommand();
     case '/voltei':
@@ -3493,7 +3490,7 @@ function handleAssistantCommand(input) {
 }
 
 function showAssistantHelp() {
-  showAssistantMessage('Comandos: /ia · /anota [texto] · /tarefa [hora] [texto] [!prior] · /compromisso [hora] [título] · /plano (várias linhas) · /recebido [cliente] · /pago [conta] · /desviei · /voltei');
+  showAssistantMessage('Comandos: /ia · /anota [texto] · /tarefa [hora] [texto] [!prior] · /compromisso [hora] [título] · /plano (várias linhas) · /recebido [cliente] · /pago [conta] · /desviei · /voltei · /ajuda');
 }
 
 // ── Comando /ia e botão "Estou aqui" ──
@@ -3532,12 +3529,26 @@ function handleIACommand(payload) {
 // ── Comando /compromisso ──
 async function handleCompromissoCommand(text) {
   if (!text) {
-    showAssistantMessage('Uso: /compromisso HH:MM Título · Ex: /compromisso 14:00 Reunião Mariana');
+    showAssistantMessage('Uso: /compromisso 14:00 Título · Ex: /compromisso 14h Reunião Mariana');
     return;
   }
-  const m = text.match(/^(?:(\d{1,2}:\d{2})\s+)?(.+?)(?:\s+!(alta|media|baixa))?$/i);
-  const hora = m?.[1] || null;
-  const titulo = (m?.[2] || text).trim();
+  // Aceita HH:MM e NNh/NNhNN
+  let horaInput = null;
+  let resto = text;
+  const mColon = text.match(/^(\d{1,2}:\d{2})\s+/);
+  if (mColon) {
+    horaInput = mColon[1];
+    resto = text.slice(mColon[0].length);
+  } else {
+    const brTime = normalizeTimeInput(text);
+    if (brTime) {
+      horaInput = brTime.normalized;
+      resto = text.replace(brTime.original, '').trim();
+    }
+  }
+  const mPrio = resto.match(/\s+!(alta|media|baixa)\s*$/i);
+  const titulo = mPrio ? resto.slice(0, mPrio.index).trim() : resto.trim();
+  const hora = horaInput;
   if (!titulo) { showAssistantMessage('Informe o título do compromisso.'); return; }
   const hoje = new Date();
   const [hh, mm] = hora ? hora.split(':').map(Number) : [hoje.getHours(), hoje.getMinutes()];
@@ -3569,7 +3580,18 @@ async function handleAnotaCommand(text) {
   }
 }
 
-// Extrai data (DD/MM/AAAA), hora (HH:MM) e prioridade (!alta/!media/!baixa) de uma linha,
+// Normaliza formatos de hora brasileiros: "10h" → "10:00", "10h30" → "10:30", "14:00" → "14:00"
+function normalizeTimeInput(str) {
+  const m = str.match(/\b(\d{1,2})h(\d{2})?\b/i);
+  if (m) {
+    const hh = String(m[1]).padStart(2, '0');
+    const mm = m[2] || '00';
+    return { normalized: `${hh}:${mm}`, original: m[0] };
+  }
+  return null;
+}
+
+// Extrai data (DD/MM/AAAA), hora (HH:MM ou NNh / NNhNN) e prioridade (!alta/!media/!baixa) de uma linha,
 // em qualquer ordem. O que sobrar é o título. Ano é obrigatório na data pra não ter ambiguidade de virada de ano.
 function parseAssistantLine(text) {
   let rest = (text || '').trim();
@@ -3580,10 +3602,17 @@ function parseAssistantLine(text) {
     rest = (rest.slice(0, dateMatch.index) + rest.slice(dateMatch.index + dateMatch[1].length)).replace(/\s+/g, ' ').trim();
   }
   let hora = null;
+  // Tenta HH:MM primeiro, depois NNh / NNhNN
   const timeMatch = rest.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
   if (timeMatch) {
     hora = timeMatch[0].length === 4 ? '0' + timeMatch[0] : timeMatch[0];
     rest = (rest.slice(0, timeMatch.index) + rest.slice(timeMatch.index + timeMatch[0].length)).replace(/\s+/g, ' ').trim();
+  } else {
+    const brTime = normalizeTimeInput(rest);
+    if (brTime) {
+      hora = brTime.normalized;
+      rest = rest.replace(brTime.original, '').replace(/\s+/g, ' ').trim();
+    }
   }
   let prioridade = 'media';
   const prioMatch = rest.match(/!(\s*)(alta|media|baixa)\s*$/i);
@@ -3743,25 +3772,6 @@ async function handlePagoCommand(text) {
 }
 
 // ── Comandos /financeiro e /agenda ──
-function openFinanceiroResumo() {
-  const el = document.getElementById('atencao-card');
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.style.outline = '2px solid var(--coral)';
-    setTimeout(() => { el.style.outline = 'none'; }, 1500);
-  }
-  showAssistantMessage('Atenção em destaque. Use "Ver Financeiro" para detalhes.');
-}
-
-function openAgendaResumo() {
-  const el = document.getElementById('atencao-card');
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.style.outline = '2px solid var(--coral)';
-    setTimeout(() => { el.style.outline = 'none'; }, 1500);
-  }
-  showAssistantMessage('Atenção em destaque. Use "Ver Agenda" para detalhes.');
-}
 
 // ── Comando /desviei ──
 async function handleDesvieiCommand() {
@@ -4810,7 +4820,7 @@ function openNovoRegistro(tab, day) {
 
   const sel = document.getElementById('nrm-appt-client');
   sel.innerHTML = '<option value="">— selecione —</option>' +
-    (T.clients||[]).filter(c=>c.is_active && !c.is_internal)
+    (T.clients||[]).filter(c=>c.is_active)
       .map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
 
   setNrmRemType('interval');
@@ -5170,7 +5180,7 @@ function openCalEditModal(id, type) {
     if (document.getElementById('nrm-appt-duration')) document.getElementById('nrm-appt-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
     const sel = document.getElementById('nrm-appt-client');
     sel.innerHTML = '<option value="">— selecione —</option>' +
-      (T.clients||[]).filter(c=>c.is_active && !c.is_internal)
+      (T.clients||[]).filter(c=>c.is_active)
         .map(c=>`<option value="${c.id}"${c.id === item.client_id ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
   } else {
     _nrmEditingTaskId = id;
