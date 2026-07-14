@@ -736,8 +736,10 @@
           <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:380px;display:flex;flex-direction:column;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <span class="sec-label">Para hoje</span>
-              <button onclick="openNovoRegistro('task')" style="font-size:10px;font-weight:800;color:var(--coral);background:rgba(196,114,90,.12);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ novo</button>
-              <button onclick="navigateTo('radar')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
+              <div style="display:flex;gap:6px;">
+                <button onclick="openNovoRegistro('task')" style="font-size:10px;font-weight:800;color:var(--coral);background:rgba(196,114,90,.12);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ novo</button>
+                <button onclick="navigateTo('radar')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
+              </div>
             </div>
             <div id="para-hoje-progress"></div>
             <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
@@ -747,7 +749,7 @@
           <div class="right-card" id="fala-comigo-card" style="flex:1;display:flex;flex-direction:column;min-height:180px;">
             <div class="sec-label" style="margin-bottom:9px;font-size:12px;font-weight:700;letter-spacing:.6px;">Fala comigo, bb</div>
             <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
-              <textarea id="assistant-input" class="elo-input" placeholder="/ia — situação atual&#10;/tarefa 10:00 Nome da tarefa&#10;/anota [anotação]&#10;/ajuda — ver todos os comandos" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
+              <textarea id="assistant-input" class="elo-input" placeholder="/resumo — situação atual&#10;/tarefa 10:00 Nome da tarefa&#10;/anota [anotação]&#10;/ajuda — ver todos os comandos" style="flex:1;font-family:inherit;padding:12px 14px;font-size:13px;resize:none;line-height:1.6;border-radius:14px;min-height:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitAssistantCommand();}"></textarea>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:6px;">
                 <div style="display:flex;gap:6px;">
                   <button onclick="handleDesvieiCommand()" style="border:1.5px solid var(--orange);border-radius:10px;background:rgba(224,122,58,.08);color:var(--orange);font-family:inherit;font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer;">⚡ Desviei</button>
@@ -1374,7 +1376,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.58 · ELO Comunicação · Atualizado em 12/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.59 · ELO Comunicação · Atualizado em 14/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1444,9 +1446,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.58</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.59</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">12/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">14/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3442,13 +3444,38 @@ setInterval(renderAssistantHero, 60000);
 function submitAssistantCommand() {
   const input = document.getElementById('assistant-input');
   if (!input) return;
+  if (input.dataset.response) {
+    input.value = '';
+    delete input.dataset.response;
+    input.style.background = '';
+    input.style.color = '';
+    input.style.fontWeight = '';
+    input.style.fontSize = '';
+    return;
+  }
   const value = input.value;
   handleAssistantCommand(value);
   input.value = '';
 }
 
 function showAssistantMessage(msg) {
-  showToast(msg, 'ok');
+  const input = document.getElementById('assistant-input');
+  if (!input) { showToast(msg, 'ok'); return; }
+  input.value = msg;
+  input.dataset.response = '1';
+  input.style.background = 'var(--bg2)';
+  input.style.color = 'var(--deep)';
+  input.style.fontWeight = '600';
+  input.style.fontSize = '12px';
+  input.select();
+  function resetStyle() {
+    delete input.dataset.response;
+    input.style.background = '';
+    input.style.color = '';
+    input.style.fontWeight = '';
+    input.style.fontSize = '';
+  }
+  input.addEventListener('input', resetStyle, { once: true });
 }
 
 function handleAssistantCommand(input) {
@@ -3456,7 +3483,7 @@ function handleAssistantCommand(input) {
   if (!text) return;
 
   if (!text.startsWith('/')) {
-    showAssistantMessage('Use um comando com barra. Ex: /ia estou aqui');
+    showAssistantMessage('Use um comando com barra. Ex: /resumo');
     return;
   }
 
@@ -3464,14 +3491,13 @@ function handleAssistantCommand(input) {
   const payload = args.join(' ').trim();
 
   switch (command.toLowerCase()) {
+    case '/resumo':
     case '/ia':
       return handleIACommand(payload);
     case '/anota':
       return handleAnotaCommand(payload);
     case '/tarefa':
       return handleTarefaCommand(payload);
-    case '/compromisso':
-      return handleCompromissoCommand(payload);
     case '/plano':
       return handlePlanoCommand(payload);
     case '/recebido':
@@ -3490,10 +3516,10 @@ function handleAssistantCommand(input) {
 }
 
 function showAssistantHelp() {
-  showAssistantMessage('Comandos: /ia · /anota [texto] · /tarefa [hora] [texto] [!prior] · /compromisso [hora] [título] · /plano (várias linhas) · /recebido [cliente] · /pago [conta] · /desviei · /voltei · /ajuda');
+  showAssistantMessage('Comandos: /resumo · /anota [texto] · /tarefa [hora] [texto] [!prior] · /plano (várias linhas) · /recebido [cliente] · /pago [conta] · /desviei · /voltei · /ajuda');
 }
 
-// ── Comando /ia e botão "Estou aqui" ──
+// ── Comando /resumo (alias: /ia) ──
 function handleEstouAqui() {
   handleIACommand('estou aqui');
 }
@@ -3524,45 +3550,6 @@ function handleIACommand(payload) {
   }
   if (partes.length === 0) partes.push('Tudo tranquilo por aqui. Nada pendente hoje.');
   showAssistantMessage(partes.join(' '));
-}
-
-// ── Comando /compromisso ──
-async function handleCompromissoCommand(text) {
-  if (!text) {
-    showAssistantMessage('Uso: /compromisso 14:00 Título · Ex: /compromisso 14h Reunião Mariana');
-    return;
-  }
-  // Aceita HH:MM e NNh/NNhNN
-  let horaInput = null;
-  let resto = text;
-  const mColon = text.match(/^(\d{1,2}:\d{2})\s+/);
-  if (mColon) {
-    horaInput = mColon[1];
-    resto = text.slice(mColon[0].length);
-  } else {
-    const brTime = normalizeTimeInput(text);
-    if (brTime) {
-      horaInput = brTime.normalized;
-      resto = text.replace(brTime.original, '').trim();
-    }
-  }
-  const mPrio = resto.match(/\s+!(alta|media|baixa)\s*$/i);
-  const titulo = mPrio ? resto.slice(0, mPrio.index).trim() : resto.trim();
-  const hora = horaInput;
-  if (!titulo) { showAssistantMessage('Informe o título do compromisso.'); return; }
-  const hoje = new Date();
-  const [hh, mm] = hora ? hora.split(':').map(Number) : [hoje.getHours(), hoje.getMinutes()];
-  const ts = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), hh, mm).getTime();
-  const payload = { title: titulo, scheduled_at: ts, is_done: false };
-  const { data, error } = await db(
-    () => sb.from('appointments').insert(payload).select().single(),
-    'Erro ao salvar compromisso'
-  );
-  if (error) return;
-  T.appointments.push(data);
-  CAL.appointments.push(data);
-  renderRightSidebar();
-  showAssistantMessage(`Compromisso criado: "${titulo}"${hora ? ' às ' + hora : ' para hoje'}.`);
 }
 
 // ── Comando /anota ──
