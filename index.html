@@ -1349,7 +1349,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.61 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.62 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1419,7 +1419,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.61</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.62</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
@@ -7587,30 +7587,67 @@ function renderPanelSemana() {
       }
     });
   }
-  const maxTs = now.getTime() + 7 * 86400000;
+  // --- Lista "Agenda da semana": tasks + appointments misturados ---
+  const weekStart = radarGetWeekStart();
+  const weekEnd = weekStart.getTime() + 7 * 86400000;
+
   const apptsWeek = (RADAR.appts || [])
-    .filter(a => a.scheduled_at >= now.getTime() && a.scheduled_at < maxTs)
-    .sort((a, b) => a.scheduled_at - b.scheduled_at);
-  if (apptsWeek.length === 0) {
-    apptsEl.innerHTML = `<div class="radar-day-detail-empty">Sem compromissos esta semana.</div>`;
-  } else {
-    apptsEl.innerHTML = apptsWeek.map(a => {
+    .filter(a => a.scheduled_at >= weekStart.getTime() && a.scheduled_at < weekEnd)
+    .map(a => {
       const d = new Date(a.scheduled_at);
-      const dow = diasSem[d.getDay()];
-      const day = String(d.getDate()).padStart(2,'0');
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      return `<div class="radar-prox-item" data-id="${a.id}" data-type="appointment" onclick="radarProxClick(this)">
-        <div class="radar-prox-date">
-          <div class="radar-prox-dow">${dow}</div>
-          <div class="radar-prox-day">${day}</div>
-        </div>
+      return { id: a.id, type: 'appt', ds, time: hhmm, title: a.title, done: !!a.is_done, dur: a.duration_minutes };
+    });
+
+  const tasksWeek = (RADAR.tasks || [])
+    .filter(t => {
+      const ts = new Date(t.scheduled_date + 'T00:00:00').getTime();
+      return ts >= weekStart.getTime() && ts < weekEnd && !t.is_done;
+    })
+    .map(t => ({
+      id: t.id, type: 'task', ds: t.scheduled_date,
+      time: t.scheduled_time || '', title: t.title, done: !!t.is_done,
+      priority: t.priority, dur: t.duration_minutes
+    }));
+
+  const allWeek = [...apptsWeek, ...tasksWeek]
+    .sort((a, b) => a.ds.localeCompare(b.ds) || (a.time || '99:99').localeCompare(b.time || '99:99'));
+
+  const diasSemW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const prioColors = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)' };
+  const btnStyle = `flex-shrink:0;border:none;background:none;cursor:pointer;padding:4px 6px;font-size:14px;opacity:.7;transition:opacity .15s;`;
+  const btnHover = `onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'"`;
+
+  if (allWeek.length === 0) {
+    apptsEl.innerHTML = `<div class="radar-day-detail-empty">Sem itens esta semana.</div>`;
+  } else {
+    let lastDs = '';
+    apptsEl.innerHTML = allWeek.map(it => {
+      const [iy, im, id2] = it.ds.split('-');
+      const dow = diasSemW[new Date(parseInt(iy), parseInt(im)-1, parseInt(id2)).getDay()];
+      const dayLabel = `${dow} ${id2}/${im}`;
+      const headerHtml = it.ds !== lastDs
+        ? `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin:12px 0 6px;padding-top:${lastDs ? '4px' : '0'}">${dayLabel}</div>`
+        : '';
+      lastDs = it.ds;
+
+      const color = it.type === 'appt' ? 'var(--blue)' : (prioColors[it.priority] || 'var(--purple)');
+      const strike = it.done ? 'opacity:.45;' : '';
+      const timeLabel = it.time ? `<span style="font-size:11px;color:var(--text-dim);margin-right:6px;">${it.time}</span>` : '';
+      const durLabel = it.dur ? `<span style="font-size:10px;color:var(--text-dim);"> · ${fMin(it.dur)}</span>` : '';
+
+      const editBtn = `<button data-id="${it.id}" data-type="${it.type === 'appt' ? 'appointment' : 'scheduled_task'}" onclick="radarEditTask(this)"
+        style="${btnStyle}color:var(--text-dim);" ${btnHover} title="Editar">✏️</button>`;
+      const delBtn = `<button data-id="${it.id}" onclick="${it.type === 'appt' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}"
+        style="${btnStyle}color:#DC2626;" ${btnHover} title="Excluir">🗑</button>`;
+
+      return `${headerHtml}<div style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid rgba(74,41,118,.06);${strike}">
+        <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
         <div style="flex:1;min-width:0;">
-          <div class="radar-prox-title">${esc(a.title)}</div>
-          <div class="radar-prox-sub">${hhmm}${a.duration_minutes ? ' · ' + fMin(a.duration_minutes) : ''}</div>
+          ${timeLabel}<span style="font-size:13px;font-weight:600;color:var(--text);">${esc(it.title)}</span>${durLabel}
         </div>
-        <button data-id="${a.id}" onclick="event.stopPropagation();radarDeleteAppt(this)"
-          style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
+        ${editBtn}${delBtn}
       </div>`;
     }).join('');
   }
