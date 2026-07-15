@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --coral: #C4725A; --coral-light: #D4866E;
@@ -1349,7 +1350,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.63 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.64 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1406,8 +1407,14 @@
           <!-- Exportar backup -->
           <div style="background:white;border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px">
             <div style="font-weight:800;font-size:15px;color:var(--deep);margin-bottom:4px">Exportar Dados</div>
-            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">Baixe um backup completo dos seus dados em JSON.</div>
-            <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="cfgExportBackup()">Baixar backup JSON</button>
+            <div style="font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.5;margin-bottom:14px">
+              Backup completo de todas as tabelas. Faça ao menos uma vez por mês e antes de qualquer alteração grande.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="elo-btn-primary" style="width:100%;justify-content:center" onclick="cfgExportBackup()">⬇️ Baixar backup JSON (todas as tabelas)</button>
+              <button class="elo-btn-outline" style="width:100%;justify-content:center" onclick="cfgExportCSV()">⬇️ Baixar CSVs (zip)</button>
+            </div>
+            <div id="backup-status" style="display:none;margin-top:10px;font-size:12px;font-weight:700;color:var(--purple);text-align:center;"></div>
           </div>
 
         </div><!-- /cfg-pane-sobre -->
@@ -1419,7 +1426,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.63</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.64</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
@@ -7713,27 +7720,88 @@ function renderPanelMes() {
     }
   }
 }
+// ── Helper: busca todas as tabelas pra backup ──────────────────
+async function _backupFetchAll() {
+  const statusEl = document.getElementById('backup-status');
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Buscando dados...'; }
+  const tables = [
+    'users','clients','tasks','categories','time_entries',
+    'scheduled_tasks','appointments','reminders',
+    'monthly_payments','cost_items','settings',
+    'notes','inspiration_posts','content_notes'
+  ];
+  const results = await Promise.all(
+    tables.map(t => sb.from(t).select('*').then(r => ({ table: t, data: r.data || [], error: r.error })))
+  );
+  if (statusEl) statusEl.style.display = 'none';
+  const out = {};
+  results.forEach(r => {
+    if (r.error) showToast(`Aviso: erro ao buscar ${r.table}`, 'warn');
+    out[r.table] = r.data;
+  });
+  return out;
+}
+
 async function cfgExportBackup() {
   try {
-    const [cl, tk, te, pay, costs] = await Promise.all([
-      sb.from('clients').select('*'),
-      sb.from('tasks').select('*'),
-      sb.from('time_entries').select('*').order('start_time',{ascending:false}).limit(5000),
-      sb.from('monthly_payments').select('*'),
-      sb.from('cost_items').select('*'),
-    ]);
-    const data = {
-      exported_at: new Date().toISOString(), version: '3.0',
-      clients: cl.data||[], tasks: tk.data||[],
-      time_entries: te.data||[], monthly_payments: pay.data||[], cost_items: costs.data||[],
-    };
-    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const all = await _backupFetchAll();
+    const payload = { exported_at: new Date().toISOString(), version: '3.64', tables: all };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href=url; a.download=`elo-backup-${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(url);
-    showToast('Backup exportado ✓','ok');
-  } catch(e) { showToast('Erro ao exportar: '+e.message,'err'); }
+    a.href = url;
+    a.download = `elo-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup JSON exportado ✓', 'ok');
+  } catch(e) { showToast('Erro ao exportar: ' + e.message, 'err'); }
+}
+
+// ── Helper: converte array de objetos → CSV string ─────────────
+function _toCSV(rows) {
+  if (!rows || rows.length === 0) return '';
+  const cols = Object.keys(rows[0]);
+  const escape = v => {
+    if (v === null || v === undefined) return '';
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g, '""') + '"'
+      : s;
+  };
+  return [cols.join(','), ...rows.map(r => cols.map(c => escape(r[c])).join(','))].join('\r\n');
+}
+
+async function cfgExportCSV() {
+  try {
+    const all = await _backupFetchAll();
+    const dateStr = new Date().toISOString().slice(0, 10);
+    if (typeof JSZip !== 'undefined') {
+      const zip = new JSZip();
+      Object.entries(all).forEach(([table, rows]) => {
+        zip.file(`${table}.csv`, _toCSV(rows));
+      });
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `elo-backup-${dateStr}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSVs exportados em zip ✓', 'ok');
+    } else {
+      Object.entries(all).forEach(([table, rows]) => {
+        if (rows.length === 0) return;
+        const blob = new Blob([_toCSV(rows)], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `elo-${table}-${dateStr}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      showToast('CSVs exportados ✓', 'ok');
+    }
+  } catch(e) { showToast('Erro ao exportar CSV: ' + e.message, 'err'); }
 }
 </script>
 </body>
