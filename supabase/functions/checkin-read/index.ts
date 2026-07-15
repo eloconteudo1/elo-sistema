@@ -166,7 +166,79 @@ Deno.serve(async (req) => {
       }), { headers: { "Content-Type": "application/json" } });
     }
 
-    return new Response(JSON.stringify({ error: "view inválida. Use ?view=semana ou ?view=produtividade" }), { status: 400 });
+    if (view === "financeiro") {
+      const today = spNow();
+      const mes = today.getUTCMonth() + 1;
+      const ano = today.getUTCFullYear();
+
+      const [paymentsRes, costsRes, clientsRes] = await Promise.all([
+        sb.from("monthly_payments")
+          .select("client_id,amount,status,due_day")
+          .eq("month", mes)
+          .eq("year", ano),
+        sb.from("cost_items")
+          .select("description,amount,category,is_paid,is_recurring")
+          .eq("month", mes)
+          .eq("year", ano),
+        sb.from("clients")
+          .select("id,name,contract_value,due_day")
+          .eq("is_active", true),
+      ]);
+
+      const clientMap = new Map((clientsRes.data || []).map((c: any) => [c.id, c.name]));
+
+      const pagamentos = (paymentsRes.data || []).map((p: any) => ({
+        cliente: clientMap.get(p.client_id) || `Cliente ${p.client_id}`,
+        valor: p.amount,
+        status: p.status, // PAGO | ABERTO | VENCIDO | PERDIDO
+      }));
+
+      const totalRecebido = pagamentos
+        .filter((p: any) => p.status === "PAGO")
+        .reduce((s: number, p: any) => s + (p.valor || 0), 0);
+      const totalAberto = pagamentos
+        .filter((p: any) => p.status === "ABERTO")
+        .reduce((s: number, p: any) => s + (p.valor || 0), 0);
+      const totalVencido = pagamentos
+        .filter((p: any) => p.status === "VENCIDO")
+        .reduce((s: number, p: any) => s + (p.valor || 0), 0);
+
+      const custos = (costsRes.data || []).map((c: any) => ({
+        descricao: c.description,
+        valor: c.amount,
+        categoria: c.category,
+        pago: !!c.is_paid,
+      }));
+
+      const totalCustosPagos = custos
+        .filter((c: any) => c.pago)
+        .reduce((s: number, c: any) => s + (c.valor || 0), 0);
+      const totalCustosAbertos = custos
+        .filter((c: any) => !c.pago)
+        .reduce((s: number, c: any) => s + (c.valor || 0), 0);
+
+      const resultadoLiquido = totalRecebido - totalCustosPagos;
+
+      return new Response(JSON.stringify({
+        periodo: `${String(mes).padStart(2, "0")}/${ano}`,
+        resumo: {
+          total_recebido: totalRecebido,
+          total_aberto: totalAberto,
+          total_vencido: totalVencido,
+          total_custos_pagos: totalCustosPagos,
+          total_custos_abertos: totalCustosAbertos,
+          resultado_liquido: resultadoLiquido,
+        },
+        pagamentos: {
+          pagos: pagamentos.filter((p: any) => p.status === "PAGO"),
+          abertos: pagamentos.filter((p: any) => p.status === "ABERTO"),
+          vencidos: pagamentos.filter((p: any) => p.status === "VENCIDO"),
+        },
+        custos,
+      }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ error: "view inválida. Use ?view=semana, ?view=produtividade ou ?view=financeiro" }), { status: 400 });
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500 });
