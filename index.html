@@ -1349,7 +1349,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.62 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.63 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1419,7 +1419,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.62</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.63</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
@@ -1770,25 +1770,50 @@ async function checkPersonalReminders() {
   if (!reminders) return;
   const now = new Date();
   const nowTs = now.getTime();
+  const todayLocalStr = todayStr();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
   reminders.forEach(rem => {
-    const lastFired = remGetLastFired(rem.id);
+    // ── INTERVAL: a cada X minutos ──────────────────────────────
     if (rem.type === 'interval' && rem.interval_minutes) {
+      const lastFired = remGetLastFired(rem.id);
       const intervalMs = rem.interval_minutes * 60000;
       if (nowTs - lastFired >= intervalMs) {
         fireReminderNotification(rem);
         remSetLastFired(rem.id, nowTs);
       }
     }
-    if (rem.type === 'daily' && rem.daily_time) {
-      const [h, m] = rem.daily_time.split(':').map(Number);
-      // Data LOCAL, não UTC — toISOString() vira o dia às 21h em Umuarama (UTC-3) e fazia o lembrete disparar 2x
-      const todayLocalStr = todayStr();
-      const lastFiredDate = lastFired ? tsToLocalDateStr(lastFired) : null;
-      const targetMinutes = h * 60 + m;
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      if (lastFiredDate !== todayLocalStr && nowMinutes >= targetMinutes) {
+
+    // ── DAILY: todo dia em horário(s) fixo(s) ───────────────────
+    // Lê daily_times (array jsonb) — daily_time (singular) é legado, ignorado
+    if (rem.type === 'daily') {
+      const times = Array.isArray(rem.daily_times) && rem.daily_times.length
+        ? rem.daily_times
+        : (rem.daily_time ? [rem.daily_time] : []); // fallback legado
+      times.forEach(hhmm => {
+        const [h, m] = (hhmm || '').split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) return;
+        const targetMinutes = h * 60 + m;
+        // Chave única por lembrete + horário, para suportar múltiplos horários no mesmo dia
+        const fireKey = `${rem.id}-${hhmm}`;
+        const lastFired = remGetLastFired(fireKey);
+        const lastFiredDate = lastFired ? tsToLocalDateStr(lastFired) : null;
+        // Data LOCAL — não usar toISOString() (vira dia às 21h em UTC-3)
+        if (lastFiredDate !== todayLocalStr && nowMinutes >= targetMinutes) {
+          fireReminderNotification(rem);
+          remSetLastFired(fireKey, nowTs);
+        }
+      });
+    }
+
+    // ── ONCE: disparar uma vez em data/hora específica ───────────
+    if (rem.type === 'once' && rem.once_at) {
+      const fireKey = `${rem.id}-once`;
+      const lastFired = remGetLastFired(fireKey);
+      // Só dispara se ainda não disparou E já passou o horário marcado
+      if (!lastFired && nowTs >= rem.once_at) {
         fireReminderNotification(rem);
-        remSetLastFired(rem.id, nowTs);
+        remSetLastFired(fireKey, nowTs);
       }
     }
   });
