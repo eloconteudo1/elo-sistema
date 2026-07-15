@@ -296,11 +296,6 @@
     .radar-task-tag.atrasada { background:#FDE8E8; color:#DC2626; }
     .radar-task-tag.afazer { background:var(--surface2); color:var(--purple); }
 
-    .radar-notas-input-row { display:flex; gap:8px; margin-bottom:12px; }
-    .radar-notas-input { flex:1; border:var(--border); border-radius:12px; padding:10px 13px; font-family:inherit; font-size:12.5px; background:var(--bg2); color:var(--text); }
-    .radar-notas-submit { width:38px; height:38px; border-radius:12px; background:var(--purple); border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
-    .radar-notas-submit:hover { background:var(--deep); }
-    .radar-notas-list { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
     .radar-nota-item { display:flex; gap:10px; align-items:flex-start; padding:8px 2px; border-bottom:1px solid rgba(0,0,0,.04); cursor:pointer; }
     .radar-nota-item:last-child { border-bottom:none; }
     .radar-nota-check { width:16px; height:16px; border-radius:50%; border:2px solid var(--lavender); flex-shrink:0; margin-top:2px; transition:.15s; }
@@ -340,12 +335,6 @@
     .radar-carga-fill { height:100%; border-radius:6px; }
     .radar-carga-label { font-size:10.5px; font-weight:700; color:var(--text-dim); white-space:nowrap; flex-shrink:0; min-width:100px; text-align:right; }
 
-    .radar-datas-item { display:flex; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid rgba(0,0,0,.05); }
-    .radar-datas-item:last-child { border-bottom:none; }
-    .radar-datas-badge { width:34px; text-align:center; flex-shrink:0; }
-    .radar-datas-badge .num { font-size:14px; font-weight:900; display:block; }
-    .radar-datas-badge .mon { font-size:8px; font-weight:800; text-transform:uppercase; color:var(--text-dim); }
-    .radar-datas-title { font-size:12.5px; font-weight:600; color:var(--text); }
 
     .radar-type-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
     .radar-type-card { border:2px solid var(--bg2); border-radius:12px; padding:11px 5px; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; background:var(--bg2); }
@@ -925,8 +914,7 @@
 
       <!-- Toggle abas -->
       <div class="radar-tabs" style="margin-bottom:18px;">
-        <button class="radar-tab active" data-rtab="geral"   onclick="setRadarTab('geral',this)">Geral</button>
-        <button class="radar-tab"        data-rtab="hoje"    onclick="setRadarTab('hoje',this)">Hoje</button>
+        <button class="radar-tab active" data-rtab="hoje"    onclick="setRadarTab('hoje',this)">Hoje</button>
         <button class="radar-tab"        data-rtab="semana"  onclick="setRadarTab('semana',this)">Semana</button>
         <button class="radar-tab"        data-rtab="mes"     onclick="setRadarTab('mes',this)">Mês</button>
       </div>
@@ -977,42 +965,8 @@
         <!-- COLUNA DIREITA — painel contextual (troca por aba) -->
         <div>
 
-          <!-- PAINEL GERAL -->
-          <div class="radar-panel active" id="radar-panel-geral">
-
-            <!-- Tarefas -->
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Tarefas</span>
-              </div>
-              <div id="radar-tarefas-list"><div class="radar-day-detail-empty">Carregando...</div></div>
-            </div>
-
-            <!-- Notas -->
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Notas</span>
-              </div>
-              <div class="radar-notas-input-row">
-                <input class="radar-notas-input" id="radar-nota-input" placeholder="Escreva uma nova anotação..." />
-                <button class="radar-notas-submit" onclick="radarSaveNota()">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
-              </div>
-              <div class="radar-notas-list" id="radar-notas-list"><div class="radar-day-detail-empty">Carregando...</div></div>
-            </div>
-
-            <!-- Próximos -->
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
-              <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Próximos na agenda</span>
-              </div>
-              <div id="radar-proximos-list"><div class="radar-day-detail-empty">Carregando...</div></div>
-            </div>
-          </div>
-
           <!-- PAINEL HOJE -->
-          <div class="radar-panel" id="radar-panel-hoje">
+          <div class="radar-panel active" id="radar-panel-hoje">
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:16px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Linha do dia</span>
@@ -1056,12 +1010,6 @@
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda do mês</span>
               </div>
               <div id="radar-mes-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
-            </div>
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
-              <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Datas importantes</span>
-              </div>
-              <div id="radar-datas-list"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
           </div>
 
@@ -1401,7 +1349,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.60 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.61 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1471,7 +1419,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.60</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.61</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
@@ -5334,213 +5282,6 @@ function calEnableNotif() {
   });
 }
 
-function renderCalAlerts() {
-  const settHtml = [
-    { icon:'⏰', bg:'rgba(255,165,0,.12)', title:'Pausa longa', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Após</span><input type="number" id="cal-pause-min" value="${CAL.settings.pauseMinutes}" min="15" max="480" style="width:70px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /><span style="font-size:12px;color:#888;">minutos</span></div>` },
-    { icon:'🍽️', bg:'rgba(255,193,7,.12)', title:'Hora do almoço', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Horário:</span><input type="time" id="cal-lunch-time" value="${CAL.settings.lunchTime}" style="width:100px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /></div>` },
-    { icon:'🌙', bg:'rgba(124,111,205,.12)', title:'Encerrar expediente', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Horário:</span><input type="time" id="cal-end-time" value="${CAL.settings.endTime}" style="width:100px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /></div>` },
-    { icon:'📊', bg:'rgba(76,175,138,.12)', title:'Meta diária', content:`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;color:#888;">Meta:</span><input type="number" id="cal-goal-hours" value="${CAL.settings.dailyGoalHours}" min="1" max="16" style="width:60px;padding:7px 10px;border-radius:8px;border:1.5px solid rgba(46,27,78,.15);font-size:13px;font-family:inherit;" /><span style="font-size:12px;color:#888;">horas/dia</span></div>` },
-    { icon:'🔴', bg:'rgba(224,122,95,.12)', title:'Tarefas atrasadas', content:`<div style="font-size:12px;color:#888;margin-top:4px;">Alerta quando próximas tarefas passam do horário</div>` },
-    { icon:'💬', bg:'rgba(37,211,102,.12)', title:'Checar WhatsApp', content:`<div style="font-size:12px;color:#888;margin-top:4px;">Configure via Alarmes Pessoais abaixo</div>` },
-  ].map(s => `<div class="cal-alert-card">
-    <div class="cal-alert-icon" style="background:${s.bg};">${s.icon}</div>
-    <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:var(--deep);">${esc(s.title)}</div>${s.content}</div>
-  </div>`).join('');
-  document.getElementById('cal-alert-settings').innerHTML = settHtml;
-
-  const remHtml = CAL.reminders.length === 0
-    ? `<div style="text-align:center;padding:24px 0;color:#bbb;font-size:13px;">Nenhum alarme pessoal. Crie o primeiro abaixo.</div>`
-    : CAL.reminders.map(rem => {
-      const emojis = {'água':'💧','levantar':'🧘','alongar':'🧘','postura':'🪑','coma':'🍎','lanche':'🍎','whatsapp':'💬'};
-      const emoji = Object.entries(emojis).find(([k])=>rem.title.toLowerCase().includes(k))?.[1] || '🔔';
-      let detail;
-      if (rem.type === 'interval') {
-        detail = `A cada ${rem.interval_minutes} min`;
-      } else if (rem.type === 'daily') {
-        const times = rem.daily_times || (rem.daily_time ? [rem.daily_time] : []);
-        detail = times.length > 0
-          ? `Todo dia às ${times.join(', ')}`
-          : `Todo dia`;
-      } else if (rem.type === 'once') {
-        if (rem.once_at) {
-          const d = new Date(rem.once_at);
-          const pad = n => String(n).padStart(2,'0');
-          detail = `${pad(d.getDate())}/${pad(d.getMonth()+1)} às ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        } else {
-          detail = 'Horário único';
-        }
-      } else {
-        detail = '';
-      }
-      const op = rem.is_active ? '1' : '0.55';
-      const toggleBg = rem.is_active ? 'var(--coral)' : 'rgba(0,0,0,.15)';
-      const knobLeft = rem.is_active ? '23px' : '3px';
-      return `<div class="cal-alert-card" style="opacity:${op};">
-        <div style="font-size:20px;">${emoji}</div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:14px;color:var(--deep);">${esc(rem.title)}</div>
-          <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">${esc(detail)}</div>
-        </div>
-        <button onclick="toggleReminder(${rem.id},${!rem.is_active})" class="cal-toggle" style="background:${toggleBg};">
-          <div class="cal-toggle-knob" style="left:${knobLeft};"></div>
-        </button>
-        <button onclick="openReminderModal(${rem.id})" style="background:none;border:none;cursor:pointer;font-size:15px;color:#bbb;padding:0 4px;">✏️</button>
-        <button onclick="deleteReminder(${rem.id})" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--coral);padding:0 4px;">🗑️</button>
-      </div>`;
-    }).join('');
-  document.getElementById('cal-reminders-list').innerHTML = remHtml;
-}
-
-function calSaveSettings() {
-  CAL.settings.pauseMinutes = Number(document.getElementById('cal-pause-min')?.value || 30);
-  CAL.settings.lunchTime = document.getElementById('cal-lunch-time')?.value || '12:00';
-  CAL.settings.endTime = document.getElementById('cal-end-time')?.value || '18:00';
-  CAL.settings.dailyGoalHours = Number(document.getElementById('cal-goal-hours')?.value || 8);
-  localStorage.setItem('elo_cal_settings', JSON.stringify(CAL.settings));
-  showToast('Configurações salvas!','ok');
-}
-
-// ── Reminder Modal ────────────────────────────────────
-function setRemType(type) {
-  CAL.remType = type;
-  document.getElementById('rem-interval-row').style.display = type === 'interval' ? '' : 'none';
-  document.getElementById('rem-daily-row').style.display = type === 'daily' ? '' : 'none';
-  document.getElementById('rem-once-row').style.display = type === 'once' ? '' : 'none';
-  const btnI = document.getElementById('rem-type-interval');
-  const btnD = document.getElementById('rem-type-daily');
-  const btnO = document.getElementById('rem-type-once');
-  [btnI, btnD, btnO].forEach(b => {
-    if (!b) return;
-    b.style.background = 'transparent';
-    b.style.color = 'var(--text-dim)';
-    b.style.border = '1.5px solid rgba(46,27,78,.15)';
-  });
-  const active = type === 'interval' ? btnI : type === 'daily' ? btnD : btnO;
-  if (active) {
-    active.style.background = 'var(--purple)';
-    active.style.color = '#fff';
-    active.style.border = 'none';
-  }
-}
-
-function openReminderModal(id) {
-  if (id) {
-    // redireciona para edição no novo modal
-    openNovoRegistro('notif');
-    const btn = { dataset: { remId: id } };
-    editNrmReminder(btn);
-  } else {
-    openNovoRegistro('notif');
-  }
-}
-
-function renderDailyTimes(times) {
-  const container = document.getElementById('rem-daily-times-list');
-  if (!container) return;
-  container.innerHTML = times.map((t, i) => `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;" data-idx="${i}">
-      <input type="time" value="${t}" class="elo-input rem-time-input"
-        style="width:120px;padding:8px 12px;"
-        onchange="updateDailyTime(${i}, this.value)" />
-      ${times.length > 1
-        ? `<button onclick="removeDailyTime(${i})"
-            style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--coral);padding:0 4px;line-height:1;">×</button>`
-        : ''}
-    </div>
-  `).join('');
-}
-
-function updateDailyTime(idx, val) {
-  const inputs = document.querySelectorAll('.rem-time-input');
-  CAL._remDailyTimes = CAL._remDailyTimes || [];
-  inputs.forEach((inp, i) => { CAL._remDailyTimes[i] = inp.value; });
-}
-
-function addDailyTime() {
-  const inputs = document.querySelectorAll('.rem-time-input');
-  const current = Array.from(inputs).map(inp => inp.value);
-  current.push('09:00');
-  CAL._remDailyTimes = current;
-  renderDailyTimes(current);
-}
-
-function removeDailyTime(idx) {
-  const inputs = document.querySelectorAll('.rem-time-input');
-  const current = Array.from(inputs).map(inp => inp.value);
-  current.splice(idx, 1);
-  CAL._remDailyTimes = current;
-  renderDailyTimes(current);
-}
-
-function getDailyTimes() {
-  const inputs = document.querySelectorAll('.rem-time-input');
-  return Array.from(inputs).map(inp => inp.value).filter(Boolean);
-}
-function closeReminderModal() { closeNovoRegistro(); CAL.editingRemId = null; }
-
-async function saveReminder() {
-  const title = document.getElementById('rem-title').value.trim();
-  if (!title) { showToast('Preencha o título','err'); return; }
-  const type = CAL.remType;
-  const description = document.getElementById('rem-desc').value.trim() || null;
-
-  const interval_minutes = type === 'interval' ? Number(document.getElementById('rem-interval').value) : null;
-
-  // daily_times: coletar horários do DOM
-  const daily_times = type === 'daily' ? getDailyTimes() : null;
-  if (type === 'daily' && (!daily_times || daily_times.length === 0)) {
-    showToast('Adicione ao menos um horário','err'); return;
-  }
-
-  // once_at: converter datetime-local para ms epoch
-  let once_at = null;
-  if (type === 'once') {
-    const val = document.getElementById('rem-once-at').value;
-    if (!val) { showToast('Informe a data e horário','err'); return; }
-    once_at = new Date(val).getTime();
-    if (isNaN(once_at)) { showToast('Data inválida','err'); return; }
-  }
-
-  // Manter daily_time como null (coluna legada)
-  const payload = { title, description, type, interval_minutes, daily_times, once_at, daily_time: null };
-
-  if (CAL.editingRemId) {
-    const { error } = await db(() => sb.from('reminders').update(payload).eq('id', CAL.editingRemId), 'Erro ao atualizar alarme');
-    if (error) return;
-    CAL.reminders = CAL.reminders.map(r => r.id===CAL.editingRemId ? {...r,...payload} : r);
-    showToast('Alarme atualizado!','ok');
-  } else {
-    const { data, error } = await db(() => sb.from('reminders').insert({ ...payload, is_active:true, user_id: appUser.id }).select().single(), 'Erro ao criar alarme');
-    if (error) return;
-    CAL.reminders.push(data);
-    showToast('Alarme criado!','ok');
-  }
-  closeReminderModal();
-}
-
-async function toggleReminder(id, isActive) {
-  const { error } = await db(() => sb.from('reminders').update({ is_active:isActive }).eq('id', id), 'Erro ao atualizar alarme');
-  if (error) return;
-  CAL.reminders = CAL.reminders.map(r => r.id===id ? {...r,is_active:isActive} : r);
-}
-
-async function deleteReminder(id) {
-  openConfirmModal('Excluir alarme?', 'Essa ação não pode ser desfeita.', async () => {
-    const { error } = await db(() => sb.from('reminders').delete().eq('id', id), 'Erro ao excluir alarme');
-    if (error) return;
-    CAL.reminders = CAL.reminders.filter(r=>r.id!==id);
-    showToast('Alarme excluído','ok');
-  });
-}
-
-// Load saved settings
-(function loadCalSettings() {
-  try {
-    const saved = localStorage.getItem('elo_cal_settings');
-    if (saved) CAL.settings = { ...CAL.settings, ...JSON.parse(saved) };
-  } catch(e) {}
-})();
-
 // ─────────────────────────────────────────────────────────────────
 // FINANCEIRO
 // ─────────────────────────────────────────────────────────────────
@@ -7407,22 +7148,16 @@ const RADAR = {
   month: new Date().getMonth(),
   year: new Date().getFullYear(),
   selectedDay: null,
-  tab: 'geral',
+  tab: 'hoje',
   weekOffset: 0,
   tasks: [],
   appts: [],
-  notes: [],
-  importantDates: []
+  notes: []
 };
 async function initRadar() {
   RADAR.tasks = T.scheduledTasks || [];
   RADAR.appts = T.appointments || [];
   RADAR.notes = T.notes || [];
-  const { data: idData } = await db(
-    () => sb.from('important_dates').select('*').order('date', { ascending: true }),
-    'Erro ao carregar datas importantes'
-  );
-  RADAR.importantDates = idData || [];
   renderRadarGrid();
   setRadarTab(RADAR.tab, document.querySelector(`.radar-tab[data-rtab="${RADAR.tab}"]`));
 }
@@ -7434,7 +7169,6 @@ function loadRadarPanelData() {
 function radarRefreshCurrentPanel() {
   renderRadarGrid();
   radarCloseDetail();
-  if (RADAR.tab === 'geral')  renderPanelGeral();
   if (RADAR.tab === 'hoje')   renderPanelHoje();
   if (RADAR.tab === 'semana') renderPanelSemana();
   if (RADAR.tab === 'mes')    renderPanelMes();
@@ -7549,7 +7283,6 @@ function setRadarTab(tab, el) {
   const panel = document.getElementById('radar-panel-' + tab);
   if (panel) panel.classList.add('active');
   const subs = {
-    geral: 'O que exige atenção agora',
     hoje: 'Linha do dia de hoje',
     semana: 'Carga e compromissos dos próximos 7 dias',
     mes: 'Visão mensal'
@@ -7563,7 +7296,6 @@ function setRadarTab(tab, el) {
   radarCloseDetail();
   renderRadarGrid();
   loadRadarPanelData();
-  if (tab === 'geral')   renderPanelGeral();
   if (tab === 'hoje')    renderPanelHoje();
   if (tab === 'semana')  { renderPanelSemana(); renderRadarWeekGrid(); }
   if (tab === 'mes')     renderPanelMes();
@@ -7596,9 +7328,6 @@ function renderRadarGrid() {
     const u = ds < todayDate ? 'informativo' : ds === todayDate ? 'hoje' : 'afazer';
     addUrg(ds, u);
   });
-  (RADAR.importantDates || []).forEach(imp => {
-    if (imp.date) addUrg(imp.date, 'informativo');
-  });
   const urgColor = { atrasada: '#DC2626', hoje: 'var(--orange)', afazer: 'var(--purple)', informativo: 'var(--blue)' };
   // Mapa de itens por dia — até 2 chips de texto por célula
   const first3 = (s) => (s || '').split(/\s+/).slice(0, 3).join(' ');
@@ -7615,9 +7344,6 @@ function renderRadarGrid() {
   (RADAR.tasks || []).forEach(t => {
     if (!t.scheduled_date) return;
     addItem(t.scheduled_date, t.title, t.is_done ? 'done' : 'task');
-  });
-  (RADAR.importantDates || []).forEach(imp => {
-    if (imp.date) addItem(imp.date, imp.label, 'info');
   });
   const diasSem = ['D','S','T','Q','Q','S','S'];
   let html = diasSem.map(d =>
@@ -7684,14 +7410,12 @@ function radarSelectDay(ds, el) {
     const ad = new Date(a.scheduled_at);
     return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
   });
-  const impDay = (RADAR.importantDates || []).filter(i => i.date === ds);
   const allItems = [
     ...apptsDay.map(a => {
       const ad = new Date(a.scheduled_at);
       return { id: a.id, time: `${String(ad.getHours()).padStart(2,'0')}:${String(ad.getMinutes()).padStart(2,'0')}`, title: a.title, type: 'appt', done: !!a.is_done };
     }),
-    ...tasksDay.map(t => ({ id: t.id, time: t.scheduled_time || '', title: t.title, type: 'task', done: !!t.is_done, priority: t.priority })),
-    ...impDay.map(i => ({ id: null, time: '', title: i.label, type: 'info', done: false }))
+    ...tasksDay.map(t => ({ id: t.id, time: t.scheduled_time || '', title: t.title, type: 'task', done: !!t.is_done, priority: t.priority }))
   ].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
   if (allItems.length === 0) {
     bodyEl.innerHTML = `<div class="radar-day-detail-empty">Nenhum item neste dia.</div>`;
@@ -7725,135 +7449,6 @@ function radarCloseDetail() {
   const mesDetail = document.getElementById('radar-mes-day-detail-card');
   if (mesDetail) mesDetail.style.display = 'none';
   RADAR.selectedDay = null;
-}
-function renderPanelGeral() {
-  loadRadarPanelData();
-  const todayDate = todayStr();
-  const atrasadas = (RADAR.tasks || []).filter(t => !t.is_done && t.scheduled_date < todayDate);
-  const afazer = (RADAR.tasks || []).filter(t => !t.is_done && t.scheduled_date >= todayDate);
-  const tarefasEl = document.getElementById('radar-tarefas-list');
-  if (tarefasEl) {
-    if (atrasadas.length === 0 && afazer.length === 0) {
-      tarefasEl.innerHTML = `<div class="radar-day-detail-empty">Nenhuma tarefa pendente. 🎉</div>`;
-    } else {
-      let html = '';
-      atrasadas.slice(0, 10).forEach(t => {
-        html += `<div class="radar-task-item">
-          <span class="radar-task-dot atrasada"></span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${dbDateToDisplay(t.scheduled_date)}</div>
-          </div>
-          <span class="radar-task-tag atrasada">Atrasada</span>
-          <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
-            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
-          <button data-id="${t.id}" onclick="radarDeleteTask(this)"
-            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
-        </div>`;
-      });
-      afazer.slice(0, 8).forEach(t => {
-        html += `<div class="radar-task-item">
-          <span class="radar-task-dot afazer"></span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:12.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-top:1px;">${t.scheduled_date === todayDate ? 'hoje' : dbDateToDisplay(t.scheduled_date)}${t.scheduled_time ? ' · ' + t.scheduled_time : ''}</div>
-          </div>
-          <span class="radar-task-tag afazer">${t.scheduled_date === todayDate ? 'Hoje' : 'A fazer'}</span>
-          <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
-            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
-          <button data-id="${t.id}" onclick="radarDeleteTask(this)"
-            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
-        </div>`;
-      });
-      if (atrasadas.length > 10) html += `<div style="font-size:10.5px;color:var(--text-dim);padding:6px 0;">+${atrasadas.length - 10} atrasadas...</div>`;
-      tarefasEl.innerHTML = html;
-    }
-  }
-  renderRadarNotas();
-  const proxEl = document.getElementById('radar-proximos-list');
-  if (proxEl) {
-    const nowTs = Date.now();
-    const maxTs = nowTs + 7 * 86400000;
-    const proximos = (RADAR.appts || [])
-      .filter(a => a.scheduled_at >= nowTs && a.scheduled_at <= maxTs)
-      .sort((a, b) => a.scheduled_at - b.scheduled_at)
-      .slice(0, 8);
-    if (proximos.length === 0) {
-      proxEl.innerHTML = `<div class="radar-day-detail-empty">Sem compromissos nos próximos 7 dias.</div>`;
-    } else {
-      const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-      proxEl.innerHTML = proximos.map(a => {
-        const d = new Date(a.scheduled_at);
-        const dow = diasSem[d.getDay()];
-        const day = String(d.getDate()).padStart(2,'0');
-        const hhmm = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        return `<div class="radar-prox-item" data-id="${a.id}" data-type="appointment" onclick="radarProxClick(this)">
-          <div class="radar-prox-date">
-            <div class="radar-prox-dow">${dow}</div>
-            <div class="radar-prox-day">${day}</div>
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div class="radar-prox-title">${esc(a.title)}</div>
-            <div class="radar-prox-sub">${hhmm}${a.duration_minutes ? ' · ' + fMin(a.duration_minutes) : ''}</div>
-          </div>
-          <button data-id="${a.id}" onclick="event.stopPropagation();radarDeleteAppt(this)"
-            style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
-          <span class="radar-prox-chevron">›</span>
-        </div>`;
-      }).join('');
-    }
-  }
-}
-function renderRadarNotas() {
-  const el = document.getElementById('radar-notas-list');
-  if (!el) return;
-  const notas = (RADAR.notes || []).slice(0, 20);
-  if (notas.length === 0) {
-    el.innerHTML = `<div class="radar-day-detail-empty">Sem anotações.</div>`;
-    return;
-  }
-  el.innerHTML = notas.map(n => {
-    const done = !!n.is_done;
-    return `<div class="radar-nota-item${done?' done':''}" onclick="radarToggleNota(${n.id},this)">
-      <div class="radar-nota-check"></div>
-      <div style="flex:1;min-width:0;">
-        <div class="radar-nota-text">${esc(n.content)}</div>
-        <div class="radar-nota-time">${n.created_at ? new Date(n.created_at).toLocaleDateString('pt-BR') : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function radarSaveNota() {
-  const input = document.getElementById('radar-nota-input');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-  const { data, error } = await db(
-    () => sb.from('notes').insert({ content: text, is_done: false }).select().single(),
-    'Erro ao salvar anotação'
-  );
-  if (error) return;
-  input.value = '';
-  RADAR.notes = [data, ...RADAR.notes];
-  T.notes = RADAR.notes;
-  renderRadarNotas();
-  showToast('Anotação salva', 'ok');
-}
-async function radarToggleNota(id, rowEl) {
-  const nota = (RADAR.notes || []).find(n => n.id === id);
-  if (!nota) return;
-  rowEl.style.transition = 'opacity .3s';
-  rowEl.style.opacity = '0';
-  const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir anotação');
-  if (error) { rowEl.style.opacity = '1'; return; }
-  RADAR.notes = RADAR.notes.filter(n => n.id !== id);
-  T.notes = RADAR.notes;
-  setTimeout(() => { rowEl.remove(); }, 300);
 }
 function radarEditTask(btn) {
   const id = Number(btn.dataset.id);
@@ -8023,7 +7618,6 @@ function renderPanelSemana() {
 function renderPanelMes() {
   loadRadarPanelData();
   const apptsEl = document.getElementById('radar-mes-appts');
-  const datasEl = document.getElementById('radar-datas-list');
   const mesStart = new Date(RADAR.year, RADAR.month, 1).getTime();
   const mesEnd = new Date(RADAR.year, RADAR.month + 1, 1).getTime();
   const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -8052,30 +7646,6 @@ function renderPanelMes() {
           <button data-id="${a.id}" onclick="event.stopPropagation();radarDeleteAppt(this)"
             style="flex-shrink:0;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
             onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
-        </div>`;
-      }).join('');
-    }
-  }
-  if (datasEl) {
-    const datas = (RADAR.importantDates || [])
-      .filter(i => {
-        const [y, m] = i.date.split('-');
-        return parseInt(y) === RADAR.year && parseInt(m)-1 === RADAR.month;
-      });
-    if (datas.length === 0) {
-      datasEl.innerHTML = `<div class="radar-day-detail-empty">Sem datas importantes neste mês.</div>`;
-    } else {
-      datasEl.innerHTML = datas.map(i => {
-        const [y, m, d] = i.date.split('-');
-        return `<div class="radar-datas-item">
-          <div class="radar-datas-badge">
-            <span class="num" style="color:var(--coral);">${parseInt(d)}</span>
-            <span class="mon">${mesesAbrev[parseInt(m)-1]}</span>
-          </div>
-          <div>
-            <div class="radar-datas-title">${esc(i.label)}</div>
-            ${i.category ? `<div style="font-size:10px;color:var(--text-dim);">${esc(i.category)}</div>` : ''}
-          </div>
         </div>`;
       }).join('');
     }
