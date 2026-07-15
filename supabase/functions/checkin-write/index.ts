@@ -46,8 +46,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Máximo 50 tarefas por chamada" }), { status: 400 });
     }
 
+    const today = spTodayYMD();
+
     // Valida tudo antes de gravar qualquer coisa — falha tudo se algum item vier torto
-    const cleaned: { title: string; scheduled_time: string | null; priority: string }[] = [];
+    const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    const cleaned: { title: string; scheduled_time: string | null; priority: string; date: string }[] = [];
     for (const t of tasksInput) {
       const title = (t?.title || "").trim();
       if (!title) {
@@ -60,8 +63,15 @@ Deno.serve(async (req) => {
         }
         scheduled_time = t.time;
       }
+      let date = today;
+      if (t?.scheduled_date) {
+        if (!DATE_RE.test(t.scheduled_date)) {
+          return new Response(JSON.stringify({ error: `Data inválida: "${t.scheduled_date}" (use YYYY-MM-DD)` }), { status: 400 });
+        }
+        date = t.scheduled_date;
+      }
       const priority = VALID_PRIORITIES.includes(t?.priority) ? t.priority : "media";
-      cleaned.push({ title, scheduled_time, priority });
+      cleaned.push({ title, scheduled_time, priority, date });
     }
 
     const sb = createClient(
@@ -69,29 +79,32 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const today = spTodayYMD();
-
+    // Agrupa datas únicas pra buscar existentes de uma vez
+    const uniqueDates = [...new Set(cleaned.map(t => t.date))];
     const { data: existing, error: exErr } = await sb
       .from("scheduled_tasks")
-      .select("title")
-      .eq("scheduled_date", today);
+      .select("title,scheduled_date")
+      .in("scheduled_date", uniqueDates);
     if (exErr) throw exErr;
 
-    const existingNorm = new Set((existing || []).map((e) => normalize(e.title)));
+    // Mapa: "YYYY-MM-DD|titulo_normalizado" → existe
+    const existingSet = new Set(
+      (existing || []).map((e) => `${e.scheduled_date}|${normalize(e.title)}`)
+    );
 
     const toInsert: any[] = [];
     const skipped: string[] = [];
     const seenInThisBatch = new Set<string>();
 
     for (const t of cleaned) {
-      const n = normalize(t.title);
-      if (existingNorm.has(n) || seenInThisBatch.has(n)) {
+      const key = `${t.date}|${normalize(t.title)}`;
+      if (existingSet.has(key) || seenInThisBatch.has(key)) {
         skipped.push(t.title);
         continue;
       }
-      seenInThisBatch.add(n);
+      seenInThisBatch.add(key);
       toInsert.push({
-        scheduled_date: today,
+        scheduled_date: t.date,
         scheduled_time: t.scheduled_time,
         title: t.title,
         priority: t.priority,
@@ -112,6 +125,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       data_referencia: today,
+      datas_usadas: uniqueDates,
       inseridas: inserted,
       puladas_ja_existiam: skipped,
       total_inseridas: inserted.length,
