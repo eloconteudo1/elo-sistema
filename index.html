@@ -1152,12 +1152,19 @@
                   </select>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:16px;">
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);cursor:pointer;font-weight:600;">
-                  <input type="checkbox" id="fnp-paid" /> Já recebido
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div><label class="field-label">Status</label>
+                  <select class="field-input" id="fnp-status" style="cursor:pointer;min-width:90px;">
+                    <option>ABERTO</option><option>PAGO</option><option>VENCIDO</option><option>PERDIDO</option>
+                  </select>
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;padding-top:16px;">
+                  <input type="checkbox" id="fnp-recurring" /> Recorrente
                 </label>
-                <button onclick="saveNewPayment()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--coral);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Salvar</button>
-                <button onclick="finToggleNewPayment()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1;">×</button>
+                <div style="margin-left:auto;display:flex;gap:8px;align-items:center;padding-top:16px;">
+                  <button onclick="finToggleNewPayment()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1;">×</button>
+                  <button onclick="saveNewPayment()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--coral);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Salvar</button>
+                </div>
               </div>
             </div>
             <div style="overflow-x:auto;">
@@ -1167,8 +1174,9 @@
                     <th style="text-align:left;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">CLIENTE / DESCRIÇÃO</th>
                     <th style="text-align:right;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">VALOR</th>
                     <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">VENCTO</th>
+                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">FORMA</th>
                     <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">STATUS</th>
-                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">AÇÃO</th>
+                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);width:56px;"></th>
                   </tr>
                 </thead>
                 <tbody id="fin-payments-tbody"></tbody>
@@ -1187,17 +1195,33 @@
             </div>
             <!-- Form novo custo -->
             <div id="fin-new-cost-form" style="display:none;background:rgba(46,24,71,.04);border:var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto auto;gap:8px;align-items:end;">
-                <div><label class="field-label">Descrição</label><input class="field-input" id="fnc-desc" placeholder="Ex: Salário Andrey" /></div>
-                <div><label class="field-label">Valor (R$)</label><input class="field-input" id="fnc-amount" type="number" placeholder="1600.00" /></div>
-                <div><label class="field-label">Categoria</label><input class="field-input" id="fnc-cat" placeholder="Ex: Pessoal, Impostos..." /></div>
-                <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px;">
-                  <input type="checkbox" id="fnc-paid" /><label for="fnc-paid" style="font-size:12px;font-weight:700;color:var(--text-dim);cursor:pointer;">Pago</label>
+              <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:10px;">Nova Despesa</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div><label class="field-label">Descrição *</label><input class="field-input" id="fnc-desc" placeholder="Ex: Salário Andrey" /></div>
+                <div><label class="field-label">Valor (R$) *</label><input class="field-input" id="fnc-amount" type="number" placeholder="1600.00" /></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+                <div><label class="field-label">Dia vencto</label><input class="field-input" id="fnc-due" type="number" placeholder="Ex: 5" min="1" max="31" /></div>
+                <div><label class="field-label">Forma pgto</label>
+                  <select class="field-input" id="fnc-method" style="cursor:pointer;">
+                    <option value="">—</option>
+                    <option>PIX</option><option>Boleto</option><option>TED</option><option>Cartão</option><option>Dinheiro</option>
+                  </select>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px;">
-                  <input type="checkbox" id="fnc-recurring" /><label for="fnc-recurring" style="font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;">Fixo (recorrente)</label>
+                <div><label class="field-label">Status</label>
+                  <select class="field-input" id="fnc-status" style="cursor:pointer;">
+                    <option>ABERTO</option><option>PAGO</option><option>VENCIDO</option>
+                  </select>
                 </div>
-                <button onclick="saveNewCost()" style="padding:8px 16px;border-radius:10px;border:none;background:var(--coral);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;">Salvar</button>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;">
+                  <input type="checkbox" id="fnc-recurring" /> Recorrente
+                </label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button onclick="finToggleNewCost()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1;">×</button>
+                  <button onclick="saveNewCost()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--coral);color:white;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Salvar</button>
+                </div>
               </div>
             </div>
             <div style="overflow-x:auto;">
@@ -1205,10 +1229,11 @@
                 <thead>
                   <tr style="border-bottom:1px solid rgba(74,41,118,.1);">
                     <th style="text-align:left;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">DESCRIÇÃO</th>
-                    <th style="text-align:left;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">CATEGORIA</th>
                     <th style="text-align:right;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">VALOR</th>
+                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">VENCTO</th>
+                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">FORMA</th>
                     <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">STATUS</th>
-                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);">AÇÕES</th>
+                    <th style="text-align:center;padding:6px 8px 10px;font-size:11px;font-weight:700;color:var(--text-dim);width:56px;"></th>
                   </tr>
                 </thead>
                 <tbody id="fin-costs-tbody"></tbody>
@@ -1376,7 +1401,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.59 · ELO Comunicação · Atualizado em 14/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.60 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1446,9 +1471,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.59</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.60</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">14/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -5688,54 +5713,40 @@ function renderFinanceiro() {
   const isPastMonth = FIN.year < new Date().getFullYear() || (FIN.year === new Date().getFullYear() && FIN.month < new Date().getMonth()+1);
 
   document.getElementById('fin-payments-tbody').innerHTML = payments.length === 0
-    ? `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum recebimento cadastrado.</td></tr>`
+    ? `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum recebimento cadastrado.</td></tr>`
     : payments.map(p => {
         const pStatus = p.status || (p.is_paid ? 'PAGO' : 'ABERTO');
-        const isPaid    = pStatus === 'PAGO';
         const isVencido = pStatus === 'VENCIDO';
         const isPerdido = pStatus === 'PERDIDO';
-
-        const statusBadge = isPaid
-          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#D5F5E3;color:#0F6E56;white-space:nowrap;">PAGO</span>`
-          : isVencido
-          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FDECEA;color:#A32D2D;white-space:nowrap;">VENCIDO</span>`
-          : isPerdido
-          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#F0F0F0;color:#666;white-space:nowrap;">PERDIDO</span>`
-          : `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FAEEDA;color:#854F0B;white-space:nowrap;">ABERTO</span>`;
-
-        const mainBtn = isPaid
-          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'ABERTO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Desmarcar</button>`
-          : isPerdido
-          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'ABERTO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(46,185,137,.4);background:transparent;color:#2FB989;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Reativar</button>`
-          : `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'PAGO')" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Marcar Pago</button>`;
-
-        const perdidoBtn = (!isPaid && !isPerdido)
-          ? `<button data-id="${p.id}" onclick="finSetStatus(${p.id},'PERDIDO')" style="padding:4px 8px;border-radius:16px;border:1px solid rgba(100,100,100,.2);background:transparent;color:var(--text-dim);font-size:10px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">Perdido</button>`
-          : '';
-
-        const del = `<button onclick="finDeletePayment(${p.id},'${esc(finClientName(p)).replace(/'/g,"\\'")}')"
-          style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.4;line-height:1;padding:2px;"
-          title="Excluir">×</button>`;
-
+        const selStyle = pStatus === 'PAGO' ? 'background:#D5F5E3;color:#0F6E56;border-color:rgba(15,110,86,.4);'
+          : isVencido ? 'background:#FDECEA;color:#A32D2D;border-color:rgba(163,45,45,.3);'
+          : isPerdido ? 'background:#F0F0F0;color:#666;border-color:rgba(100,100,100,.3);'
+          : 'background:#FAEEDA;color:#854F0B;border-color:rgba(133,79,11,.3);';
         const avulso = p.is_manual
           ? `<span style="font-size:9px;background:#e8f5e9;color:#2e7d32;border-radius:6px;padding:1px 5px;font-weight:700;margin-right:5px;white-space:nowrap;">AVULSO</span>`
           : '';
+        const recTag = p.is_recurring
+          ? `<span style="font-size:9px;background:#EDE8F5;color:#4A2976;border-radius:6px;padding:1px 5px;font-weight:800;margin-left:5px;white-space:nowrap;">RECORRENTE</span>`
+          : '';
         const rowBg   = isVencido ? 'background:rgba(220,38,38,.05);' : isPerdido ? 'background:rgba(100,100,100,.04);' : '';
         const amtStyle = isVencido ? 'color:#DC2626;' : isPerdido ? 'color:var(--text-dim);text-decoration:line-through;' : '';
+        const forma = p.payment_method || '—';
+        const opt = s => `<option${pStatus===s?' selected':''}>${s}</option>`;
 
         return `<tr style="${rowBg}">
-          <td style="${TDbase}">${avulso}${esc(finClientName(p))}</td>
+          <td style="${TDbase}">${avulso}${esc(finClientName(p))}${recTag}</td>
           <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(p.amount))}</td>
           <td style="${TDnw}text-align:center;">${finClientDueDay(p)}</td>
-          <td style="${TDnw}text-align:center;">${statusBadge}</td>
+          <td style="${TDnw}text-align:center;font-size:11px;color:var(--text-dim);">${esc(forma)}</td>
           <td style="${TDnw}text-align:center;">
-            <div style="display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
-              ${mainBtn}
-              ${perdidoBtn}
-              <button onclick="openEditPaymentModal(${p.id},${p.amount})"
-                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px;opacity:.5;line-height:1;"
-                title="Editar valor">✏</button>
-              ${del}
+            <select onchange="finSetStatus(${p.id},this.value)" style="font-size:11px;font-weight:700;font-family:inherit;padding:4px 8px;border-radius:10px;cursor:pointer;border:1.5px solid;min-width:90px;${selStyle}">
+              ${opt('PAGO')}${opt('ABERTO')}${opt('VENCIDO')}${opt('PERDIDO')}
+            </select>
+          </td>
+          <td style="${TDnw}text-align:center;">
+            <div style="display:flex;gap:4px;justify-content:center;align-items:center;">
+              <button onclick="openEditPaymentModal(${p.id},${p.amount})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;opacity:.4;padding:2px 4px;line-height:1;" title="Editar">✏</button>
+              <button onclick="finDeletePayment(${p.id},'${esc(finClientName(p)).replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.35;padding:2px;line-height:1;" title="Excluir">×</button>
             </div>
           </td>
         </tr>`;
@@ -5745,32 +5756,36 @@ function renderFinanceiro() {
   document.getElementById('fin-cost-summary').innerHTML =
     `<span style="color:#2FB989;font-weight:700;">${fBRL(custosPagos)} pago</span> · <span style="color:#E07A3A;font-weight:700;">${fBRL(custosAbertos)} em aberto</span>`;
   document.getElementById('fin-costs-tbody').innerHTML = costs.length === 0
-    ? `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum custo cadastrado. Clique em "+ Adicionar".</td></tr>`
+    ? `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-dim);">Nenhum custo cadastrado. Clique em "+ Adicionar".</td></tr>`
     : costs.map(c => {
-        const isPaid = c.is_paid;
-        const status = isPaid
-          ? `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#D5F5E3;color:#0F6E56;">PAGO</span>`
-          : `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;background:#FAEEDA;color:#854F0B;">ABERTO</span>`;
-        const fixoBadge = c.is_recurring
-          ? `<span style="font-size:9px;background:#EDE8F5;color:#4A2976;border-radius:6px;padding:1px 5px;font-weight:800;margin-left:5px;white-space:nowrap;">FIXO</span>`
+        const cStatus = c.status || (c.is_paid ? 'PAGO' : 'ABERTO');
+        const isVencido = cStatus === 'VENCIDO';
+        const recTag = c.is_recurring
+          ? `<span style="font-size:9px;background:#EDE8F5;color:#4A2976;border-radius:6px;padding:1px 5px;font-weight:800;margin-left:5px;white-space:nowrap;">RECORRENTE</span>`
           : '';
-        const toggleBtn = isPaid
-          ? `<button onclick="finToggleCost(${c.id},false)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(163,45,45,.3);background:transparent;color:#A32D2D;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Desmarcar</button>`
-          : `<button onclick="finToggleCost(${c.id},true)" style="padding:4px 10px;border-radius:16px;border:1px solid rgba(196,114,90,.35);background:transparent;color:var(--coral);font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;">Marcar Pago</button>`;
-        return `<tr>
-          <td style="${TDbase}">${esc(c.description)}${fixoBadge}</td>
-          <td style="${TDbase}color:var(--text-dim);">${c.category||'—'}</td>
-          <td style="${TDnw}text-align:right;font-weight:700;">${fBRL(Number(c.amount))}</td>
-          <td style="${TDnw}text-align:center;">${status}</td>
+        const selStyle = cStatus === 'PAGO' ? 'background:#D5F5E3;color:#0F6E56;border-color:rgba(15,110,86,.4);'
+          : isVencido ? 'background:#FDECEA;color:#A32D2D;border-color:rgba(163,45,45,.3);'
+          : 'background:#FAEEDA;color:#854F0B;border-color:rgba(133,79,11,.3);';
+        const amtStyle = isVencido ? 'color:#DC2626;' : '';
+        const rowBg = isVencido ? 'background:rgba(220,38,38,.05);' : '';
+        const dueDay = c.due_date ? `Dia ${c.due_date}` : '—';
+        const forma = c.payment_method || '—';
+        const opt = s => `<option${cStatus===s?' selected':''}>${s}</option>`;
+
+        return `<tr style="${rowBg}">
+          <td style="${TDbase}">${esc(c.description)}${recTag}</td>
+          <td style="${TDnw}text-align:right;font-weight:700;${amtStyle}">${fBRL(Number(c.amount))}</td>
+          <td style="${TDnw}text-align:center;">${dueDay}</td>
+          <td style="${TDnw}text-align:center;font-size:11px;color:var(--text-dim);">${esc(forma)}</td>
           <td style="${TDnw}text-align:center;">
-            <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
-              ${toggleBtn}
-              <button onclick="openEditCostModal(${c.id},'${c.description.replace(/'/g,"\\'")}',${c.amount})"
-                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;opacity:.5;line-height:1;padding:2px 4px;"
-                title="Editar">✏</button>
-              <button onclick="finDeleteCost(${c.id},'${c.description.replace(/'/g,"\\'")}') "
-                style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.35;line-height:1;padding:2px 4px;"
-                title="Excluir">×</button>
+            <select onchange="finSetCostStatus(${c.id},this.value)" style="font-size:11px;font-weight:700;font-family:inherit;padding:4px 8px;border-radius:10px;cursor:pointer;border:1.5px solid;min-width:90px;${selStyle}">
+              ${opt('PAGO')}${opt('ABERTO')}${opt('VENCIDO')}
+            </select>
+          </td>
+          <td style="${TDnw}text-align:center;">
+            <div style="display:flex;gap:4px;justify-content:center;align-items:center;">
+              <button onclick="openEditCostModal(${c.id},'${c.description.replace(/'/g,"\\'")}',${c.amount})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;opacity:.4;padding:2px 4px;line-height:1;" title="Editar">✏</button>
+              <button onclick="finDeleteCost(${c.id},'${c.description.replace(/'/g,"\\'")}') " style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;opacity:.35;padding:2px 4px;line-height:1;" title="Excluir">×</button>
             </div>
           </td>
         </tr>`;
@@ -5896,7 +5911,9 @@ async function saveNewPayment() {
   const amount = parseFloat(document.getElementById('fnp-amount').value||'0');
   const due    = parseInt(document.getElementById('fnp-due').value||'0')||null;
   const method = document.getElementById('fnp-method').value||null;
-  const isPaid = document.getElementById('fnp-paid').checked;
+  const status = document.getElementById('fnp-status')?.value||'ABERTO';
+  const isPaid = status === 'PAGO';
+  const isRecurring = document.getElementById('fnp-recurring')?.checked || false;
   if (!name || !amount) { showToast('Preencha nome e valor','warn'); return; }
   const { data, error } = await db(
     () => sb.from('monthly_payments').insert({
@@ -5904,7 +5921,7 @@ async function saveNewPayment() {
       amount, is_paid: isPaid, client_name: name,
       is_manual: true, due_day: due, payment_method: method,
       paid_at: isPaid ? new Date().toISOString() : null,
-      status: isPaid ? 'PAGO' : 'ABERTO',
+      status, is_recurring: isRecurring,
     }).select().single(),
     'Erro ao adicionar recebimento'
   );
@@ -5914,7 +5931,8 @@ async function saveNewPayment() {
   document.getElementById('fnp-amount').value='';
   document.getElementById('fnp-due').value='';
   document.getElementById('fnp-method').value='';
-  document.getElementById('fnp-paid').checked=false;
+  if (document.getElementById('fnp-status')) document.getElementById('fnp-status').value='ABERTO';
+  if (document.getElementById('fnp-recurring')) document.getElementById('fnp-recurring').checked=false;
   finToggleNewPayment();
   renderFinanceiro();
   showToast('Recebimento adicionado ✓','ok');
@@ -5923,14 +5941,17 @@ async function saveNewPayment() {
 async function saveNewCost() {
   const desc      = document.getElementById('fnc-desc').value.trim();
   const amount    = parseFloat(document.getElementById('fnc-amount').value||'0');
-  const cat       = document.getElementById('fnc-cat').value.trim()||null;
-  const isPaid    = document.getElementById('fnc-paid').checked;
+  const dueDay    = document.getElementById('fnc-due').value.trim()||null;
+  const method    = document.getElementById('fnc-method').value||null;
+  const status    = document.getElementById('fnc-status').value||'ABERTO';
+  const isPaid    = status === 'PAGO';
   const recurring = document.getElementById('fnc-recurring')?.checked || false;
   if (!desc || !amount) { showToast('Preencha descrição e valor','warn'); return; }
   const { data, error } = await db(
     () => sb.from('cost_items').insert({
       user_id: appUser.id, month: FIN.month, year: FIN.year,
-      description: desc, amount, category: cat, is_paid: isPaid,
+      description: desc, amount, is_paid: isPaid, status,
+      due_date: dueDay, payment_method: method,
       is_recurring: recurring,
     }).select().single(),
     'Erro ao adicionar custo'
@@ -5939,8 +5960,9 @@ async function saveNewCost() {
   FIN.costs.push(data);
   document.getElementById('fnc-desc').value='';
   document.getElementById('fnc-amount').value='';
-  document.getElementById('fnc-cat').value='';
-  document.getElementById('fnc-paid').checked=false;
+  document.getElementById('fnc-due').value='';
+  document.getElementById('fnc-method').value='';
+  document.getElementById('fnc-status').value='ABERTO';
   if (document.getElementById('fnc-recurring')) document.getElementById('fnc-recurring').checked=false;
   finToggleNewCost();
   renderFinanceiro();
@@ -5967,15 +5989,20 @@ async function finMarkPayment(id, isPaid) {
   showToast(isPaid ? 'Marcado como pago ✓' : 'Desmarcado','ok');
 }
 
-async function finToggleCost(id, isPaid) {
+async function finSetCostStatus(id, status) {
+  const isPaid = status === 'PAGO';
   const { error } = await db(
-    () => sb.from('cost_items').update({ is_paid: isPaid }).eq('id', id),
+    () => sb.from('cost_items').update({ status, is_paid: isPaid }).eq('id', id),
     'Erro ao atualizar custo'
   );
   if (error) return;
-  FIN.costs = FIN.costs.map(c => c.id===id ? {...c, is_paid: isPaid} : c);
+  FIN.costs = FIN.costs.map(c => c.id===id ? {...c, status, is_paid: isPaid} : c);
   renderFinanceiro();
-  showToast(isPaid ? 'Custo marcado pago ✓' : 'Desmarcado','ok');
+  showToast(
+    status === 'PAGO' ? 'Custo marcado pago ✓' :
+    status === 'VENCIDO' ? 'Custo marcado vencido' :
+    'Status atualizado', 'ok'
+  );
 }
 
 async function finSetStatus(id, status) {
