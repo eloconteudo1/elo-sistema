@@ -1350,7 +1350,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.64 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.65 · ELO Comunicação · Atualizado em 15/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1426,7 +1426,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.64</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.65</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">15/07/2026</span></span>
   </footer>
@@ -2130,6 +2130,36 @@ function mniRemToggle() {
   document.getElementById('mni-rem-daily').style.display = type === 'daily' ? '' : 'none';
   document.getElementById('mni-rem-interval').style.display = type === 'interval' ? '' : 'none';
 }
+// ── Helper: avisa duplicata antes de insert ────────────────────
+// type: 'appt' | 'task'
+// title: string
+// dateStr: 'YYYY-MM-DD'
+// Retorna true se duplicata encontrada (chamador deve abortar)
+function _checkDuplicate(type, title, dateStr) {
+  const norm = s => (s || '').trim().toLowerCase();
+  if (type === 'appt') {
+    const dup = (T.appointments || []).find(a => {
+      const d = new Date(a.scheduled_at);
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      return ds === dateStr && norm(a.title) === norm(title);
+    });
+    if (dup) {
+      showToast(`Já existe um compromisso "${title}" nesta data`, 'warn');
+      return true;
+    }
+  }
+  if (type === 'task') {
+    const dup = (T.scheduledTasks || []).find(t =>
+      t.scheduled_date === dateStr && norm(t.title) === norm(title)
+    );
+    if (dup) {
+      showToast(`Já existe uma tarefa "${title}" nesta data`, 'warn');
+      return true;
+    }
+  }
+  return false;
+}
+
 async function saveMobileAppt() {
   const title = document.getElementById('mni-appt-title')?.value.trim();
   const date  = document.getElementById('mni-appt-date')?.value;
@@ -2140,6 +2170,7 @@ async function saveMobileAppt() {
   const [y,m,d] = date.split('-').map(Number);
   const [h,min] = time.split(':').map(Number);
   const scheduledAt = new Date(y,m-1,d,h,min,0).getTime();
+  if (_checkDuplicate('appt', title, date)) return;
   const { error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false }), 'Erro ao salvar compromisso');
   if (error) return;
   showToast('Compromisso salvo ✓','ok');
@@ -2155,6 +2186,7 @@ async function saveMobileTask() {
   const clientId = Number(document.getElementById('mni-task-client')?.value) || null;
   if (!title) { showToast('Informe o título','warn'); return; }
   if (!date)  { showToast('Informe a data','warn'); return; }
+  if (_checkDuplicate('task', title, date)) return;
   const { error } = await db(() => sb.from('scheduled_tasks').insert({
     title, scheduled_date:date, scheduled_time:time,
     priority, client_id:clientId, is_done:false, user_id:appUser.id
@@ -5045,6 +5077,8 @@ async function _nrmSaveAppt() {
     if (tidx !== -1) T.appointments[tidx] = { ...T.appointments[tidx], ...payload };
     showToast('Compromisso atualizado!', 'ok');
   } else {
+    const ds = `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    if (_checkDuplicate('appt', title, ds)) { btn.textContent = 'Salvar'; btn.disabled = false; return; }
     const { data, error } = await db(() => sb.from('appointments').insert(payload).select().single(), 'Erro ao salvar compromisso');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) return;
@@ -5087,6 +5121,7 @@ async function _nrmSaveTask() {
     if (tidx !== -1) T.scheduledTasks[tidx] = { ...T.scheduledTasks[tidx], ...payload };
     showToast('Tarefa atualizada!', 'ok');
   } else {
+    if (_checkDuplicate('task', title, dbDate)) { btn.textContent = 'Salvar'; btn.disabled = false; return; }
     payload.is_done = false; payload.user_id = 1;
     const { data, error } = await db(() => sb.from('scheduled_tasks').insert(payload).select().single(), 'Erro ao salvar tarefa');
     btn.textContent = 'Salvar'; btn.disabled = false;
