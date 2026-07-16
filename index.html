@@ -1354,7 +1354,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.66 · ELO Comunicação · Atualizado em 16/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.67 · ELO Comunicação · Atualizado em 16/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1430,7 +1430,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.66</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.67</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">16/07/2026</span></span>
   </footer>
@@ -7336,12 +7336,12 @@ function renderRadarWeekGrid() {
     const chipsHtml = allItems.slice(0, 2).map(it => {
       const dc = it.type === 'task' && it.priority ? (prioColors[it.priority] || dotColor.task) : dotColor[it.type];
       const strike = it.done ? 'text-decoration:line-through;opacity:.55;' : '';
-      return `<span style="display:block;width:100%;box-sizing:border-box;font-size:9px;font-weight:700;line-height:1.25;
-        padding:2px 4px;border-radius:5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+      return `<span style="display:block;width:100%;box-sizing:border-box;font-size:11px;font-weight:700;line-height:1.3;
+        padding:4px 6px;border-radius:6px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
         ${isToday ? 'background:rgba(255,255,255,.22);color:#fff;' : chipKindStyle[it.type]}${strike}">${it.time ? esc(it.time) + ' ' : ''}${esc(it.title)}</span>`;
     }).join('');
     const moreHtml = allItems.length > 2
-      ? `<span style="display:block;font-size:8px;font-weight:800;margin-top:2px;color:${isToday ? 'rgba(255,255,255,.75)' : (isSelected ? 'var(--purple)' : 'var(--text-dim)')};text-align:left;">+${allItems.length - 2} mais</span>`
+      ? `<span style="display:block;font-size:10px;font-weight:800;margin-top:4px;color:${isToday ? 'rgba(255,255,255,.75)' : (isSelected ? 'var(--purple)' : 'var(--text-dim)')};text-align:left;">+${allItems.length - 2} mais</span>`
       : '';
     let bg = 'var(--off)';
     let border = '1px solid rgba(74,41,118,.07)';
@@ -7349,9 +7349,9 @@ function renderRadarWeekGrid() {
     if (isToday) { bg = 'var(--coral)'; labelColor = '#fff'; border = 'none'; }
     if (isSelected && !isToday) { border = '2px solid var(--purple)'; bg = 'var(--surface2)'; labelColor = 'var(--purple)'; }
     html += `<div onclick="radarSelectDay('${ds}',this)"
-      style="background:${bg};border:${border};border-radius:10px;padding:6px 5px;min-height:80px;cursor:pointer;transition:background .15s,border-color .15s;">
-      <div style="text-align:center;font-size:9px;font-weight:800;color:${labelColor};margin-bottom:2px;">${diasSem3[i]} ${String(d.getDate()).padStart(2,'0')}</div>
-      ${countLabel ? `<div style="text-align:center;font-size:9px;font-weight:600;color:${isToday ? 'rgba(255,255,255,.85)' : 'var(--text-dim)'};">${countLabel}</div>` : ''}
+      style="background:${bg};border:${border};border-radius:10px;padding:10px 8px;min-height:130px;cursor:pointer;transition:background .15s,border-color .15s;">
+      <div style="text-align:center;font-size:11px;font-weight:800;color:${labelColor};margin-bottom:4px;">${diasSem3[i]} ${String(d.getDate()).padStart(2,'0')}</div>
+      ${countLabel ? `<div style="text-align:center;font-size:10.5px;font-weight:600;color:${isToday ? 'rgba(255,255,255,.85)' : 'var(--text-dim)'};margin-bottom:2px;">${countLabel}</div>` : ''}
       ${chipsHtml}${moreHtml}
     </div>`;
   }
