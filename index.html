@@ -974,6 +974,12 @@
 
           <!-- PAINEL HOJE -->
           <div class="radar-panel active" id="radar-panel-hoje">
+            <div id="radar-atrasadas-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid #DC2626;padding:14px 16px;margin-bottom:16px;">
+              <div style="margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;">⚠ Atrasadas <span id="radar-atrasadas-count"></span></span>
+              </div>
+              <div id="radar-atrasadas-list"></div>
+            </div>
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:16px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Linha do dia</span>
@@ -1354,7 +1360,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.68 · ELO Comunicação · Atualizado em 16/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.69 · ELO Comunicação · Atualizado em 16/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1430,7 +1436,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.68</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.69</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">16/07/2026</span></span>
   </footer>
@@ -7226,8 +7232,55 @@ function radarProxClick(div) {
   if (!id) return;
   openCalEditModal(id, 'appointment');
 }
+function renderRadarAtrasadas() {
+  const card = document.getElementById('radar-atrasadas-card');
+  const list = document.getElementById('radar-atrasadas-list');
+  const count = document.getElementById('radar-atrasadas-count');
+  if (!card || !list) return;
+  const todayDate = todayStr();
+  const atrasadas = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+  if (atrasadas.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  if (count) count.textContent = `(${atrasadas.length})`;
+  list.innerHTML = atrasadas.map((t, i) => {
+    const prio = t.priority === 'alta' ? ' · alta' : '';
+    const borda = i < atrasadas.length - 1 ? 'border-bottom:1px solid rgba(74,41,118,.08);' : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;${borda}">
+      <div style="min-width:0;">
+        <div style="font-size:13.5px;font-weight:600;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
+        <div style="font-size:11.5px;color:#DC2626;">era ${esc(dbDateToDisplay(t.scheduled_date))}${prio}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <button data-id="${t.id}" onclick="radarMoverParaHoje(this)"
+          style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;border:none;background:#FDE8E8;color:#DC2626;cursor:pointer;font-family:inherit;">→ Hoje</button>
+        <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
+          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
+        <button data-id="${t.id}" onclick="radarDeleteTask(this)"
+          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function radarMoverParaHoje(btn) {
+  const id = Number(btn.dataset.id);
+  if (!id) return;
+  btn.disabled = true;
+  const novaData = todayStr();
+  const { error } = await db(() => sb.from('scheduled_tasks').update({ scheduled_date: novaData }).eq('id', id), 'Erro ao remanejar tarefa');
+  if (error) { btn.disabled = false; return; }
+  T.scheduledTasks = T.scheduledTasks.map(t => t.id === id ? { ...t, scheduled_date: novaData } : t);
+  showToast('Tarefa remanejada para hoje', 'ok');
+  radarRefreshCurrentPanel();
+}
+
 function renderPanelHoje() {
   loadRadarPanelData();
+  renderRadarAtrasadas();
   const todayDate = todayStr();
   const bodyEl = document.getElementById('radar-timeline-body');
   if (!bodyEl) return;
