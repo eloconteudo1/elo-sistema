@@ -274,11 +274,11 @@
     .radar-day-detail { margin-top:14px; padding-top:14px; border-top:1px solid rgba(0,0,0,.06); display:none; }
     .radar-day-detail.open { display:block; }
     .radar-day-detail-title { font-size:12px; font-weight:800; color:var(--deep); margin-bottom:8px; }
-    .radar-day-detail-item { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-bottom:1px solid rgba(0,0,0,.05); }
+    .radar-day-detail-item { display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-bottom:1px solid rgba(0,0,0,.05); }
     .radar-day-detail-item:last-child { border-bottom:none; }
-    .radar-day-detail-time { font-size:11px; font-weight:800; color:var(--text-dim); width:40px; flex-shrink:0; }
-    .radar-day-detail-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:4px; }
-    .radar-day-detail-name { font-size:12.5px; font-weight:600; color:var(--text); }
+    .radar-day-detail-time { font-size:12.5px; font-weight:800; color:var(--text-dim); width:44px; flex-shrink:0; }
+    .radar-day-detail-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+    .radar-day-detail-name { font-size:14px; font-weight:600; color:var(--text); }
     .radar-day-detail-empty { font-size:12px; color:var(--text-dim); font-weight:600; }
 
     .radar-tabs { display:inline-flex; background:var(--surface2); border-radius:12px; padding:4px; gap:4px; }
@@ -961,6 +961,12 @@
             </div>
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;" id="radar-week-grid"></div>
           </div>
+          <div id="radar-week-agenda-wrap" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-top:20px;">
+            <div style="margin-bottom:14px;">
+              <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda da semana</span>
+            </div>
+            <div id="radar-semana-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
+          </div>
         </div>
 
         <!-- COLUNA DIREITA — painel contextual (troca por aba) -->
@@ -981,7 +987,11 @@
 
           <!-- PAINEL SEMANA -->
           <div class="radar-panel" id="radar-panel-semana">
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-bottom:16px;">
+            <div class="radar-day-detail-card" id="radar-semana-day-detail-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid var(--coral);padding:14px 16px;margin-bottom:16px;">
+              <div class="radar-day-detail-title" id="radar-semana-day-detail-title" style="color:var(--coral);"></div>
+              <div id="radar-semana-day-detail-body"></div>
+            </div>
+            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:14px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Carga dos próximos 7 dias</span>
               </div>
@@ -991,12 +1001,6 @@
                 <div class="radar-legend-item"><span class="radar-legend-dot" style="background:var(--orange);"></span>cheio</div>
                 <div class="radar-legend-item"><span class="radar-legend-dot" style="background:#DC2626;"></span>sobrecarga</div>
               </div>
-            </div>
-            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
-              <div style="margin-bottom:14px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda da semana</span>
-              </div>
-              <div id="radar-semana-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
           </div>
 
@@ -1350,7 +1354,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.65 · ELO Comunicação · Atualizado em 15/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.66 · ELO Comunicação · Atualizado em 16/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1426,9 +1430,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.65</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.66</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">15/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">16/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -7306,11 +7310,16 @@ function renderRadarWeekGrid() {
   const todayDate = todayStr();
   const dotColor = { appt: 'var(--blue)', task: 'var(--purple)' };
   const prioColors = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)' };
+  const chipKindStyle = {
+    appt: `background:rgba(59,130,246,.12);color:var(--blue);`,
+    task: `background:rgba(74,41,118,.10);color:var(--purple);`
+  };
   let html = '';
   for (let i = 0; i < 7; i++) {
     const d = new Date(sunday.getTime() + i * 86400000);
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const isToday = ds === todayDate;
+    const isSelected = RADAR.selectedDay === ds;
     const tasksDay = (RADAR.tasks || []).filter(t => t.scheduled_date === ds);
     const apptsDay = (RADAR.appts || []).filter(a => {
       const ad = new Date(a.scheduled_at);
@@ -7323,21 +7332,27 @@ function renderRadarWeekGrid() {
       }),
       ...tasksDay.map(t => ({ id: t.id, type: 'task', time: t.scheduled_time || '', title: t.title, done: !!t.is_done, priority: t.priority }))
     ].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
-    const itemsHtml = allItems.map(it => {
+    const countLabel = allItems.length ? `${allItems.length} ${allItems.length === 1 ? 'item' : 'itens'}` : '';
+    const chipsHtml = allItems.slice(0, 2).map(it => {
       const dc = it.type === 'task' && it.priority ? (prioColors[it.priority] || dotColor.task) : dotColor[it.type];
       const strike = it.done ? 'text-decoration:line-through;opacity:.55;' : '';
-      return `<div data-id="${it.id}" data-type="${it.type === 'appt' ? 'appointment' : 'scheduled_task'}" onclick="radarEditTask(this)"
-        style="display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:var(--text);background:rgba(74,41,118,.06);border-radius:5px;padding:3px 4px;margin-bottom:3px;cursor:pointer;${strike}">
-        <span style="width:5px;height:5px;border-radius:50%;background:${dc};flex-shrink:0;"></span>
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.time ? esc(it.time) + ' ' : ''}${esc(it.title)}</span>
-      </div>`;
+      return `<span style="display:block;width:100%;box-sizing:border-box;font-size:9px;font-weight:700;line-height:1.25;
+        padding:2px 4px;border-radius:5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;
+        ${isToday ? 'background:rgba(255,255,255,.22);color:#fff;' : chipKindStyle[it.type]}${strike}">${it.time ? esc(it.time) + ' ' : ''}${esc(it.title)}</span>`;
     }).join('');
-    const bg = isToday ? 'rgba(196,114,90,.12)' : 'var(--off)';
-    const border = isToday ? '2px solid var(--coral)' : '1px solid rgba(74,41,118,.07)';
-    const labelColor = isToday ? 'var(--coral)' : 'rgba(46,27,78,.45)';
-    html += `<div style="background:${bg};border:${border};border-radius:10px;padding:6px 5px;min-height:150px;">
-      <div style="text-align:center;font-size:9px;font-weight:800;color:${labelColor};margin-bottom:4px;">${diasSem3[i]} ${String(d.getDate()).padStart(2,'0')}</div>
-      ${itemsHtml}
+    const moreHtml = allItems.length > 2
+      ? `<span style="display:block;font-size:8px;font-weight:800;margin-top:2px;color:${isToday ? 'rgba(255,255,255,.75)' : (isSelected ? 'var(--purple)' : 'var(--text-dim)')};text-align:left;">+${allItems.length - 2} mais</span>`
+      : '';
+    let bg = 'var(--off)';
+    let border = '1px solid rgba(74,41,118,.07)';
+    let labelColor = 'rgba(46,27,78,.45)';
+    if (isToday) { bg = 'var(--coral)'; labelColor = '#fff'; border = 'none'; }
+    if (isSelected && !isToday) { border = '2px solid var(--purple)'; bg = 'var(--surface2)'; labelColor = 'var(--purple)'; }
+    html += `<div onclick="radarSelectDay('${ds}',this)"
+      style="background:${bg};border:${border};border-radius:10px;padding:6px 5px;min-height:80px;cursor:pointer;transition:background .15s,border-color .15s;">
+      <div style="text-align:center;font-size:9px;font-weight:800;color:${labelColor};margin-bottom:2px;">${diasSem3[i]} ${String(d.getDate()).padStart(2,'0')}</div>
+      ${countLabel ? `<div style="text-align:center;font-size:9px;font-weight:600;color:${isToday ? 'rgba(255,255,255,.85)' : 'var(--text-dim)'};">${countLabel}</div>` : ''}
+      ${chipsHtml}${moreHtml}
     </div>`;
   }
   wrap.innerHTML = html;
@@ -7358,8 +7373,10 @@ function setRadarTab(tab, el) {
   if (subEl) subEl.textContent = subs[tab] || '';
   const monthWrap = document.getElementById('radar-cal-month-wrap');
   const weekWrap = document.getElementById('radar-cal-week-wrap');
+  const weekAgendaWrap = document.getElementById('radar-week-agenda-wrap');
   if (monthWrap) monthWrap.style.display = tab === 'semana' ? 'none' : 'block';
   if (weekWrap) weekWrap.style.display = tab === 'semana' ? 'block' : 'none';
+  if (weekAgendaWrap) weekAgendaWrap.style.display = tab === 'semana' ? 'block' : 'none';
   radarCloseDetail();
   renderRadarGrid();
   loadRadarPanelData();
@@ -7463,10 +7480,16 @@ function renderRadarGrid() {
 function radarSelectDay(ds, el) {
   RADAR.selectedDay = ds;
   renderRadarGrid();
-  const inMes = RADAR.tab === 'mes';
-  const detail = document.getElementById(inMes ? 'radar-mes-day-detail-card' : 'radar-day-detail');
-  const titleEl = document.getElementById(inMes ? 'radar-mes-day-detail-title' : 'radar-day-detail-title');
-  const bodyEl = document.getElementById(inMes ? 'radar-mes-day-detail-body' : 'radar-day-detail-body');
+  if (RADAR.tab === 'semana') renderRadarWeekGrid();
+  const idMap = {
+    hoje:   { card: 'radar-day-detail', title: 'radar-day-detail-title', body: 'radar-day-detail-body', mode: 'class' },
+    semana: { card: 'radar-semana-day-detail-card', title: 'radar-semana-day-detail-title', body: 'radar-semana-day-detail-body', mode: 'block' },
+    mes:    { card: 'radar-mes-day-detail-card', title: 'radar-mes-day-detail-title', body: 'radar-mes-day-detail-body', mode: 'block' }
+  };
+  const cfg = idMap[RADAR.tab] || idMap.hoje;
+  const detail = document.getElementById(cfg.card);
+  const titleEl = document.getElementById(cfg.title);
+  const bodyEl = document.getElementById(cfg.body);
   if (!detail || !titleEl || !bodyEl) return;
   const [y, m, d] = ds.split('-');
   const diasSem = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -7507,7 +7530,7 @@ function radarSelectDay(ds, el) {
       </div>`;
     }).join('');
   }
-  if (inMes) { detail.style.display = 'block'; }
+  if (cfg.mode === 'block') { detail.style.display = 'block'; }
   else { detail.classList.add('open'); }
 }
 function radarCloseDetail() {
@@ -7515,6 +7538,8 @@ function radarCloseDetail() {
   if (detail) detail.classList.remove('open');
   const mesDetail = document.getElementById('radar-mes-day-detail-card');
   if (mesDetail) mesDetail.style.display = 'none';
+  const semanaDetail = document.getElementById('radar-semana-day-detail-card');
+  if (semanaDetail) semanaDetail.style.display = 'none';
   RADAR.selectedDay = null;
 }
 function radarEditTask(btn) {
@@ -7683,7 +7708,7 @@ function renderPanelSemana() {
 
   const diasSemW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const prioColors = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)' };
-  const btnStyle = `flex-shrink:0;border:none;background:none;cursor:pointer;padding:4px 6px;font-size:14px;opacity:.7;transition:opacity .15s;`;
+  const btnStyle = `flex-shrink:0;border:none;background:none;cursor:pointer;padding:4px 6px;font-size:15px;opacity:.7;transition:opacity .15s;`;
   const btnHover = `onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'"`;
 
   if (allWeek.length === 0) {
@@ -7695,24 +7720,24 @@ function renderPanelSemana() {
       const dow = diasSemW[new Date(parseInt(iy), parseInt(im)-1, parseInt(id2)).getDay()];
       const dayLabel = `${dow} ${id2}/${im}`;
       const headerHtml = it.ds !== lastDs
-        ? `<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin:12px 0 6px;padding-top:${lastDs ? '4px' : '0'}">${dayLabel}</div>`
+        ? `<div style="font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin:14px 0 8px;padding-top:${lastDs ? '6px' : '0'}">${dayLabel}</div>`
         : '';
       lastDs = it.ds;
 
       const color = it.type === 'appt' ? 'var(--blue)' : (prioColors[it.priority] || 'var(--purple)');
       const strike = it.done ? 'opacity:.45;' : '';
-      const timeLabel = it.time ? `<span style="font-size:11px;color:var(--text-dim);margin-right:6px;">${it.time}</span>` : '';
-      const durLabel = it.dur ? `<span style="font-size:10px;color:var(--text-dim);"> · ${fMin(it.dur)}</span>` : '';
+      const timeLabel = it.time ? `<span style="font-size:12.5px;color:var(--text-dim);margin-right:8px;">${it.time}</span>` : '';
+      const durLabel = it.dur ? `<span style="font-size:11px;color:var(--text-dim);"> · ${fMin(it.dur)}</span>` : '';
 
       const editBtn = `<button data-id="${it.id}" data-type="${it.type === 'appt' ? 'appointment' : 'scheduled_task'}" onclick="radarEditTask(this)"
         style="${btnStyle}color:var(--text-dim);" ${btnHover} title="Editar">✏️</button>`;
       const delBtn = `<button data-id="${it.id}" onclick="${it.type === 'appt' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}"
         style="${btnStyle}color:#DC2626;" ${btnHover} title="Excluir">🗑</button>`;
 
-      return `${headerHtml}<div style="display:flex;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid rgba(74,41,118,.06);${strike}">
-        <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+      return `${headerHtml}<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(74,41,118,.06);${strike}">
+        <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></span>
         <div style="flex:1;min-width:0;">
-          ${timeLabel}<span style="font-size:13px;font-weight:600;color:var(--text);">${esc(it.title)}</span>${durLabel}
+          ${timeLabel}<span style="font-size:14.5px;font-weight:600;color:var(--text);">${esc(it.title)}</span>${durLabel}
         </div>
         ${editBtn}${delBtn}
       </div>`;
