@@ -1354,7 +1354,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.67 · ELO Comunicação · Atualizado em 16/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.68 · ELO Comunicação · Atualizado em 16/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1430,7 +1430,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.67</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.68</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">16/07/2026</span></span>
   </footer>
@@ -1859,7 +1859,6 @@ function navigateTo(page) {
   if (page === 'resultado'  && appUser) initResultado();
   if (page === 'clientes'   && appUser) initClientes();
   if (page === 'radar'      && appUser) initRadar();
-  if (page === 'calendario' && appUser) initCalendario();
   if (page === 'financeiro' && appUser) initFinanceiro();
   if (page === 'config'     && appUser) initConfig();
   // Mantém a URL em sincronia com a página ativa — permite abrir em nova aba / recarregar na mesma página
@@ -4550,250 +4549,11 @@ const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho'
 // ─────────────────────────────────────────────────────────────────
 // CALENDÁRIO
 // ─────────────────────────────────────────────────────────────────
-const MONTHS_CAL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const PRIORITY_COLOR = { alta:'#e07a5f', media:'#7c6fcd', baixa:'#4caf8a' };
-
+// Cache da aba Lembretes do modal Novo Registro (único uso vivo remanescente do antigo Calendário)
 const CAL = {
-  tab: 'calendario',
-  year: new Date().getFullYear(),
-  month: new Date().getMonth(),
-  selectedDay: null,
-  appointments: [],
-  scheduledTasks: [],
   reminders: [],
-  modalTab: 'compromisso',
-  editingRemId: null,
-  remType: 'interval',
-  hoursByDay: {},
-  settings: { pauseMinutes:30, lunchTime:'12:00', endTime:'18:00', dailyGoalHours:8 },
 };
 
-async function initCalendario() {
-  await loadCalData();
-  renderCalPage();
-}
-
-async function loadCalData() {
-  const now = new Date(CAL.year, CAL.month, 1);
-  const monthStart = new Date(CAL.year, CAL.month, 1).getTime();
-  const monthEnd = new Date(CAL.year, CAL.month+1, 0, 23, 59, 59, 999).getTime();
-  const calMonthStartStr = `${CAL.year}-${String(CAL.month+1).padStart(2,'0')}-01`;
-  const calMonthEndStr   = `${CAL.year}-${String(CAL.month+1).padStart(2,'0')}-31`;
-
-  const [apptRes, taskRes, remRes, teRes] = await Promise.all([
-    sb.from('appointments').select('*').gte('scheduled_at', monthStart).lte('scheduled_at', monthEnd).order('scheduled_at'),
-    sb.from('scheduled_tasks').select('*').gte('scheduled_date', calMonthStartStr).lte('scheduled_date', calMonthEndStr).order('scheduled_date', {ascending:true}),
-    sb.from('reminders').select('*').order('id'),
-    sb.from('time_entries').select('start_time,duration_minutes').gte('start_time', monthStart).lte('start_time', monthEnd),
-  ]);
-  CAL.appointments = apptRes.data || [];
-  CAL.scheduledTasks = taskRes.data || [];
-  CAL.reminders = remRes.data || [];
-
-  // Horas trabalhadas por dia
-  CAL.hoursByDay = {};
-  for (const e of (teRes.data || [])) {
-    if (!e.duration_minutes) continue;
-    const d = new Date(e.start_time);
-    const day = d.getDate();
-    CAL.hoursByDay[day] = (CAL.hoursByDay[day] || 0) + e.duration_minutes;
-  }
-
-  // Iniciar ticker de alarmes (apenas uma vez)
-  if (!window._alarmTickerStarted) {
-    window._alarmTickerStarted = true;
-    startAlarmTicker();
-  }
-}
-
-function setCalTab(tab) {
-  CAL.tab = tab;
-  const isCal = tab === 'calendario';
-  document.getElementById('cal-view-calendario').style.display = isCal ? '' : 'none';
-  document.getElementById('cal-view-alertas').style.display = isCal ? 'none' : '';
-  document.getElementById('cal-nav').style.display = isCal ? '' : 'none';
-
-  const btnCal = document.getElementById('cal-tab-calendario');
-  const btnAl = document.getElementById('cal-tab-alertas');
-  btnCal.style.background = isCal ? '#fff' : 'transparent';
-  btnCal.style.color = isCal ? 'var(--deep)' : 'var(--text-dim)';
-  btnCal.style.boxShadow = isCal ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
-  btnAl.style.background = !isCal ? '#fff' : 'transparent';
-  btnAl.style.color = !isCal ? 'var(--deep)' : 'var(--text-dim)';
-  btnAl.style.boxShadow = !isCal ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
-}
-
-function renderCalPage() {
-  document.getElementById('cal-month-label').textContent = `${MONTHS_CAL[CAL.month]} ${CAL.year}`;
-  renderCalGrid();
-  renderCalSidebar();
-}
-
-function getEventsByDay() {
-  const map = {};
-  for (const appt of CAL.appointments) {
-    const d = new Date(Number(appt.scheduled_at));
-    if (d.getMonth() === CAL.month && d.getFullYear() === CAL.year) {
-      const day = d.getDate();
-      if (!map[day]) map[day] = [];
-      map[day].push({ id:appt.id, type:'appointment', title:appt.title, time:d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), isDone:appt.is_done });
-    }
-  }
-  for (const task of CAL.scheduledTasks) {
-    if (!task.scheduled_date) continue;
-    const parts = task.scheduled_date.split('-');
-    if (parts.length !== 3) continue;
-    const [yyyy, mm, dd] = parts.map(Number);
-    if (mm-1 === CAL.month && yyyy === CAL.year) {
-      if (!map[dd]) map[dd] = [];
-      map[dd].push({ id:task.id, type:'task', title:task.title, time:task.scheduled_time||null, priority:task.priority||'media', isDone:task.is_done });
-    }
-  }
-  return map;
-}
-
-function renderCalGrid() {
-  const now = new Date();
-  const todayDay = now.getDate();
-  const isCurrentMonth = now.getMonth() === CAL.month && now.getFullYear() === CAL.year;
-  const firstDay = new Date(CAL.year, CAL.month, 1).getDay();
-  const daysInMonth = new Date(CAL.year, CAL.month+1, 0).getDate();
-  const eventsByDay = getEventsByDay();
-
-  const cells = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  let html = '';
-  cells.forEach((day, idx) => {
-    if (!day) { html += `<div class="cal-cell empty"></div>`; return; }
-    const events = eventsByDay[day] || [];
-    const isToday = isCurrentMonth && day === todayDay;
-    const isSel = day === CAL.selectedDay;
-    let cls = 'cal-cell';
-    if (isToday) cls += ' today';
-    if (isSel) cls += ' selected';
-
-    let chips = events.slice(0, 2).map(ev => {
-      const bg = ev.type === 'appointment'
-        ? 'rgba(124,111,205,.15)' : `${PRIORITY_COLOR[ev.priority||'media']}22`;
-      const col = ev.type === 'appointment'
-        ? 'var(--purple)' : PRIORITY_COLOR[ev.priority||'media'];
-      const dec = ev.isDone ? 'line-through' : 'none';
-      const op = ev.isDone ? '0.5' : '1';
-      return `<div class="cal-event-chip" style="background:${bg};color:${col};text-decoration:${dec};opacity:${op};">${esc(ev.title)}</div>`;
-    }).join('');
-    if (events.length > 2) chips += `<div style="font-size:10px;color:#999;padding-left:5px;">+${events.length-2} mais</div>`;
-
-
-    html += `<div class="${cls}" onclick="calSelectDay(${day})">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div class="cal-cell-num">${day}</div>
-        <button class="cal-add-btn" onclick="event.stopPropagation();openNovoRegistro('appt',${day})">+</button>
-      </div>
-      ${chips}
-    </div>`;
-  });
-  document.getElementById('cal-days-grid').innerHTML = html;
-}
-
-function calSelectDay(day) {
-  CAL.selectedDay = CAL.selectedDay === day ? null : day;
-  renderCalGrid();
-  renderCalSidebar();
-}
-
-function renderCalSidebar() {
-  const sidebar = document.getElementById('cal-sidebar');
-  const now = new Date();
-  const apptCount = CAL.appointments.length;
-  const taskCount = CAL.scheduledTasks.filter(t => {
-    if (!t.scheduled_date) return false;
-    const p = t.scheduled_date.split('-');
-    return p.length === 3 && Number(p[1])-1 === CAL.month && Number(p[0]) === CAL.year;
-  }).length;
-
-  let panelHtml = '';
-  if (CAL.selectedDay) {
-    const eventsByDay = getEventsByDay();
-    const events = eventsByDay[CAL.selectedDay] || [];
-    let evHtml = '';
-    if (events.length === 0) {
-      evHtml = `<div style="text-align:center;padding:20px 0;">
-        <p style="font-size:13px;color:#aaa;margin:0 0 12px;">Nenhum evento neste dia</p>
-        <button onclick="openNovoRegistro('appt',${CAL.selectedDay})" style="padding:8px 18px;border-radius:10px;border:1.5px dashed rgba(196,114,90,.4);background:rgba(196,114,90,.05);color:var(--coral);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">+ Adicionar evento</button>
-      </div>`;
-    } else {
-      evHtml = `<div style="display:flex;flex-direction:column;gap:10px;">` +
-        events.map(ev => {
-          const col = ev.type === 'appointment' ? 'var(--purple)' : PRIORITY_COLOR[ev.priority||'media'];
-          const bg = ev.type === 'appointment' ? 'rgba(124,111,205,.08)' : `${PRIORITY_COLOR[ev.priority||'media']}11`;
-          const lbl = ev.type === 'appointment' ? 'COMPROMISSO' : `TAREFA · ${(ev.priority||'media').toUpperCase()}`;
-          const done = ev.isDone ? '<span style="margin-left:6px;color:#4caf8a;">✓ CONCLUÍDO</span>' : '';
-          const dec = ev.isDone ? 'line-through' : 'none';
-          const op = ev.isDone ? '0.5' : '1';
-          const timeHtml = ev.time ? `<div style="font-size:11px;color:#888;margin-top:2px;">🕐 ${ev.time}</div>` : '';
-          const onDelete = ev.type === 'appointment'
-            ? `deleteAppt(${ev.id})`
-            : `deleteTask(${ev.id})`;
-          return `<div style="padding:10px 14px;border-radius:10px;background:${bg};border-left:3px solid ${col};opacity:${op};">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-              <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${col};">${lbl}${done}</div>
-              <div style="display:flex;gap:4px;">
-                <button onclick="openCalEditModal(${ev.id},'${ev.type}')"
-                  style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:0 2px;opacity:.6;line-height:1;" title="Editar">✏</button>
-                <button onclick="${onDelete}"
-                  style="background:none;border:none;cursor:pointer;color:var(--coral);font-size:14px;padding:0 2px;opacity:.7;line-height:1;" title="Excluir">×</button>
-              </div>
-            </div>
-            <div style="font-size:13px;font-weight:600;color:var(--deep);text-decoration:${dec};">${esc(ev.title)}</div>
-            ${timeHtml}
-          </div>`;
-        }).join('') + `</div>`;
-    }
-    panelHtml = `<div class="cal-panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <h3 style="font-size:15px;font-weight:700;color:var(--deep);margin:0;">${CAL.selectedDay} de ${MONTHS_CAL[CAL.month]}</h3>
-        <button onclick="openNovoRegistro('appt',${CAL.selectedDay})" style="padding:5px 12px;border-radius:8px;border:none;background:var(--coral);color:#fff;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;">+ Evento</button>
-      </div>
-      ${evHtml}
-    </div>`;
-  } else {
-    panelHtml = ''; // sem legenda — notas aparecem abaixo
-  }
-
-  sidebar.innerHTML = panelHtml + `
-    <div class="cal-panel" id="cal-notes-panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <h3 style="font-size:13px;font-weight:700;color:var(--deep);margin:0;letter-spacing:.5px;text-transform:uppercase;">Minhas Anotações</h3>
-      </div>
-      <div id="cal-notes-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
-      <button onclick="openNovoRegistro('nota')" style="margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1.5px dashed rgba(196,114,90,.35);background:rgba(196,114,90,.04);color:var(--coral);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nova anotação</button>
-    </div>`;
-  renderCalNotes();
-}
-
-function calPrevMonth() {
-  if (CAL.month === 0) { CAL.month = 11; CAL.year--; }
-  else CAL.month--;
-  CAL.selectedDay = null;
-  loadCalData().then(() => renderCalPage());
-}
-function calNextMonth() {
-  if (CAL.month === 11) { CAL.month = 0; CAL.year++; }
-  else CAL.month++;
-  CAL.selectedDay = null;
-  loadCalData().then(() => renderCalPage());
-}
-function calGoToday() {
-  const now = new Date();
-  CAL.month = now.getMonth();
-  CAL.year = now.getFullYear();
-  CAL.selectedDay = now.getDate();
-  loadCalData().then(() => renderCalPage());
-}
-
-// ── Modal de evento ──────────────────────────────────
 // ── Modal unificado: Novo Registro ─────────────────────
 let _nrmRemType = 'interval';
 let _nrmEditingRemId = null;
@@ -4821,16 +4581,8 @@ function openNovoRegistro(tab, day) {
   document.getElementById('nrm-title').textContent = 'Novo registro';
   document.getElementById('nrm-save-btn').textContent = 'Salvar';
 
-  if (day) {
-    const dd = String(day).padStart(2,'0');
-    const mm = String(CAL.month+1).padStart(2,'0');
-    const dateStr = `${dd}/${mm}/${CAL.year}`;
-    document.getElementById('nrm-appt-date').value = dateStr;
-    document.getElementById('nrm-task-date').value = dateStr;
-  } else {
-    document.getElementById('nrm-appt-date').value = '';
-    document.getElementById('nrm-task-date').value = '';
-  }
+  document.getElementById('nrm-appt-date').value = '';
+  document.getElementById('nrm-task-date').value = '';
 
   ['nrm-appt-title','nrm-appt-time','nrm-appt-desc'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
@@ -5075,8 +4827,6 @@ async function _nrmSaveAppt() {
     const { error } = await db(() => sb.from('appointments').update(payload).eq('id', _nrmEditingApptId), 'Erro ao atualizar compromisso');
     btn.textContent = 'Atualizar'; btn.disabled = false;
     if (error) return;
-    const idx = CAL.appointments.findIndex(a => a.id === _nrmEditingApptId);
-    if (idx !== -1) CAL.appointments[idx] = { ...CAL.appointments[idx], ...payload };
     const tidx = T.appointments.findIndex(a => a.id === _nrmEditingApptId);
     if (tidx !== -1) T.appointments[tidx] = { ...T.appointments[tidx], ...payload };
     showToast('Compromisso atualizado!', 'ok');
@@ -5086,12 +4836,10 @@ async function _nrmSaveAppt() {
     const { data, error } = await db(() => sb.from('appointments').insert(payload).select().single(), 'Erro ao salvar compromisso');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) return;
-    CAL.appointments.push(data);
     T.appointments.push(data);
     showToast('Compromisso salvo!', 'ok');
   }
   closeNovoRegistro();
-  renderCalPage();
   renderRightSidebar();
 }
 
@@ -5119,8 +4867,6 @@ async function _nrmSaveTask() {
     const { error } = await db(() => sb.from('scheduled_tasks').update(payload).eq('id', _nrmEditingTaskId), 'Erro ao atualizar tarefa');
     btn.textContent = 'Atualizar'; btn.disabled = false;
     if (error) return;
-    const idx = CAL.scheduledTasks.findIndex(t => t.id === _nrmEditingTaskId);
-    if (idx !== -1) CAL.scheduledTasks[idx] = { ...CAL.scheduledTasks[idx], ...payload };
     const tidx = T.scheduledTasks.findIndex(t => t.id === _nrmEditingTaskId);
     if (tidx !== -1) T.scheduledTasks[tidx] = { ...T.scheduledTasks[tidx], ...payload };
     showToast('Tarefa atualizada!', 'ok');
@@ -5130,12 +4876,10 @@ async function _nrmSaveTask() {
     const { data, error } = await db(() => sb.from('scheduled_tasks').insert(payload).select().single(), 'Erro ao salvar tarefa');
     btn.textContent = 'Salvar'; btn.disabled = false;
     if (error) return;
-    CAL.scheduledTasks.push(data);
     T.scheduledTasks.push(data);
     showToast('Tarefa salva!', 'ok');
   }
   closeNovoRegistro();
-  renderCalPage();
   renderRightSidebar();
 }
 
@@ -5178,12 +4922,6 @@ function openNoteEditModal(id) {
   document.getElementById('nrm-nota-id').value = id;
   document.getElementById('nrm-title').textContent = 'Editar anotação';
 }
-
-// Funções legadas substituídas pelo modal unificado
-function openCalModal(day) { openNovoRegistro('appt', day); }
-function closeCalModal() { closeNovoRegistro(); }
-function setCalModalTab(tab) {}
-function saveCalEvent() { saveNovoRegistro(); }
 
 function openCalEditModal(id, type) {
   let item = null;
@@ -5287,71 +5025,6 @@ function playAlarmSound() {
   } catch(e) { console.warn('Audio não disponível:', e); }
 }
 
-// ── Ticker de alarmes (verifica a cada 30s) ──────────────────────
-const _firedAlarms = new Set(); // "id-HH:MM" ou "id-once"
-
-function startAlarmTicker() {
-  checkAlarms();
-  setInterval(checkAlarms, 30000);
-}
-
-function checkAlarms() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const currentMs = now.getTime();
-
-  (CAL.reminders || []).forEach(rem => {
-    if (!rem.is_active) return;
-
-    if (rem.type === 'interval') {
-      // Interval: verificar via localStorage timestamp
-      const key = `elo_rem_last_${rem.id}`;
-      const last = Number(localStorage.getItem(key) || 0);
-      const diffMin = (currentMs - last) / 60000;
-      if (diffMin >= rem.interval_minutes) {
-        localStorage.setItem(key, currentMs);
-        showAlarmBanner(rem.title, rem.description || `Intervalo de ${rem.interval_minutes} minutos`);
-      }
-
-    } else if (rem.type === 'daily') {
-      const times = rem.daily_times || (rem.daily_time ? [rem.daily_time] : []);
-      times.forEach(t => {
-        const fireKey = `${rem.id}-${t}`;
-        const todayKey = `${fireKey}-${now.toDateString()}`;
-        if (currentTime === t && !_firedAlarms.has(todayKey)) {
-          _firedAlarms.add(todayKey);
-          showAlarmBanner(rem.title, rem.description || `Horário diário: ${t}`);
-        }
-      });
-
-    } else if (rem.type === 'once') {
-      if (!rem.once_at) return;
-      const fireKey = `${rem.id}-once`;
-      const diffSec = Math.abs(currentMs - rem.once_at) / 1000;
-      if (diffSec <= 60 && !_firedAlarms.has(fireKey)) {
-        _firedAlarms.add(fireKey);
-        const d = new Date(rem.once_at);
-        showAlarmBanner(rem.title, rem.description || `Alarme: ${pad(d.getHours())}:${pad(d.getMinutes())}`);
-      }
-    }
-  });
-}
-
-// ── Alertas ──────────────────────────────────────────
-function calEnableNotif() {
-  if (!('Notification' in window)) { showToast('Seu navegador não suporta notificações.','err'); return; }
-  Notification.requestPermission().then(p => {
-    const btn = document.getElementById('cal-notif-btn');
-    if (p === 'granted') {
-      btn.style.background = 'rgba(76,175,138,.15)'; btn.style.color = '#4caf8a';
-      btn.textContent = '✅ Notificações ativadas';
-      showToast('Notificações ativadas!','ok');
-    } else {
-      showToast('Permissão negada. Verifique as configurações do navegador.','err');
-    }
-  });
-}
 
 // ─────────────────────────────────────────────────────────────────
 // FINANCEIRO
@@ -7546,20 +7219,11 @@ function radarEditTask(btn) {
   const id = Number(btn.dataset.id);
   const type = btn.dataset.type;
   if (!id) return;
-  if (type === 'scheduled_task') {
-    const item = (T.scheduledTasks || []).find(t => t.id === id);
-    if (item && !CAL.scheduledTasks.find(t => t.id === id)) CAL.scheduledTasks.push(item);
-  } else {
-    const item = (T.appointments || []).find(a => a.id === id);
-    if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
-  }
   openCalEditModal(id, type);
 }
 function radarProxClick(div) {
   const id = Number(div.dataset.id);
   if (!id) return;
-  const item = (T.appointments || []).find(a => a.id === id);
-  if (item && !CAL.appointments.find(a => a.id === id)) CAL.appointments.push(item);
   openCalEditModal(id, 'appointment');
 }
 function renderPanelHoje() {
