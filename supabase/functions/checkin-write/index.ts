@@ -1,6 +1,6 @@
 // supabase/functions/checkin-write/index.ts
 // Grava scheduled_tasks e/ou appointments, só depois de aprovação explícita ("/lançar") do Check-in.
-// Nunca grava financeiro. Dedup por título normalizado + dia.
+// Financeiro: só baixa (UPDATE → PAGO) em monthly_payments existentes. Nunca INSERT, nunca outros status.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.110.0";
 
 const SP_OFFSET_MS = 3 * 60 * 60 * 1000;
@@ -46,15 +46,38 @@ Deno.serve(async (req) => {
 
     const tasksInput = Array.isArray(body?.tasks) ? body.tasks : [];
     const apptsInput = Array.isArray(body?.appointments) ? body.appointments : [];
+    const paymentsInput = Array.isArray(body?.payments) ? body.payments : [];
 
-    if (tasksInput.length === 0 && apptsInput.length === 0) {
-      return new Response(JSON.stringify({ error: "Envie tasks e/ou appointments" }), { status: 400 });
+    if (tasksInput.length === 0 && apptsInput.length === 0 && paymentsInput.length === 0) {
+      return new Response(JSON.stringify({ error: "Envie tasks, appointments e/ou payments" }), { status: 400 });
     }
     if (tasksInput.length > 50 || apptsInput.length > 50) {
       return new Response(JSON.stringify({ error: "Máximo 50 itens por array por chamada" }), { status: 400 });
     }
+    if (paymentsInput.length > 20) {
+      return new Response(JSON.stringify({ error: "Máximo 20 payments por chamada" }), { status: 400 });
+    }
 
     const today = spTodayYMD();
+    const nowSp = new Date(Date.now() - SP_OFFSET_MS);
+    const curMonth = nowSp.getUTCMonth() + 1;
+    const curYear = nowSp.getUTCFullYear();
+
+    // ── Validar payments ──────────────────────────────────────────
+    const cleanedPayments: { client_id: number | null; client_name: string | null; month: number; year: number }[] = [];
+    for (const p of paymentsInput) {
+      const client_id = p?.client_id ? Number(p.client_id) : null;
+      const client_name = (p?.client_name || "").trim() || null;
+      if (!client_id && !client_name) {
+        return new Response(JSON.stringify({ error: "Todo payment precisa de client_id ou client_name" }), { status: 400 });
+      }
+      const month = p?.month ? Number(p.month) : curMonth;
+      const year = p?.year ? Number(p.year) : curYear;
+      if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year) || year < 2020 || year > 2100) {
+        return new Response(JSON.stringify({ error: "month/year inválidos" }), { status: 400 });
+      }
+      cleanedPayments.push({ client_id, client_name, month, year });
+    }
 
     // ── Validar tasks ─────────────────────────────────────────────
     const cleanedTasks: { title: string; scheduled_time: string | null; priority: string; date: string }[] = [];
@@ -149,6 +172,58 @@ Deno.serve(async (req) => {
       toInsertAppts.push({ title: a.title, scheduled_at: a.scheduled_at, client_id: a.client_id, is_done: false, alert_fired: false });
     }
 
+    // ── Processar baixas de pagamento ─────────────────────────────
+    const baixados: any[] = [];
+    const jaPagos: string[] = [];
+    const naoEncontrados: string[] = [];
+    const ambiguos: string[] = [];
+
+    if (cleanedPayments.length > 0) {
+      const { data: allClients, error: clErr } = await sb
+        .from("clients").select("id,name,is_active").eq("is_active", true);
+      if (clErr) throw clErr;
+
+      for (const p of cleanedPayments) {
+        let clientId = p.client_id;
+        let clientName = "";
+
+        if (clientId) {
+          const c = (allClients || []).find((c: any) => c.id === clientId);
+          if (!c) { naoEncontrados.push(`client_id ${clientId}`); continue; }
+          clientName = c.name;
+        } else {
+          const alvo = normalize(p.client_name!);
+          const matches = (allClients || []).filter((c: any) => normalize(c.name).includes(alvo));
+          if (matches.length === 0) { naoEncontrados.push(p.client_name!); continue; }
+          if (matches.length > 1) { ambiguos.push(`${p.client_name} (${matches.map((m: any) => m.name).join(", ")})`); continue; }
+          clientId = matches[0].id;
+          clientName = matches[0].name;
+        }
+
+        const { data: rows, error: payErr } = await sb
+          .from("monthly_payments").select("id,status,is_paid,amount")
+          .eq("client_id", clientId).eq("month", p.month).eq("year", p.year);
+        if (payErr) throw payErr;
+
+        if (!rows || rows.length === 0) { naoEncontrados.push(`${clientName} ${p.month}/${p.year}`); continue; }
+        const row = rows[0];
+        if (row.is_paid || row.status === "PAGO") { jaPagos.push(`${clientName} ${p.month}/${p.year}`); continue; }
+
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, "0");
+        const mm2 = String(now.getMonth() + 1).padStart(2, "0");
+        const yyyy = now.getFullYear();
+        const paid_date = `${dd}/${mm2}/${yyyy}`;
+
+        const { error: upErr } = await sb
+          .from("monthly_payments")
+          .update({ status: "PAGO", is_paid: true, paid_at: now.toISOString(), paid_date })
+          .eq("id", row.id);
+        if (upErr) throw upErr;
+        baixados.push({ cliente: clientName, mes: p.month, ano: p.year, valor: row.amount });
+      }
+    }
+
     // ── Inserir tudo ──────────────────────────────────────────────
     let insertedTasks: any[] = [];
     let insertedAppts: any[] = [];
@@ -168,6 +243,7 @@ Deno.serve(async (req) => {
       data_referencia: today,
       tarefas: { inseridas: insertedTasks, puladas: skippedTasks, total_inseridas: insertedTasks.length, total_puladas: skippedTasks.length },
       compromissos: { inseridos: insertedAppts, pulados: skippedAppts, total_inseridos: insertedAppts.length, total_pulados: skippedAppts.length },
+      pagamentos: { baixados, ja_pagos: jaPagos, nao_encontrados: naoEncontrados, ambiguos, total_baixados: baixados.length },
     }), { headers: { "Content-Type": "application/json" } });
 
   } catch (err) {
