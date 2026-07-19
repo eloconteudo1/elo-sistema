@@ -989,6 +989,18 @@
                 <div id="radar-timeline-body"><div class="radar-day-detail-empty">Carregando...</div></div>
               </div>
             </div>
+            <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-top:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Anotações</span>
+              </div>
+              <div class="radar-notas-input-row">
+                <input class="radar-notas-input" id="radar-nota-hoje-input" placeholder="Nova anotação rápida..." onkeydown="if(event.key==='Enter'){event.preventDefault();radarSaveNotaHoje();}" />
+                <button class="radar-notas-submit" onclick="radarSaveNotaHoje()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div id="cal-notes-list" class="radar-notas-list"><div class="radar-day-detail-empty">Carregando...</div></div>
+            </div>
           </div>
 
           <!-- PAINEL SEMANA -->
@@ -1360,7 +1372,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.70 · ELO Comunicação · Atualizado em 16/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.71 · ELO Comunicação · Atualizado em 19/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1436,9 +1448,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.70</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.71</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">16/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">19/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -7273,9 +7285,24 @@ async function radarMoverParaHoje(btn) {
   radarRefreshCurrentPanel();
 }
 
+async function radarSaveNotaHoje() {
+  const inp = document.getElementById('radar-nota-hoje-input');
+  if (!inp) return;
+  const content = inp.value.trim();
+  if (!content) { showToast('Escreva algo antes de salvar','warn'); return; }
+  const { data, error } = await db(() => sb.from('notes').insert({ content }).select().single(), 'Erro ao salvar anotação');
+  if (error) return;
+  T.notes.unshift(data);
+  inp.value = '';
+  renderCalNotes();
+  renderNotesList();
+  showToast('Anotação salva ✓','ok');
+}
+
 function renderPanelHoje() {
   loadRadarPanelData();
   renderRadarAtrasadas();
+  renderCalNotes();
   const todayDate = todayStr();
   const bodyEl = document.getElementById('radar-timeline-body');
   if (!bodyEl) return;
