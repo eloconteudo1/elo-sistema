@@ -1372,7 +1372,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.72 · ELO Comunicação · Atualizado em 20/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.73 · ELO Comunicação · Atualizado em 23/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,9 +1448,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.72</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.73</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">20/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">23/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -2835,9 +2835,24 @@ function startGlobalTimerTick() {
     if (T.activeEntry && !T.isPaused) {
       const e = T.activeEntry;
       T.elapsed = Date.now() - e.start_time - (e.paused_duration || 0);
+      _checkLongTimer();
     }
     updateTimerRing();
   }, 1000);
+}
+
+function _checkLongTimer() {
+  const elapsedMin = Math.floor(T.elapsed / 60000);
+  if (elapsedMin < 120) return;
+  if (T._longTimerNextWarn == null) T._longTimerNextWarn = 120;
+  if (elapsedMin < T._longTimerNextWarn) return;
+  const nomeTarefa = T.activeEntry?.task_name || T.selectedTaskName || 'Tarefa atual';
+  showAlarmBanner(
+    `⏱ Cronômetro ligado há ${fMin(elapsedMin)}`,
+    `${nomeTarefa} — ainda está nessa? Se esqueceu, pare o timer e ajuste o registro.`
+  );
+  showToast(`Cronômetro rodando há ${fMin(elapsedMin)}`, 'warn');
+  T._longTimerNextWarn = elapsedMin + 60;
 }
 
 function startTick() {
@@ -2884,6 +2899,7 @@ async function startTimer() {
 
   // Otimista: timer aparece imediatamente antes do banco responder
   T.isRunning = true; T.isPaused = false; T.elapsed = 0;
+  T._longTimerNextWarn = null;
   T.activeEntry = { id: null, start_time: now, paused_duration: 0 };
   startGlobalTimerTick();
   renderTimerCenter();
