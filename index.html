@@ -1115,7 +1115,7 @@
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
                 <div><label class="field-label">Nome / Descrição *</label><input class="field-input" id="fnp-name" placeholder="Ex: Consultoria extra" /></div>
                 <div><label class="field-label">Valor (R$) *</label><input class="field-input" id="fnp-amount" type="number" placeholder="500.00" /></div>
-                <div><label class="field-label">Dia vencto</label><input class="field-input" id="fnp-due" type="number" placeholder="Ex: 15" min="1" max="31" /></div>
+                <div><label class="field-label" id="fnp-due-label">Dia vencto</label><input class="field-input" id="fnp-due" type="number" placeholder="Ex: 15" min="1" max="31" /></div>
                 <div><label class="field-label">Forma</label>
                   <select class="field-input" id="fnp-method" style="cursor:pointer;">
                     <option value="">Selecionar</option>
@@ -1130,7 +1130,7 @@
                   </select>
                 </div>
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;padding-top:16px;">
-                  <input type="checkbox" id="fnp-recurring" /> Recorrente
+                  <input type="checkbox" id="fnp-recurring" onchange="finSyncDueField('fnp')" /> Recorrente
                 </label>
                 <div style="margin-left:auto;display:flex;gap:8px;align-items:center;padding-top:16px;">
                   <button onclick="finToggleNewPayment()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1;">×</button>
@@ -1172,7 +1172,7 @@
                 <div><label class="field-label">Valor (R$) *</label><input class="field-input" id="fnc-amount" type="number" placeholder="1600.00" /></div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
-                <div><label class="field-label">Dia vencto</label><input class="field-input" id="fnc-due" type="number" placeholder="Ex: 5" min="1" max="31" /></div>
+                <div><label class="field-label" id="fnc-due-label">Dia vencto</label><input class="field-input" id="fnc-due" type="number" placeholder="Ex: 5" min="1" max="31" /></div>
                 <div><label class="field-label">Forma pgto</label>
                   <select class="field-input" id="fnc-method" style="cursor:pointer;">
                     <option value="">—</option>
@@ -1187,7 +1187,7 @@
               </div>
               <div style="display:flex;align-items:center;justify-content:space-between;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--purple);cursor:pointer;">
-                  <input type="checkbox" id="fnc-recurring" /> Recorrente
+                  <input type="checkbox" id="fnc-recurring" checked onchange="finSyncDueField('fnc')" /> Recorrente
                 </label>
                 <div style="display:flex;gap:8px;align-items:center;">
                   <button onclick="finToggleNewCost()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-dim);line-height:1;">×</button>
@@ -1372,7 +1372,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.71 · ELO Comunicação · Atualizado em 19/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.72 · ELO Comunicação · Atualizado em 20/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,9 +1448,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.71</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.72</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">19/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">20/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1736,6 +1736,25 @@ function dbDateToDisplay(s) {
   if (!s) return '';
   const [yyyy,mm,dd] = s.split('-');
   return `${dd}/${mm}/${yyyy}`;
+}
+function finSyncDueField(prefix) {
+  const chk = document.getElementById(prefix + '-recurring');
+  const label = document.getElementById(prefix + '-due-label');
+  const input = document.getElementById(prefix + '-due');
+  if (!chk || !label || !input) return;
+  if (chk.checked) {
+    label.textContent = 'Dia vencto';
+    input.type = 'number';
+    input.min = 1; input.max = 31;
+    input.placeholder = 'Ex: 12';
+  } else {
+    label.textContent = 'Data';
+    input.type = 'date';
+    input.removeAttribute('min');
+    input.removeAttribute('max');
+    input.placeholder = '';
+  }
+  input.value = '';
 }
 function inputToDbDate(s) {
   // aceita DD/MM/AAAA ou YYYY-MM-DD
@@ -5148,7 +5167,11 @@ function finClientName(p) {
   return cl?.name || '—';
 }
 function finClientDueDay(p) {
-  if (p.is_manual) return p.due_day ? `Dia ${p.due_day}` : '—';
+  if (p.is_manual) {
+    if (p.due_day) return `Dia ${p.due_day}`;
+    if (p.payment_date) return dbDateToDisplay(p.payment_date);
+    return '—';
+  }
   const cl = FIN.clients.find(c => c.id === p.client_id);
   return cl?.due_day ? `Dia ${cl.due_day}` : '—';
 }
@@ -5271,7 +5294,7 @@ function renderFinanceiro() {
           : 'background:#FAEEDA;color:#854F0B;border-color:rgba(133,79,11,.3);';
         const amtStyle = isVencido ? 'color:#DC2626;' : '';
         const rowBg = isVencido ? 'background:rgba(220,38,38,.05);' : '';
-        const dueDay = c.due_date ? `Dia ${c.due_date}` : '—';
+        const dueDay = c.due_date ? `Dia ${c.due_date}` : (c.payment_date ? dbDateToDisplay(c.payment_date) : '—');
         const forma = c.payment_method || '—';
         const opt = s => `<option${cStatus===s?' selected':''}>${s}</option>`;
 
@@ -5403,26 +5426,31 @@ async function renderFinChart() {
 function finToggleNewPayment() {
   const el = document.getElementById('fin-new-payment-form');
   el.style.display = el.style.display === 'none' ? '' : 'none';
+  finSyncDueField('fnp');
 }
 function finToggleNewCost() {
   const el = document.getElementById('fin-new-cost-form');
   el.style.display = el.style.display === 'none' ? '' : 'none';
+  finSyncDueField('fnc');
 }
 
 async function saveNewPayment() {
   const name   = document.getElementById('fnp-name').value.trim();
   const amount = parseFloat(document.getElementById('fnp-amount').value||'0');
-  const due    = parseInt(document.getElementById('fnp-due').value||'0')||null;
+  const dueVal = document.getElementById('fnp-due').value.trim()||null;
   const method = document.getElementById('fnp-method').value||null;
   const status = document.getElementById('fnp-status')?.value||'ABERTO';
   const isPaid = status === 'PAGO';
   const isRecurring = document.getElementById('fnp-recurring')?.checked || false;
+  const due         = isRecurring ? (parseInt(dueVal||'0')||null) : null;
+  const paymentDate = isRecurring ? null : inputToDbDate(dueVal);
   if (!name || !amount) { showToast('Preencha nome e valor','warn'); return; }
+  if (!isRecurring && !paymentDate) { showToast('Informe a data do recebimento','warn'); return; }
   const { data, error } = await db(
     () => sb.from('monthly_payments').insert({
       client_id: 0, month: FIN.month, year: FIN.year,
       amount, is_paid: isPaid, client_name: name,
-      is_manual: true, due_day: due, payment_method: method,
+      is_manual: true, due_day: due, payment_date: paymentDate, payment_method: method,
       paid_at: isPaid ? new Date().toISOString() : null,
       status, is_recurring: isRecurring,
     }).select().single(),
@@ -5432,10 +5460,10 @@ async function saveNewPayment() {
   FIN.payments.push(data);
   document.getElementById('fnp-name').value='';
   document.getElementById('fnp-amount').value='';
-  document.getElementById('fnp-due').value='';
   document.getElementById('fnp-method').value='';
   if (document.getElementById('fnp-status')) document.getElementById('fnp-status').value='ABERTO';
   if (document.getElementById('fnp-recurring')) document.getElementById('fnp-recurring').checked=false;
+  finSyncDueField('fnp');
   finToggleNewPayment();
   renderFinanceiro();
   showToast('Recebimento adicionado ✓','ok');
@@ -5444,17 +5472,20 @@ async function saveNewPayment() {
 async function saveNewCost() {
   const desc      = document.getElementById('fnc-desc').value.trim();
   const amount    = parseFloat(document.getElementById('fnc-amount').value||'0');
-  const dueDay    = document.getElementById('fnc-due').value.trim()||null;
+  const dueVal    = document.getElementById('fnc-due').value.trim()||null;
   const method    = document.getElementById('fnc-method').value||null;
   const status    = document.getElementById('fnc-status').value||'ABERTO';
   const isPaid    = status === 'PAGO';
   const recurring = document.getElementById('fnc-recurring')?.checked || false;
+  const dueDay      = recurring ? dueVal : null;
+  const paymentDate = recurring ? null : inputToDbDate(dueVal);
   if (!desc || !amount) { showToast('Preencha descrição e valor','warn'); return; }
+  if (!recurring && !paymentDate) { showToast('Informe a data do pagamento','warn'); return; }
   const { data, error } = await db(
     () => sb.from('cost_items').insert({
       user_id: appUser.id, month: FIN.month, year: FIN.year,
       description: desc, amount, is_paid: isPaid, status,
-      due_date: dueDay, payment_method: method,
+      due_date: dueDay, payment_date: paymentDate, payment_method: method,
       is_recurring: recurring,
     }).select().single(),
     'Erro ao adicionar custo'
@@ -5463,10 +5494,10 @@ async function saveNewCost() {
   FIN.costs.push(data);
   document.getElementById('fnc-desc').value='';
   document.getElementById('fnc-amount').value='';
-  document.getElementById('fnc-due').value='';
   document.getElementById('fnc-method').value='';
   document.getElementById('fnc-status').value='ABERTO';
-  if (document.getElementById('fnc-recurring')) document.getElementById('fnc-recurring').checked=false;
+  if (document.getElementById('fnc-recurring')) document.getElementById('fnc-recurring').checked=true;
+  finSyncDueField('fnc');
   finToggleNewCost();
   renderFinanceiro();
   showToast('Custo adicionado ✓','ok');
