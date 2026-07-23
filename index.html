@@ -1372,7 +1372,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.74 · ELO Comunicação · Atualizado em 23/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.75 · ELO Comunicação · Atualizado em 23/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,7 +1448,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.74</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.75</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">23/07/2026</span></span>
   </footer>
@@ -7567,7 +7567,19 @@ function renderPanelMes() {
     }
   }
 }
-// ── Helper: busca todas as tabelas pra backup ──────────────────
+// ── Helper: busca todas as tabelas pra backup (paginado — REST trunca em 1000) ──
+async function _backupFetchTable(t) {
+  const out = [];
+  const STEP = 1000;
+  for (let from = 0; ; from += STEP) {
+    const { data, error } = await sb.from(t).select('*').order('id', { ascending: true }).range(from, from + STEP - 1);
+    if (error) return { table: t, data: out, error };
+    out.push(...(data || []));
+    if (!data || data.length < STEP) break;
+  }
+  return { table: t, data: out, error: null };
+}
+
 async function _backupFetchAll() {
   const statusEl = document.getElementById('backup-status');
   if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Buscando dados...'; }
@@ -7577,9 +7589,7 @@ async function _backupFetchAll() {
     'monthly_payments','cost_items','settings',
     'notes','inspiration_posts','content_notes'
   ];
-  const results = await Promise.all(
-    tables.map(t => sb.from(t).select('*').then(r => ({ table: t, data: r.data || [], error: r.error })))
-  );
+  const results = await Promise.all(tables.map(t => _backupFetchTable(t)));
   if (statusEl) statusEl.style.display = 'none';
   const out = {};
   results.forEach(r => {
@@ -7592,7 +7602,7 @@ async function _backupFetchAll() {
 async function cfgExportBackup() {
   try {
     const all = await _backupFetchAll();
-    const payload = { exported_at: new Date().toISOString(), version: '3.64', tables: all };
+    const payload = { exported_at: new Date().toISOString(), version: '3.75', tables: all };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
