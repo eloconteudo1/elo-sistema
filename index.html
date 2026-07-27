@@ -470,6 +470,14 @@
     .note-item-body { flex:1; min-width:0; }
     .cal-note-text { flex:1; font-size:12px; font-weight:600; color:var(--text); cursor:text; min-width:0; white-space:normal; line-height:1.5; word-break:break-word; }
     .cal-note-text:hover { color:var(--purple); }
+    .radar-notas-input-row { display:flex; gap:8px; margin-bottom:16px; }
+    .radar-notas-input { flex:1; padding:9px 14px; font-size:13px; font-family:inherit; border:1px solid rgba(74,41,118,.12); border-radius:12px; background:var(--bg); color:var(--text); outline:none; transition:border-color .15s; }
+    .radar-notas-input:focus { border-color:var(--purple); }
+    .radar-notas-submit { width:34px; height:34px; border-radius:10px; border:none; background:var(--deep); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity .15s; }
+    .radar-notas-submit:hover { opacity:.85; }
+    .radar-notas-list { display:flex; flex-direction:column; gap:0; }
+    .radar-notas-ver-mais { display:block; margin:10px auto 0; font-size:12px; font-weight:700; color:var(--purple); background:none; border:none; cursor:pointer; padding:6px 16px; border-radius:20px; transition:background .15s; }
+    .radar-notas-ver-mais:hover { background:var(--surface2); }
     @media (max-width:768px) {
       .activity-row { grid-template-columns:36px 1fr 80px 60px 26px 26px; gap:6px; }
       #manual-entry-link { margin-top:8px; }
@@ -1372,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.75 · ELO Comunicação · Atualizado em 23/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.76 · ELO Comunicação · Atualizado em 27/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1448,9 +1456,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.75</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.76</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">23/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">27/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3120,37 +3128,57 @@ async function saveNote() {
   showToast('Anotação salva ✓','ok');
 }
 
+let _calNotesExpanded = false;
 async function renderCalNotes() {
   const list = document.getElementById('cal-notes-list');
   if (!list) return;
   const { data, error } = await db(() => sb.from('notes').select('*').order('created_at',{ascending:false}), 'Erro ao carregar anotações');
   if (error) { list.innerHTML = '<div style="font-size:12px;color:#aaa;">Erro ao carregar.</div>'; return; }
   if (!data || data.length === 0) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--text-dim);opacity:.6;">Nenhuma anotação ainda.</div>`;
+    list.innerHTML = '<div style="font-size:12px;color:var(--text-dim);opacity:.6;">Nenhuma anotação ainda.</div>';
+    _calNotesExpanded = false;
     return;
   }
-  list.innerHTML = data.map(note => {
+  T.notes = data;
+  const limit = 5;
+  const showAll = _calNotesExpanded || data.length <= limit;
+  const visible = showAll ? data : data.slice(0, limit);
+  let html = visible.map((note, i) => {
     const d = new Date(note.created_at);
     const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="note-item">
+    const preview = esc(note.content).replace(/\n/g,'<br>');
+    const isLast = i === visible.length - 1 && (showAll || data.length <= limit);
+    const borderStyle = isLast ? '' : 'border-bottom:.5px solid rgba(74,41,118,.07);';
+    return `<div class="note-item" data-cal-note-row="${note.id}" style="${borderStyle}">
       <button class="note-check-btn" data-cal-complete="${note.id}" title="Concluir"></button>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);white-space:normal;word-break:break-word;line-height:1.5;cursor:pointer;background:#f9f8fc;border-left:3px solid var(--purple);border-radius:8px;padding:8px 10px;"
-          onclick="openNoteEditModal(${note.id})"
-          title="Clique para editar">
-          ${(() => { const escaped = esc(note.content).replace(/\n/g,'<br>'); const sp = escaped.search(/[\s<]/); const t = sp === -1 ? escaped : escaped.slice(0,sp); const r = sp === -1 ? '' : escaped.slice(sp); return `<strong>${t}</strong>${r}`; })()}
-        </div>
+      <div class="note-item-body">
+        <div class="note-item-preview" data-cal-edit="${note.id}" title="Clique para editar">${preview}</div>
         <div class="note-item-date">${dateStr}</div>
+      </div>
+      <div class="note-item-actions">
+        <button class="note-action-btn" data-cal-edit-btn="${note.id}" title="Editar">✏️</button>
+        <button class="note-action-btn" data-cal-delete="${note.id}" title="Excluir">🗑</button>
       </div>
     </div>`;
   }).join('');
-  if (!list._delegated) {
-    list._delegated = true;
+  if (data.length > limit) {
+    const label = _calNotesExpanded ? 'ver menos' : 'ver mais';
+    html += `<button class="radar-notas-ver-mais" data-cal-toggle-expand="1">${label}</button>`;
+  }
+  list.innerHTML = html;
+  if (!list._delegated2) {
+    list._delegated2 = true;
     list.addEventListener('click', async function(ev) {
-      const btn = ev.target.closest('[data-cal-complete]');
-      if (btn) {
-        const id = Number(btn.dataset.calComplete);
-        const row = btn.closest('.note-item');
+      const toggleBtn = ev.target.closest('[data-cal-toggle-expand]');
+      if (toggleBtn) {
+        _calNotesExpanded = !_calNotesExpanded;
+        renderCalNotes();
+        return;
+      }
+      const completeBtn = ev.target.closest('[data-cal-complete]');
+      if (completeBtn) {
+        const id = Number(completeBtn.dataset.calComplete);
+        const row = completeBtn.closest('.note-item');
         if (row) { row.style.opacity='0'; row.style.transition='opacity .2s'; }
         await new Promise(r => setTimeout(r, 200));
         const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao concluir nota');
@@ -3160,15 +3188,27 @@ async function renderCalNotes() {
         renderCalNotes();
         return;
       }
-      // compatibilidade legada
-      const old = ev.target.closest('[data-cal-note-id]');
-      if (old) {
-        const id = Number(old.dataset.calNoteId);
-        const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao excluir nota');
-        if (error) return;
-        if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
-        renderNotesList();
-        renderCalNotes();
+      const editPreview = ev.target.closest('[data-cal-edit]');
+      if (editPreview) {
+        openNoteEditModal(Number(editPreview.dataset.calEdit));
+        return;
+      }
+      const editBtn = ev.target.closest('[data-cal-edit-btn]');
+      if (editBtn) {
+        openNoteEditModal(Number(editBtn.dataset.calEditBtn));
+        return;
+      }
+      const deleteBtn = ev.target.closest('[data-cal-delete]');
+      if (deleteBtn) {
+        const id = Number(deleteBtn.dataset.calDelete);
+        openConfirmModal('Excluir anotação', 'Tem certeza que deseja excluir esta anotação?', async () => {
+          const { error } = await db(() => sb.from('notes').delete().eq('id', id), 'Erro ao excluir nota');
+          if (error) return;
+          if (Array.isArray(T.notes)) T.notes = T.notes.filter(n => n.id !== id);
+          renderNotesList();
+          renderCalNotes();
+        });
+        return;
       }
     });
   }
@@ -3651,11 +3691,14 @@ async function handleAnotaCommand(text) {
     showAssistantMessage('Uso: /anota [texto da anotação]');
     return;
   }
-  const { error } = await db(
-    () => sb.from('notes').insert({ content: text }),
+  const { data, error } = await db(
+    () => sb.from('notes').insert({ content: text }).select().single(),
     'Erro ao salvar anotação'
   );
-  if (!error) {
+  if (!error && data) {
+    if (Array.isArray(T.notes)) T.notes.unshift(data);
+    renderNotesList();
+    if (document.getElementById('cal-notes-list')) renderCalNotes();
     showAssistantMessage('Anotado.');
   }
 }
