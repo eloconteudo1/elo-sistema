@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.76 · ELO Comunicação · Atualizado em 27/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.77 · ELO Comunicação · Atualizado em 28/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,9 +1456,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.76</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.77</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">27/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">28/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -2219,12 +2219,13 @@ async function saveMobileAppt() {
   const [h,min] = time.split(':').map(Number);
   const scheduledAt = new Date(y,m-1,d,h,min,0).getTime();
   if (_checkDuplicate('appt', title, date)) return;
-  const { error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false }), 'Erro ao salvar compromisso');
+  const { data, error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false }).select().single(), 'Erro ao salvar compromisso');
   if (error) return;
+  T.appointments.push(data);
   showToast('Compromisso salvo ✓','ok');
   closeMobileNewItem();
-  await reloadTodayData();
   renderMobileAgenda();
+  renderRightSidebar();
 }
 async function saveMobileTask() {
   const title    = document.getElementById('mni-task-title')?.value.trim();
@@ -2235,15 +2236,16 @@ async function saveMobileTask() {
   if (!title) { showToast('Informe o título','warn'); return; }
   if (!date)  { showToast('Informe a data','warn'); return; }
   if (_checkDuplicate('task', title, date)) return;
-  const { error } = await db(() => sb.from('scheduled_tasks').insert({
+  const { data, error } = await db(() => sb.from('scheduled_tasks').insert({
     title, scheduled_date:date, scheduled_time:time,
     priority, client_id:clientId, is_done:false, user_id:appUser.id
-  }), 'Erro ao salvar tarefa');
+  }).select().single(), 'Erro ao salvar tarefa');
   if (error) return;
+  T.scheduledTasks.push(data);
   showToast('Tarefa salva ✓','ok');
   closeMobileNewItem();
-  await reloadTodayData();
   renderMobileAgenda();
+  renderRightSidebar();
 }
 async function saveMobileReminder() {
   const type = document.getElementById('mni-rem-type')?.value;
@@ -2336,7 +2338,7 @@ async function showApp(au) {
   document.getElementById('avatar-email-label').textContent = au.email||'';
   appUser = await getOrCreateUser(au);
   _showAppInFlight = false;
-  initHome();
+  await initHome();
   startGlobalTimerTick();
   refreshTodayPill();
   checkPersonalReminders();
@@ -4937,6 +4939,7 @@ async function _nrmSaveAppt() {
   }
   closeNovoRegistro();
   renderRightSidebar();
+  if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
 }
 
 async function _nrmSaveTask() {
@@ -4977,6 +4980,7 @@ async function _nrmSaveTask() {
   }
   closeNovoRegistro();
   renderRightSidebar();
+  if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
 }
 
 async function _nrmSaveNota() {
@@ -7476,14 +7480,19 @@ function renderPanelSemana() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(now.getTime() + i * 86400000);
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const count = (RADAR.tasks || []).filter(t => t.scheduled_date === ds && !t.is_done).length
-                + (RADAR.appts || []).filter(a => {
-                    const ad = new Date(a.scheduled_at);
-                    return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
-                  }).length;
-    const color = count === 0 ? '#BFA8D9' : count <= 2 ? '#2FB989' : count <= 5 ? '#E07A3A' : '#DC2626';
+    const tasksDayMin = (RADAR.tasks || [])
+      .filter(t => t.scheduled_date === ds && !t.is_done)
+      .reduce((sum, t) => sum + (t.duration_minutes || 30), 0);
+    const apptsDayMin = (RADAR.appts || [])
+      .filter(a => {
+        const ad = new Date(a.scheduled_at);
+        return `${ad.getFullYear()}-${String(ad.getMonth()+1).padStart(2,'0')}-${String(ad.getDate()).padStart(2,'0')}` === ds;
+      })
+      .reduce((sum, a) => sum + (a.duration_minutes || 30), 0);
+    const totalMin = tasksDayMin + apptsDayMin;
+    const color = totalMin === 0 ? '#BFA8D9' : totalMin <= 180 ? '#2FB989' : totalMin <= 420 ? '#E07A3A' : '#DC2626';
     labels.push(`${diasSem[d.getDay()]} ${d.getDate()}`);
-    counts.push(count);
+    counts.push(Math.round(totalMin / 60 * 10) / 10);
     barColors.push(color);
   }
   const canvas = document.getElementById('radar-carga-chart');
@@ -7500,7 +7509,7 @@ function renderPanelSemana() {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => `${ctx.raw} item${ctx.raw === 1 ? '' : 's'}` } }
+          tooltip: { callbacks: { label: (ctx) => `${ctx.raw}h` } }
         },
         scales: {
           x: { grid: { display: false }, ticks: { font: { size: 9, weight: '800' } } },

@@ -356,6 +356,13 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Eliminado toast "Erro ao carregar configurações" que aparecia a cada abertura do Financeiro
 - Versão 3.39, data 07/07/2026
 
+**Sessão S-FIX-RADAR — Sincronização de dados do Radar (V3.77)**
+- Fix race condition no boot: `await initHome()` em `showApp()` — antes rodava sem await, então `navigateTo(targetPage)` (que dispara `initRadar()`) podia renderizar com `T.scheduledTasks`/`T.appointments`/`T.notes` ainda vazios se a página de entrada fosse o Radar
+- Fix desktop não atualizar painel do Radar ao salvar: `_nrmSaveAppt()` e `_nrmSaveTask()` agora chamam `radarRefreshCurrentPanel()` (guardado por `#page-radar.active`) após `renderRightSidebar()`
+- Fix mobile não gravar item na memória: `saveMobileAppt()` e `saveMobileTask()` agora usam `.select().single()` no insert, dão `push()` no array `T.appointments`/`T.scheduledTasks` correspondente e chamam `renderRightSidebar()` — removido `reloadTodayData()` (recarregava `time_entries`, tabela sem relação com o insert)
+- Fix gráfico de carga da semana (`renderPanelSemana()`): antes contava `.length` de itens, agora soma `duration_minutes` (default 30min quando ausente); cores por faixa de tempo (≤3h verde, ≤7h laranja, >7h vermelho) em vez de contagem; `counts` em horas (`Xh` no tooltip)
+- Versão 3.77, data 28/07/2026
+
 **Sessão RADAR-A1 — Schema + CSS base do Radar (V3.36)**
 - SQL: `ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false`
 - SQL: `ALTER TABLE scheduled_tasks ADD COLUMN IF NOT EXISTS duration_minutes integer`
@@ -445,6 +452,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S-URGENTE | ~~S-URGENTE: Radar células com texto (84px, chips 3 palavras, +N) + fix query hourly_rate Financeiro~~ | **Concluído** |
 | S-FIX-E2A | ~~S-FIX-E2A: Editar/excluir universal no Radar (todas as listas) + tipografia font-weight:600~~ | **Concluído** |
 | S-FIX-E2B | ~~S-FIX-E2B: Gráfico de carga Chart.js, fundo do calendário var(--off), detalhe do Mês no painel direito~~ | **Concluído** |
+| S-FIX-RADAR | ~~S-FIX-RADAR: Race condition boot + sync desktop/mobile do Radar + carga por tempo (não contagem)~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
