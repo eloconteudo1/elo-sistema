@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.78 · ELO Comunicação · Atualizado em 28/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.79 · ELO Comunicação · Atualizado em 28/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,7 +1456,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.78</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.79</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">28/07/2026</span></span>
   </footer>
@@ -3442,6 +3442,9 @@ function getRadarData() {
       title: t.title,
       priority: t.priority || 'media',
       is_done: !!t.is_done,
+      duration_minutes: t.duration_minutes || null,
+      client_id: t.client_id || null,
+      task_id: t.task_id || null,
       sortTime: t.scheduled_time || '23:59'
     }));
   const apptItems = (T.appointments || [])
@@ -3460,6 +3463,9 @@ function getRadarData() {
         title: a.title,
         priority: 'compromisso',
         is_done: !!a.is_done,
+        duration_minutes: a.duration_minutes || null,
+        client_id: a.client_id || null,
+        task_id: a.task_id || null,
         sortTime: `${hh}:${mm}`
       };
     });
@@ -3499,6 +3505,43 @@ function renderAssistantHero() {
   dtEl.innerHTML = `<b>${diaSemana}</b><span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span>${dataStr}<span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span><b>${hora}</b>`;
 }
 
+// ── Sequenciador: ordem manual do dia (localStorage, por data) ──
+function seqOrderKey() { return `elo_seq_order_${todayStr()}`; }
+function seqLoadOrder() {
+  try { return JSON.parse(localStorage.getItem(seqOrderKey()) || '[]'); }
+  catch(_) { return []; }
+}
+function seqSaveOrder(order) {
+  try { localStorage.setItem(seqOrderKey(), JSON.stringify(order)); } catch(_) {}
+}
+function seqItemKey(it) { return `${it._type}-${it.id}`; }
+function seqSortItems(items) {
+  const order = seqLoadOrder();
+  const pending = items.filter(i => !i.is_done);
+  const done = items.filter(i => i.is_done);
+  pending.sort((a, b) => {
+    const ia = order.indexOf(seqItemKey(a));
+    const ib = order.indexOf(seqItemKey(b));
+    if (ia === -1 && ib === -1) return (a.sortTime||'').localeCompare(b.sortTime||'');
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  return { pending, done };
+}
+function seqMoveInOrder(draggedKey, targetKey) {
+  const data = getRadarData();
+  const allKeys = data.items.filter(i => !i.is_done).map(seqItemKey);
+  let order = seqLoadOrder().filter(k => allKeys.includes(k));
+  allKeys.forEach(k => { if (!order.includes(k)) order.push(k); });
+  const from = order.indexOf(draggedKey);
+  const to = order.indexOf(targetKey);
+  if (from === -1 || to === -1 || from === to) return;
+  order.splice(from, 1);
+  order.splice(to, 0, draggedKey);
+  seqSaveOrder(order);
+}
+
 // ── Render: Para Hoje (dados reais via getRadarData) ──
 function renderParaHoje() {
   const data = getRadarData();
@@ -3507,61 +3550,71 @@ function renderParaHoje() {
   if (!timelineEl) return;
   const minutesWorked = (T.todayEntries || []).reduce((s, e) => s + (e.duration_minutes || 0), 0);
   const goalMin = (T.settings && T.settings.daily_goal_minutes) || 480;
-  const total = data.totalCount || 0;
-  const done = data.doneCount || 0;
-  const pctDone = total ? Math.round((done / total) * 100) : 0;
+  const pctDone = goalMin ? Math.min(100, Math.round((minutesWorked / goalMin) * 100)) : 0;
+  const barColor = pctDone < 60 ? 'var(--green)' : pctDone < 100 ? 'var(--orange)' : '#DC2626';
   if (progressEl) {
-    const horaStr = fMin(minutesWorked);
-    const metaStr = fMin(goalMin);
     progressEl.innerHTML = `
-      <div style="height:5px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:6px;">
-        <div style="height:100%;background:var(--green);width:${pctDone}%;transition:width .4s;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:700;color:var(--text-dim);">Seu dia</span>
+        <span style="font-size:11px;color:var(--text-dim);">${fMin(minutesWorked)} de ${fMin(goalMin)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;color:var(--text-dim);margin-bottom:10px;">
-        <span><b style="color:var(--text);">${done} feita${done===1?'':'s'}</b> · ${total - done} restante${(total-done)===1?'':'s'}</span>
-        <span style="color:var(--text);font-weight:800;">${horaStr} / ${metaStr}</span>
+      <div style="height:8px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:12px;">
+        <div style="height:100%;background:${barColor};width:${pctDone}%;transition:width .4s;"></div>
       </div>`;
   }
-  if (total === 0) {
+  if (!data.items.length) {
     timelineEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
     return;
   }
-  const nowHHMM = `${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
-  timelineEl.innerHTML = data.items.map(it => {
-    const isNow = !it.is_done && it.time && it.time <= nowHHMM && it === data.nextItem;
-    const markColor = it.is_done ? 'var(--green)' : isNow ? 'var(--coral)' : it.priority === 'alta' ? '#DC2626' : it._type === 'appt' ? 'var(--blue)' : 'var(--lavender)';
-    const titleStyle = it.is_done ? 'text-decoration:line-through;color:var(--text-dim);' : 'color:var(--text);';
-    const timeColor = isNow ? 'var(--coral)' : 'var(--text-dim)';
-    const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
+  const { pending, done } = seqSortItems(data.items);
+  let html = '';
+  pending.forEach((it, idx) => {
+    const key = seqItemKey(it);
+    const hasClientTask = it.client_id && it.task_id;
     const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
-    const sub = [tipoLabel, durLabel].filter(Boolean).join(' · ');
-    const tag = isNow ? `<span style="font-size:8px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.12);padding:2px 7px;border-radius:8px;margin-left:6px;white-space:nowrap;">AGORA</span>` : '';
-    const checkColor = it.is_done ? 'var(--green)' : 'rgba(74,41,118,.15)';
-    const checkIcon = it.is_done ? '✓' : '';
-    const completeBtn = `<button
-      data-id="${it.id}" data-type="${it._type}"
-      onclick="paraHojeComplete(this)"
-      style="flex-shrink:0;width:20px;height:20px;border-radius:50%;
-             border:2px solid ${checkColor};background:${it.is_done ? 'var(--green)' : 'transparent'};
-             color:#fff;font-size:10px;font-weight:900;cursor:pointer;
-             display:grid;place-items:center;transition:all .15s;margin-top:2px;"
-      title="${it.is_done ? 'Marcar como pendente' : 'Concluir'}">${checkIcon}</button>`;
-    const actionBtns = `
-      <div class="ph-actions" style="display:none;gap:2px;flex-shrink:0;">
-        <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
-        <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Excluir">🗑</button>
-      </div>`;
-    return `
-      <div class="ph-item" style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);">
-        ${completeBtn}
-        <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:${timeColor};padding-top:1px;">${esc(it.time || '')}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;${titleStyle}overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}${tag}</div>
-          ${sub ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${sub}</div>` : ''}
-        </div>
-        ${actionBtns}
-      </div>`;
-  }).join('');
+    const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
+    const sub = [it.time, tipoLabel, durLabel].filter(Boolean).join(' · ');
+    if (idx === 0) {
+      html += `
+        <div class="ph-current" style="border:2px solid var(--coral);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:rgba(196,114,90,.05);">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:9px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.14);padding:2px 8px;border-radius:8px;">AGORA</span>
+            ${sub ? `<span style="font-size:10px;color:var(--text-dim);">${esc(sub)}</span>` : ''}
+          </div>
+          <div style="font-size:14px;font-weight:800;color:var(--deep);margin-bottom:10px;">${esc(it.title)}</div>
+          <div style="display:flex;gap:6px;">
+            <button data-seq-start="${key}" style="flex:1;background:var(--coral);color:#fff;border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:800;cursor:pointer;">▶ Iniciar</button>
+            <button data-seq-complete="${key}" style="width:36px;background:var(--bg2);border:none;border-radius:10px;cursor:pointer;color:var(--green);font-size:14px;">✓</button>
+            <button data-seq-postpone="${key}" style="width:36px;background:var(--bg2);border:none;border-radius:10px;cursor:pointer;color:var(--purple);font-size:12px;">→</button>
+          </div>
+          ${!hasClientTask ? `<div style="font-size:10px;color:var(--orange);margin-top:6px;">Sem cliente/atividade — editar antes de iniciar direto.</div>` : ''}
+        </div>`;
+    } else {
+      html += `
+        <div class="ph-item" draggable="true" data-seq-key="${key}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;">
+          <span style="color:rgba(74,41,118,.3);font-size:12px;flex-shrink:0;">⠿</span>
+          <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:var(--text-dim);">${esc(it.time || '')}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+          </div>
+          <div class="ph-actions" style="display:none;gap:2px;flex-shrink:0;">
+            <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
+            <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Excluir">🗑</button>
+          </div>
+        </div>`;
+    }
+  });
+  if (done.length) {
+    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(74,41,118,.07);font-size:10px;font-weight:700;color:var(--text-dim);">Concluídos (${done.length})</div>`;
+    done.forEach(it => {
+      html += `
+        <div class="ph-item" style="display:flex;align-items:center;gap:8px;padding:5px 0;opacity:.6;">
+          <span style="width:20px;text-align:center;color:var(--green);font-size:12px;">✓</span>
+          <div style="flex:1;min-width:0;font-size:12px;text-decoration:line-through;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+        </div>`;
+    });
+  }
+  timelineEl.innerHTML = html;
 }
 function paraHojeComplete(btn) {
   const id = Number(btn.dataset.id);
@@ -3590,8 +3643,88 @@ function paraHojeSetupActions() {
       const type = delBtn.dataset.phType;
       if (type === 'task') deleteTask(id);
       else deleteAppt(id);
+      return;
     }
+    const startBtn = ev.target.closest('[data-seq-start]');
+    if (startBtn) { sequencerStartItem(startBtn.dataset.seqStart); return; }
+    const completeBtn = ev.target.closest('[data-seq-complete]');
+    if (completeBtn) { sequencerCompleteItem(completeBtn.dataset.seqComplete); return; }
+    const postponeBtn = ev.target.closest('[data-seq-postpone]');
+    if (postponeBtn) { sequencerPostponeItem(postponeBtn.dataset.seqPostpone); return; }
   });
+  let dragKey = null;
+  timeline.addEventListener('dragstart', ev => {
+    const row = ev.target.closest('[data-seq-key]');
+    if (!row) return;
+    dragKey = row.dataset.seqKey;
+    ev.dataTransfer.effectAllowed = 'move';
+  });
+  timeline.addEventListener('dragover', ev => {
+    if (ev.target.closest('[data-seq-key]')) ev.preventDefault();
+  });
+  timeline.addEventListener('drop', ev => {
+    const row = ev.target.closest('[data-seq-key]');
+    if (!row || !dragKey) return;
+    ev.preventDefault();
+    seqMoveInOrder(dragKey, row.dataset.seqKey);
+    dragKey = null;
+    renderParaHoje();
+  });
+}
+
+function sequencerParseKey(key) {
+  const [type, idStr] = key.split('-');
+  return { type, id: Number(idStr) };
+}
+function sequencerFindItem(type, id) {
+  if (type === 'task') return (T.scheduledTasks || []).find(t => t.id === id);
+  return (T.appointments || []).find(a => a.id === id);
+}
+async function sequencerStartItem(key) {
+  const { type, id } = sequencerParseKey(key);
+  const item = sequencerFindItem(type, id);
+  if (!item) return;
+  if (!item.client_id || !item.task_id) {
+    showToast('Preencha cliente e atividade antes de iniciar direto', 'warn');
+    if (type === 'task') radarEditTask({ dataset: { id: String(id), type: 'task' } });
+    else radarEditTask({ dataset: { id: String(id), type: 'appointment' } });
+    return;
+  }
+  const activity = (T.tasks || []).find(t => t.id === item.task_id);
+  T.selectedClientId = item.client_id;
+  T.selectedTaskId = item.task_id;
+  T.selectedTaskName = activity ? activity.name : (item.title || '');
+  updateClientBtn();
+  renderTaskTree();
+  renderTimerCenter();
+  renderTimerButtons();
+  await startTimer();
+}
+async function sequencerCompleteItem(key) {
+  const { type, id } = sequencerParseKey(key);
+  if (type === 'task') completeTask(id);
+  else completeAppt(id);
+}
+async function sequencerPostponeItem(key) {
+  const { type, id } = sequencerParseKey(key);
+  const item = sequencerFindItem(type, id);
+  if (!item) return;
+  if (type === 'task') {
+    const [y, m, d] = item.scheduled_date.split('-').map(Number);
+    const tomorrow = new Date(y, m - 1, d + 1);
+    const novaData = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+    const { error } = await db(() => sb.from('scheduled_tasks').update({ scheduled_date: novaData }).eq('id', id), 'Erro ao adiar tarefa');
+    if (error) return;
+    T.scheduledTasks = T.scheduledTasks.map(t => t.id === id ? { ...t, scheduled_date: novaData } : t);
+  } else {
+    const novoTs = item.scheduled_at + 86400000;
+    const { error } = await db(() => sb.from('appointments').update({ scheduled_at: novoTs }).eq('id', id), 'Erro ao adiar compromisso');
+    if (error) return;
+    T.appointments = T.appointments.map(a => a.id === id ? { ...a, scheduled_at: novoTs } : a);
+  }
+  showToast('Adiado pra amanhã', 'ok');
+  renderRightSidebar();
+  if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
 }
 renderAssistantHero();
 setInterval(renderAssistantHero, 60000);
