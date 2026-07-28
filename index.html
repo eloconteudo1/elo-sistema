@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.77 · ELO Comunicação · Atualizado em 28/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.78 · ELO Comunicação · Atualizado em 28/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,7 +1456,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.77</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.78</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">28/07/2026</span></span>
   </footer>
@@ -1522,6 +1522,10 @@
           <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Cliente (opcional)</label>
           <select id="nrm-appt-client" class="elo-select" style="width:100%;"></select>
         </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Atividade (opcional)</label>
+          <select id="nrm-appt-activity" class="elo-select" style="width:100%;"></select>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div>
             <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Duração (minutos)</label>
@@ -1568,6 +1572,14 @@
             <option value="media" selected>Média</option>
             <option value="alta">Alta</option>
           </select>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Cliente (opcional)</label>
+          <select id="nrm-task-client" class="elo-select" style="width:100%;"></select>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Atividade (opcional)</label>
+          <select id="nrm-task-activity" class="elo-select" style="width:100%;"></select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div>
@@ -2073,6 +2085,7 @@ function openMobileNewItem() {
   sheet.id = 'mobile-new-item-sheet';
   sheet.style.cssText = 'position:fixed;inset:0;z-index:400;';
   const clientOptions = T.clients.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const activityOptions = (T.tasks||[]).map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
   const today = todayStr();
   const inputS = `width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(74,41,118,.15);font-family:inherit;font-size:14px;color:var(--deep);outline:none;background:var(--bg);box-sizing:border-box;margin-bottom:10px;display:block;`;
   const labelS = `display:block;font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;`;
@@ -2101,6 +2114,7 @@ function openMobileNewItem() {
   window._mniInputS = inputS;
   window._mniLabelS = labelS;
   window._mniClientOptions = clientOptions;
+  window._mniActivityOptions = activityOptions;
   window._mniToday = today;
   mniTab('appt');
 }
@@ -2119,6 +2133,7 @@ function mniTab(tab) {
   const S = window._mniInputS || '';
   const L = window._mniLabelS || '';
   const co = window._mniClientOptions || '';
+  const ao = window._mniActivityOptions || '';
   const td = window._mniToday || '';
   const btnS = `width:100%;padding:14px;border-radius:12px;border:none;background:var(--coral);color:#fff;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;`;
   const body = document.getElementById('mni-body');
@@ -2132,6 +2147,8 @@ function mniTab(tab) {
       <input id="mni-appt-time" type="time" style="${S}" />
       <label style="${L}">Cliente</label>
       <select id="mni-appt-client" style="${S}"><option value="">Nenhum</option>${co}</select>
+      <label style="${L}">Atividade</label>
+      <select id="mni-appt-activity" style="${S}"><option value="">Nenhuma</option>${ao}</select>
       <button style="${btnS}" onclick="saveMobileAppt()">Salvar compromisso</button>`;
   } else if (tab === 'task') {
     body.innerHTML = `
@@ -2149,6 +2166,8 @@ function mniTab(tab) {
       </select>
       <label style="${L}">Cliente</label>
       <select id="mni-task-client" style="${S}"><option value="">Nenhum</option>${co}</select>
+      <label style="${L}">Atividade</label>
+      <select id="mni-task-activity" style="${S}"><option value="">Nenhuma</option>${ao}</select>
       <button style="${btnS}" onclick="saveMobileTask()">Salvar tarefa</button>`;
   } else if (tab === 'rem') {
     body.innerHTML = `
@@ -2213,13 +2232,14 @@ async function saveMobileAppt() {
   const date  = document.getElementById('mni-appt-date')?.value;
   const time  = document.getElementById('mni-appt-time')?.value || '00:00';
   const clientId = Number(document.getElementById('mni-appt-client')?.value) || null;
+  const activityId = Number(document.getElementById('mni-appt-activity')?.value) || null;
   if (!title) { showToast('Informe o título','warn'); return; }
   if (!date)  { showToast('Informe a data','warn'); return; }
   const [y,m,d] = date.split('-').map(Number);
   const [h,min] = time.split(':').map(Number);
   const scheduledAt = new Date(y,m-1,d,h,min,0).getTime();
   if (_checkDuplicate('appt', title, date)) return;
-  const { data, error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, is_done:false }).select().single(), 'Erro ao salvar compromisso');
+  const { data, error } = await db(() => sb.from('appointments').insert({ title, scheduled_at:scheduledAt, client_id:clientId, task_id:activityId, is_done:false }).select().single(), 'Erro ao salvar compromisso');
   if (error) return;
   T.appointments.push(data);
   showToast('Compromisso salvo ✓','ok');
@@ -2233,12 +2253,13 @@ async function saveMobileTask() {
   const time     = document.getElementById('mni-task-time')?.value || null;
   const priority = document.getElementById('mni-task-priority')?.value || 'media';
   const clientId = Number(document.getElementById('mni-task-client')?.value) || null;
+  const activityId = Number(document.getElementById('mni-task-activity')?.value) || null;
   if (!title) { showToast('Informe o título','warn'); return; }
   if (!date)  { showToast('Informe a data','warn'); return; }
   if (_checkDuplicate('task', title, date)) return;
   const { data, error } = await db(() => sb.from('scheduled_tasks').insert({
     title, scheduled_date:date, scheduled_time:time,
-    priority, client_id:clientId, is_done:false, user_id:appUser.id
+    priority, client_id:clientId, task_id:activityId, is_done:false, user_id:appUser.id
   }).select().single(), 'Erro ao salvar tarefa');
   if (error) return;
   T.scheduledTasks.push(data);
@@ -4696,10 +4717,15 @@ function openNovoRegistro(tab, day) {
   document.getElementById('nrm-nota-content').value = '';
   document.getElementById('nrm-nota-id').value = '';
 
-  const sel = document.getElementById('nrm-appt-client');
-  sel.innerHTML = '<option value="">— selecione —</option>' +
+  const clientOptionsHtml = '<option value="">— selecione —</option>' +
     (T.clients||[]).filter(c=>c.is_active)
       .map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('nrm-appt-client').innerHTML = clientOptionsHtml;
+  document.getElementById('nrm-task-client').innerHTML = clientOptionsHtml;
+  const activityOptionsHtml = '<option value="">— selecione —</option>' +
+    (T.tasks||[]).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  document.getElementById('nrm-appt-activity').innerHTML = activityOptionsHtml;
+  document.getElementById('nrm-task-activity').innerHTML = activityOptionsHtml;
 
   setNrmRemType('interval');
   document.getElementById('nrm-rem-name').value = '';
@@ -4735,6 +4761,14 @@ function closeNovoRegistro() {
   if (apptAlertUnit) apptAlertUnit.value = 'min';
   const taskDur = document.getElementById('nrm-task-duration');
   if (taskDur) taskDur.value = '';
+  const nrmApptClient = document.getElementById('nrm-appt-client');
+  if (nrmApptClient) nrmApptClient.value = '';
+  const nrmApptActivity = document.getElementById('nrm-appt-activity');
+  if (nrmApptActivity) nrmApptActivity.value = '';
+  const nrmTaskClient = document.getElementById('nrm-task-client');
+  if (nrmTaskClient) nrmTaskClient.value = '';
+  const nrmTaskActivity = document.getElementById('nrm-task-activity');
+  if (nrmTaskActivity) nrmTaskActivity.value = '';
 }
 
 function setNrmTab(btn) {
@@ -4909,13 +4943,14 @@ async function _nrmSaveAppt() {
   const durMin = document.getElementById('nrm-appt-duration')?.value;
   const desc = document.getElementById('nrm-appt-desc').value.trim();
   const clientId = document.getElementById('nrm-appt-client').value;
+  const activityId = document.getElementById('nrm-appt-activity').value;
   const parts = date.split('/');
   if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)', 'err'); return; }
   const [dd, mm, yyyy] = parts.map(Number);
   const [hh, min] = time ? time.split(':').map(Number) : [0, 0];
   const ts = new Date(yyyy, mm-1, dd, hh||0, min||0).getTime();
   if (isNaN(ts)) { showToast('Data inválida', 'err'); return; }
-  const payload = { title, description: desc || null, scheduled_at: ts, client_id: clientId ? Number(clientId) : null };
+  const payload = { title, description: desc || null, scheduled_at: ts, client_id: clientId ? Number(clientId) : null, task_id: activityId ? Number(activityId) : null };
   const alertMinutes = nrmAlertToMinutes(alertVal, alertUnit);
   if (alertMinutes) payload.alert_minutes_before = alertMinutes;
   if (durMin) payload.duration_minutes = parseInt(durMin);
@@ -4952,11 +4987,13 @@ async function _nrmSaveTask() {
   const alertUnit = document.getElementById('nrm-task-alert-unit').value;
   const durMin = document.getElementById('nrm-task-duration')?.value;
   const desc = document.getElementById('nrm-task-desc').value.trim();
+  const clientId = document.getElementById('nrm-task-client').value;
+  const activityId = document.getElementById('nrm-task-activity').value;
   const parts = date.split('/');
   if (parts.length !== 3) { showToast('Data inválida (DD/MM/AAAA)', 'err'); return; }
   const [dd, mm, yyyy] = parts.map(Number);
   const dbDate = `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-  const payload = { title, description: desc || null, scheduled_date: dbDate, priority, scheduled_time: time || null };
+  const payload = { title, description: desc || null, scheduled_date: dbDate, priority, scheduled_time: time || null, client_id: clientId ? Number(clientId) : null, task_id: activityId ? Number(activityId) : null };
   const alertMinutes = nrmAlertToMinutes(alertVal, alertUnit);
   if (alertMinutes) payload.alert_minutes_before = alertMinutes;
   if (durMin) payload.duration_minutes = parseInt(durMin);
@@ -5051,6 +5088,7 @@ function openCalEditModal(id, type) {
     sel.innerHTML = '<option value="">— selecione —</option>' +
       (T.clients||[]).filter(c=>c.is_active)
         .map(c=>`<option value="${c.id}"${c.id === item.client_id ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
+    if (document.getElementById('nrm-appt-activity')) document.getElementById('nrm-appt-activity').value = item.task_id || '';
   } else {
     _nrmEditingTaskId = id;
     document.getElementById('nrm-task-date').value = dbDateToDisplay(item.scheduled_date) || '';
@@ -5062,6 +5100,8 @@ function openCalEditModal(id, type) {
     document.getElementById('nrm-task-alert-value').value = taskAlertFields.value;
     document.getElementById('nrm-task-alert-unit').value = taskAlertFields.unit;
     if (document.getElementById('nrm-task-duration')) document.getElementById('nrm-task-duration').value = item.duration_minutes ? String(item.duration_minutes) : '';
+    if (document.getElementById('nrm-task-client')) document.getElementById('nrm-task-client').value = item.client_id || '';
+    if (document.getElementById('nrm-task-activity')) document.getElementById('nrm-task-activity').value = item.task_id || '';
   }
 
   document.getElementById('nrm-title').textContent = type === 'appointment' ? 'Editar compromisso' : 'Editar tarefa';

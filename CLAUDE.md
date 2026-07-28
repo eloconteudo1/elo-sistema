@@ -363,6 +363,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Fix gráfico de carga da semana (`renderPanelSemana()`): antes contava `.length` de itens, agora soma `duration_minutes` (default 30min quando ausente); cores por faixa de tempo (≤3h verde, ≤7h laranja, >7h vermelho) em vez de contagem; `counts` em horas (`Xh` no tooltip)
 - Versão 3.77, data 28/07/2026
 
+**Sessão S-CAMPO-CLIENTE-ATIVIDADE — Campo Cliente/Atividade em agenda e tarefa, pré-requisito do Sequenciador (V3.78)**
+- SQL: `alter table scheduled_tasks add column if not exists task_id bigint references tasks(id)`; `alter table appointments add column if not exists task_id bigint references tasks(id)` — ambos nullable, campos opcionais
+- Desktop: campo Cliente adicionado na aba Tarefa (`nrm-task-client`, já existia em Compromisso); campo Atividade (`nrm-appt-activity` / `nrm-task-activity`) adicionado nas duas abas, populado a partir de `T.tasks` (mesma lista canônica do seletor do cronômetro)
+- `openNovoRegistro()` popula os 4 selects novos; `closeNovoRegistro()` limpa os 4; `openCalEditModal()` (chamada por `radarEditTask`) preenche `client_id`/`task_id` ao editar item existente
+- `_nrmSaveAppt()` e `_nrmSaveTask()` incluem `task_id` no payload; compromisso já enviava `client_id`, tarefa passou a enviar também
+- Mobile: campo Atividade adicionado em `mniTab('appt')` e `mniTab('task')` via `window._mniActivityOptions`; `saveMobileAppt()` e `saveMobileTask()` incluem `task_id` no insert
+- Versão 3.78, data 28/07/2026
+
 **Sessão RADAR-A1 — Schema + CSS base do Radar (V3.36)**
 - SQL: `ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_done boolean DEFAULT false`
 - SQL: `ALTER TABLE scheduled_tasks ADD COLUMN IF NOT EXISTS duration_minutes integer`
@@ -453,6 +461,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S-FIX-E2A | ~~S-FIX-E2A: Editar/excluir universal no Radar (todas as listas) + tipografia font-weight:600~~ | **Concluído** |
 | S-FIX-E2B | ~~S-FIX-E2B: Gráfico de carga Chart.js, fundo do calendário var(--off), detalhe do Mês no painel direito~~ | **Concluído** |
 | S-FIX-RADAR | ~~S-FIX-RADAR: Race condition boot + sync desktop/mobile do Radar + carga por tempo (não contagem)~~ | **Concluído** |
+| S-CAMPO-CLIENTE-ATIVIDADE | ~~S-CAMPO-CLIENTE-ATIVIDADE: campo Cliente/Atividade em agenda e tarefa (desktop + mobile), pré-requisito Sequenciador~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
