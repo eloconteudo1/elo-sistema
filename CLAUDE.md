@@ -369,6 +369,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - `/recebido` (equivalente em `monthly_payments`) já fazia a dupla atualização corretamente, sem alteração
 - Versão 3.80, data 29/07/2026
 
+**Sessão S-RENOMEAR-RADAR — Rótulo "Radar" → "Tarefas" na UI (V3.82)**
+- `index.html`: texto visível trocado em 2 pontos — aba do topbar (`data-page="radar"`) e `#radar-title`
+- Nenhum identificador interno alterado: `RADAR`, `initRadar()`, `radarRefreshCurrentPanel()`, `#radar-title`, `.radar-tabs`, hash `#radar`, `data-page="radar"` continuam iguais
+- "Resultado" sem alteração
+- Versão 3.82, data 29/07/2026
+
 **Sessão S-CAMPO-CLIENTE-ATIVIDADE — Campo Cliente/Atividade em agenda e tarefa, pré-requisito do Sequenciador (V3.78)**
 - SQL: `alter table scheduled_tasks add column if not exists task_id bigint references tasks(id)`; `alter table appointments add column if not exists task_id bigint references tasks(id)` — ambos nullable, campos opcionais
 - Desktop: campo Cliente adicionado na aba Tarefa (`nrm-task-client`, já existia em Compromisso); campo Atividade (`nrm-appt-activity` / `nrm-task-activity`) adicionado nas duas abas, populado a partir de `T.tasks` (mesma lista canônica do seletor do cronômetro)
