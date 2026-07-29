@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.79 · ELO Comunicação · Atualizado em 28/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.80 · ELO Comunicação · Atualizado em 29/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,9 +1456,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.79</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.80</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">28/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">29/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -3744,7 +3744,6 @@ function submitAssistantCommand() {
   }
   const value = input.value;
   handleAssistantCommand(value);
-  input.value = '';
 }
 
 function showAssistantMessage(msg) {
@@ -4043,7 +4042,7 @@ async function handlePagoCommand(text) {
   }
   const cost = matches[0];
   const { error } = await db(
-    () => sb.from('cost_items').update({ is_paid: true }).eq('id', cost.id),
+    () => sb.from('cost_items').update({ is_paid: true, status: 'PAGO' }).eq('id', cost.id),
     'Erro ao dar baixa na conta'
   );
   if (error) return;
