@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.80 · ELO Comunicação · Atualizado em 29/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.81 · ELO Comunicação · Atualizado em 29/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,7 +1456,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.80</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.81</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">29/07/2026</span></span>
   </footer>
@@ -1820,7 +1820,7 @@ function playReminderBeep() {
   } catch(e) {}
 }
 function fireReminderNotification(rem) {
-  showAlarmBanner(rem.title || 'Lembrete', rem.description || '');
+  showAlarmBanner(rem.title || 'Lembrete', rem.description || '', 'reminder');
 }
 function remGetLastFired(id) {
   try { return JSON.parse(localStorage.getItem('elo_rem_lastfired')||'{}')[id] || 0; } catch(e) { return 0; }
@@ -2880,7 +2880,8 @@ function _checkLongTimer() {
   const nomeTarefa = T.activeEntry?.task_name || T.selectedTaskName || 'Tarefa atual';
   showAlarmBanner(
     `⏱ Cronômetro ligado há ${fMin(elapsedMin)}`,
-    `${nomeTarefa} — ainda está nessa? Se esqueceu, pare o timer e ajuste o registro.`
+    `${nomeTarefa} — ainda está nessa? Se esqueceu, pare o timer e ajuste o registro.`,
+    'timer'
   );
   showToast(`Cronômetro rodando há ${fMin(elapsedMin)}`, 'warn');
   T._longTimerNextWarn = elapsedMin + 60;
@@ -5244,23 +5245,25 @@ function openCalEditModal(id, type) {
 let _alarmBannerTimeout = null;
 let _alarmAudio = null;
 
-function showAlarmBanner(title, desc) {
+function showAlarmBanner(title, desc, kind) {
   const banner = document.getElementById('elo-alarm-banner');
   if (!banner) return;
+  const durationMs = kind === 'reminder' ? 10000 : 8000;
   document.getElementById('elo-alarm-title').textContent = title;
   document.getElementById('elo-alarm-desc').textContent = desc || '';
   banner.style.display = 'block';
 
   // Barra de progresso: reseta e inicia
   const bar = document.getElementById('elo-alarm-progress-bar');
-  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(()=>{ bar.style.transition='width 8s linear'; bar.style.width='0%'; }, 50); }
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(()=>{ bar.style.transition=`width ${durationMs/1000}s linear`; bar.style.width='0%'; }, 50); }
 
-  // Auto-dismiss após 8s
+  // Auto-dismiss
   clearTimeout(_alarmBannerTimeout);
-  _alarmBannerTimeout = setTimeout(dismissAlarmBanner, 8000);
+  _alarmBannerTimeout = setTimeout(dismissAlarmBanner, durationMs);
 
-  // Som
-  playAlarmSound();
+  // Som — cada tipo de alarme tem som próprio, pra reconhecer de ouvido qual é qual
+  if (kind === 'reminder') playReminderAlarmSound();
+  else playTimerAlarmSound();
 
   // Notificação do sistema (se permitida)
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -5275,25 +5278,40 @@ function dismissAlarmBanner() {
   if (_alarmAudio) { _alarmAudio.pause(); _alarmAudio = null; }
 }
 
-function playAlarmSound() {
+function _beepAt(ctx, freq, start, dur) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  osc.type = 'sine';
+  gain.gain.setValueAtTime(0, ctx.currentTime + start);
+  gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + start + 0.02);
+  gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
+  osc.start(ctx.currentTime + start);
+  osc.stop(ctx.currentTime + start + dur + 0.05);
+}
+// Som do TIMER >120min — grave, poucos bipes espaçados (não confundir com lembrete)
+function playTimerAlarmSound() {
   try {
     if (_alarmAudio) { _alarmAudio.pause(); _alarmAudio = null; }
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(freq, start, dur) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0, ctx.currentTime + start);
-      gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + start + 0.02);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + dur);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + dur + 0.05);
-    }
-    // 2 bipes
-    beep(880, 0,    0.18);
-    beep(1100, 0.28, 0.28);
+    _beepAt(ctx, 440, 0,    0.3);
+    _beepAt(ctx, 330, 1.4,  0.4);
+  } catch(e) { console.warn('Audio não disponível:', e); }
+}
+// Som do LEMBRETE cadastrado — agudo, bipes espaçados preenchendo os 10s do banner
+function playReminderAlarmSound() {
+  try {
+    if (_alarmAudio) { _alarmAudio.pause(); _alarmAudio = null; }
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    _beepAt(ctx, 880,  0,   0.18);
+    _beepAt(ctx, 1100, 0.3, 0.18);
+    _beepAt(ctx, 880,  2.5, 0.18);
+    _beepAt(ctx, 1100, 2.8, 0.18);
+    _beepAt(ctx, 880,  5.5, 0.18);
+    _beepAt(ctx, 1100, 5.8, 0.18);
+    _beepAt(ctx, 880,  8.5, 0.18);
+    _beepAt(ctx, 1100, 8.8, 0.18);
   } catch(e) { console.warn('Audio não disponível:', e); }
 }
 
