@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.82 · ELO Comunicação · Atualizado em 29/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.83 · ELO Comunicação · Atualizado em 29/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,7 +1456,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.82</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.83</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">29/07/2026</span></span>
   </footer>
@@ -3598,6 +3598,7 @@ function renderParaHoje() {
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
           </div>
+          <button class="ph-start-btn" data-seq-start="${key}" title="Iniciar timer" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
           <div class="ph-actions" style="display:none;gap:2px;flex-shrink:0;">
             <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
             <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Excluir">🗑</button>

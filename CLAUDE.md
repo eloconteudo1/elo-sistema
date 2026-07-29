@@ -375,6 +375,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - "Resultado" sem alteração
 - Versão 3.82, data 29/07/2026
 
+**Sessão S-PARA-HOJE-INICIAR — Botão ▶ em todo item da fila "Para Hoje" (V3.83)**
+- `renderParaHoje()`: item não-primeiro (`idx > 0`) ganhou `<button class="ph-start-btn" data-seq-start="${key}">▶</button>` entre título e `ph-actions`, sempre visível (não depende de hover)
+- Sem JS novo — `data-seq-start` já capturado por `paraHojeSetupActions()` → `sequencerStartItem(key)`
+- Item AGORA (idx === 0) sem alteração; drag-and-drop e hover ✏️🗑 preservados
+- Versão 3.83, data 29/07/2026
+
 **Sessão S-CAMPO-CLIENTE-ATIVIDADE — Campo Cliente/Atividade em agenda e tarefa, pré-requisito do Sequenciador (V3.78)**
 - SQL: `alter table scheduled_tasks add column if not exists task_id bigint references tasks(id)`; `alter table appointments add column if not exists task_id bigint references tasks(id)` — ambos nullable, campos opcionais
 - Desktop: campo Cliente adicionado na aba Tarefa (`nrm-task-client`, já existia em Compromisso); campo Atividade (`nrm-appt-activity` / `nrm-task-activity`) adicionado nas duas abas, populado a partir de `T.tasks` (mesma lista canônica do seletor do cronômetro)
