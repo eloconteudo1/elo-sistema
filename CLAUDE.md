@@ -381,6 +381,14 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 - Item AGORA (idx === 0) sem alteração; drag-and-drop e hover ✏️🗑 preservados
 - Versão 3.83, data 29/07/2026
 
+**Sessão S-PERFORMANCE-CACHE — Cache Resultado + dados em memória + limpeza CAL residual (V3.84)**
+- `initResultado()`: cache TTL de 2min (mesmo padrão do Financeiro/Clientes) via `_resLastLoad`/`_resCacheView`/`RES_TTL`, chave `resViewMode-resMonth-resYear`
+- `resRenderHoje()`: elimina as 2 queries (`time_entries` + `settings`) e reutiliza `T.todayEntries`, `T.settings`, `T.clients` já carregados pelo boot — resto da função inalterado
+- `CAL` (resíduo do Calendário antigo, só `CAL.reminders` ainda vivo) removido — migrado para `T.reminders`, mesmo padrão de tudo mais no estado global
+- Intervalos `refreshTodayPill` (30s) e `renderAssistantHero` (60s) agora pausam fora da Home (`_pauseHomeIntervals`/`_resumeHomeIntervals` chamados em `navigateTo`); `checkPersonalReminders` continua rodando sempre, independente da página
+- Nenhuma mudança de UI visível
+- Versão 3.84, data 30/07/2026
+
 **Sessão S-CAMPO-CLIENTE-ATIVIDADE — Campo Cliente/Atividade em agenda e tarefa, pré-requisito do Sequenciador (V3.78)**
 - SQL: `alter table scheduled_tasks add column if not exists task_id bigint references tasks(id)`; `alter table appointments add column if not exists task_id bigint references tasks(id)` — ambos nullable, campos opcionais
 - Desktop: campo Cliente adicionado na aba Tarefa (`nrm-task-client`, já existia em Compromisso); campo Atividade (`nrm-appt-activity` / `nrm-task-activity`) adicionado nas duas abas, populado a partir de `T.tasks` (mesma lista canônica do seletor do cronômetro)
