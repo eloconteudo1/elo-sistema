@@ -53,319 +53,257 @@ body{
 
 
 /* ── PAGE ── */
-.page{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  padding:16px 24px 16px;
-  gap:10px;
-  overflow:hidden;
-  min-height:0;
+.page {
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
-/* ── KPI BAR ── */
-.kpi-bar{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  flex-shrink:0;
+/* ── SEARCH BLOCK ── */
+.search-block {
+  background: var(--surface);
+  border: 0.5px solid rgba(74,41,118,.12);
+  border-radius: 18px;
+  padding: 22px 26px;
+  box-shadow: 0 6px 24px rgba(46,24,71,.07);
+  flex-shrink: 0;
 }
-.kpi-card{
-  background:var(--surface);
-  border:var(--border);
-  border-radius:14px;
-  padding:12px 16px;
-  box-shadow:var(--shadow-sm);
+.search-top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
-.kpi-label{font-size:9px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
-.kpi-val{font-size:26px;font-weight:800;color:var(--text);line-height:1.1;}
-.kpi-val.orange{color:var(--orange);}
-.kpi-val.green{color:var(--green);}
-.kpi-val.lavender{color:var(--lavender);}
-.kpi-hint{font-size:10px;color:var(--text-dim);margin-top:2px;}
+.search-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.search-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.search-sub {
+  font-size: 11px;
+  color: rgba(46,27,78,.4);
+  margin-bottom: 16px;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border: 2px solid rgba(74,41,118,.12);
+  border-radius: 14px;
+  padding: 0 18px;
+  margin-bottom: 14px;
+  transition: border-color .15s;
+}
+.search-bar:focus-within {
+  border-color: var(--purple);
+}
+.search-bar svg {
+  flex-shrink: 0;
+  color: var(--purple);
+  opacity: .5;
+}
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text);
+  padding: 14px 0;
+  outline: none;
+}
+.search-input::placeholder {
+  color: var(--lavender);
+  font-weight: 500;
+}
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-select {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg2);
+  border: 0.5px solid rgba(74,41,118,.1);
+  border-radius: 8px;
+  padding: 8px 28px 8px 12px;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%234A2976' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.btn-limpar {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(46,27,78,.45);
+  background: transparent;
+  border: 0.5px solid rgba(74,41,118,.1);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.btn-limpar:hover { background: var(--bg); }
+.filter-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.stat {
+  font-size: 11px;
+  color: rgba(46,27,78,.45);
+}
+.stat-num {
+  font-weight: 700;
+}
+.stat-num.green { color: var(--green); }
+.stat-num.lav { color: var(--lavender); }
 
-/* ── SEARCH BAR ── */
-.search-bar{
-  background:var(--surface);
-  border:var(--border);
-  border-radius:14px;
-  box-shadow:var(--shadow-sm);
-  padding:12px 16px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  flex-shrink:0;
+/* ── POST GRID ── */
+.post-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  min-height: 200px;
 }
-.search-input-wrap{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:var(--bg);
-  border:var(--border);
-  border-radius:10px;
-  padding:0 14px;
+.grid-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--text-dim);
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
-.search-input-wrap svg{color:var(--text-dim);flex-shrink:0;}
-.search-input{
-  flex:1;
-  border:none;
-  background:transparent;
-  font-family:inherit;
-  font-size:13px;
-  color:var(--text);
-  padding:10px 0;
-  outline:none;
+.grid-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--lavender);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  gap: 8px;
 }
-.search-input::placeholder{color:var(--lavender);}
-.search-filters{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.search-filters select{
-  font-family:inherit;
-  font-size:12px;
-  font-weight:600;
-  color:var(--text);
-  background:var(--bg2);
-  border:var(--border);
-  border-radius:8px;
-  padding:6px 10px;
-  cursor:pointer;
-  outline:none;
-  flex:1;
-}
-.search-filters select:focus{border-color:rgba(74,41,118,.35);}
-.btn-limpar{
-  background:transparent;
-  border:var(--border);
-  color:var(--text-dim);
-  font-family:inherit;
-  font-size:12px;
-  font-weight:600;
-  padding:6px 14px;
-  border-radius:8px;
-  cursor:pointer;
-  white-space:nowrap;
-  flex-shrink:0;
-  transition:all .15s;
-}
-.btn-limpar:hover{background:var(--surface2);color:var(--text);}
-
-/* ── CONTENT AREA ── */
-.content-area{
-  flex:1;
-  display:flex;
-  gap:12px;
-  min-height:0;
-  overflow:hidden;
-}
-
-/* ── NOTEPAD ── */
-.notepad{
-  flex:0 0 380px;
-  background:var(--surface);
-  border-radius:16px;
-  border:var(--border);
-  box-shadow:var(--shadow-sm);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  min-height:0;
-}
-.notepad-client-row{
-  padding:12px 16px 10px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  border-bottom:var(--border);
-  flex-shrink:0;
-}
-.client-label-txt{
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:1.2px;
-  text-transform:uppercase;
-  color:var(--text-dim);
-  white-space:nowrap;
-}
-
-/* Custom select */
-.custom-select{position:relative;flex:1;}
-.select-trigger{
-  display:flex;align-items:center;gap:8px;
-  background:var(--bg2);border:var(--border);border-radius:9px;
-  padding:7px 10px;cursor:pointer;font-family:inherit;font-size:13px;
-  font-weight:600;color:var(--text);user-select:none;transition:border-color .15s;
-}
-.select-trigger:hover{border-color:rgba(74,41,118,.3);}
-.select-trigger.open{border-color:var(--purple);}
-.trigger-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--lavender);}
-.trigger-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.trigger-arrow{font-size:10px;color:var(--text-dim);transition:transform .15s;}
-.trigger-arrow.up{transform:rotate(180deg);}
-.select-dropdown{
-  display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;
-  background:var(--surface);border:var(--border);border-radius:12px;
-  box-shadow:0 8px 24px rgba(46,24,71,.15);z-index:200;overflow:hidden;
-}
-.select-dropdown.open{display:block;}
-.dropdown-search-wrap{padding:8px 10px;border-bottom:var(--border);}
-.dropdown-search{
-  width:100%;border:var(--border);border-radius:8px;padding:6px 10px;
-  font-family:inherit;font-size:12px;background:var(--bg2);color:var(--text);outline:none;
-}
-.dropdown-list{max-height:180px;overflow-y:auto;}
-.dropdown-item{
-  display:flex;align-items:center;gap:8px;padding:8px 12px;
-  font-size:13px;font-weight:500;color:var(--text);cursor:pointer;transition:background .1s;
-}
-.dropdown-item:hover{background:var(--surface2);}
-.dropdown-item.selected{background:var(--bg2);font-weight:700;}
-.item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-
-/* Toolbar formatação */
-.notepad-toolbar{
-  padding:8px 14px 6px;
-  display:flex;align-items:center;gap:4px;
-  border-bottom:var(--border);flex-shrink:0;
-  flex-wrap:wrap;
-}
-.toolbar-btn{
-  background:transparent;border:none;cursor:pointer;
-  font-family:inherit;font-size:13px;font-weight:700;
-  color:var(--text-dim);padding:4px 8px;border-radius:6px;transition:all .12s;
-}
-.toolbar-btn:hover{background:var(--surface2);color:var(--text);}
-.toolbar-sep{width:1px;height:18px;background:rgba(74,41,118,.12);margin:0 4px;flex-shrink:0;}
-.toolbar-sym{font-size:11px;font-weight:600;padding:4px 6px;}
-
-/* Notepad header */
-.notepad-header{
-  padding:8px 16px 4px;
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.notepad-header-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);}
-.notepad-header-hint{font-size:11px;color:var(--lavender);}
-
-/* Editor */
-.notepad-editor-wrap{flex:1;padding:0 16px;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-.notepad-editor{
-  flex:1;background:var(--bg);border:var(--border);border-radius:10px;
-  padding:12px 14px;font-size:13px;line-height:1.75;color:var(--text);
-  outline:none;overflow-y:auto;font-family:inherit;
-}
-.notepad-editor:empty::before{content:attr(data-placeholder);color:var(--lavender);pointer-events:none;}
-.notepad-editor::-webkit-scrollbar{width:3px;}
-.notepad-editor::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:2px;}
-
-/* Rodapé notas */
-.notepad-footer{
-  padding:8px 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.notepad-footer-hint{font-size:11px;color:var(--text-dim);}
-.btn-salvar{
-  background:var(--coral);border:none;color:#fff;font-size:12px;font-weight:700;
-  padding:7px 18px;border-radius:9px;cursor:pointer;font-family:inherit;transition:background .15s;
-}
-.btn-salvar:hover{background:var(--coral-light);}
-.btn-salvar:disabled{background:var(--lavender);cursor:not-allowed;}
-
-/* ── BANCO PANEL ── */
-.banco-panel{
-  flex:1;
-  background:var(--surface);
-  border-radius:16px;
-  border:var(--border);
-  box-shadow:var(--shadow-sm);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  min-height:0;
-}
-.banco-header{
-  background:var(--deep);
-  padding:12px 16px;
-  display:flex;align-items:center;gap:10px;
-  border-radius:16px 16px 0 0;flex-shrink:0;
-}
-.banco-header-info{flex:1;}
-.banco-header-title{color:#fff;font-weight:700;font-size:14px;}
-.banco-header-sub{color:var(--lavender);font-size:11px;margin-top:1px;}
-.banco-counter{
-  background:var(--purple);color:#fff;border-radius:8px;
-  padding:2px 10px;font-size:12px;font-weight:700;
+.grid-more {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
 }
 
-/* Lista de posts — 1 coluna */
-.banco-list{
-  flex:1;
-  overflow-y:auto;
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+/* Post card */
+.post-card {
+  background: var(--surface);
+  border: 0.5px solid rgba(74,41,118,.1);
+  border-radius: 16px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
 }
-.banco-list::-webkit-scrollbar{width:4px;}
-.banco-list::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:2px;}
-
-/* Post card — 1 coluna, mais legível */
-.post-card{
-  background:var(--surface);
-  border:var(--border);
-  border-radius:12px;
-  padding:12px 14px;
-  box-shadow:0 1px 4px rgba(46,24,71,.05);
-  transition:box-shadow .15s;
+.post-card:hover {
+  box-shadow: 0 8px 24px rgba(46,24,71,.1);
+  border-color: rgba(74,41,118,.22);
 }
-.post-card:hover{box-shadow:0 4px 12px rgba(46,24,71,.10);}
-
-.post-card-top{
-  display:flex;align-items:center;gap:8px;margin-bottom:6px;
+.post-card-tags {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
-.post-card-tags{display:flex;gap:6px;flex:1;flex-wrap:wrap;}
-.tag{
-  font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
-  border-radius:6px;padding:2px 8px;
+.tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  padding: 3px 7px;
+  white-space: nowrap;
 }
-.tag.esp{background:var(--bg2);color:var(--purple);}
-.tag.fmt{background:rgba(196,114,90,.12);color:var(--coral);}
-.tag.status-ideia{background:rgba(224,122,58,.12);color:var(--orange);}
-.tag.status-aprovado{background:rgba(47,185,137,.12);color:var(--green);}
-.tag.status-usado{background:rgba(191,168,217,.18);color:var(--purple);}
-
-.post-card-title{
-  font-size:13px;font-weight:700;color:var(--text);
-  margin-bottom:5px;line-height:1.4;
+.tag.esp { background: var(--bg2); color: var(--purple); }
+.tag.fmt { background: rgba(196,114,90,.1); color: var(--coral); }
+.tag.status-ideia { background: rgba(224,122,58,.1); color: var(--orange); }
+.tag.status-aprovado { background: rgba(47,185,137,.1); color: var(--green); }
+.tag.status-usado { background: rgba(191,168,217,.18); color: var(--purple); }
+.post-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.post-card-preview{
-  font-size:12px;color:var(--text-dim);line-height:1.6;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
-  margin-bottom:8px;
+.post-card-preview {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  margin-bottom: 8px;
 }
-.post-card-foot{
-  display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding-top:8px;border-top:var(--border);
+.post-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 0.5px solid rgba(74,41,118,.06);
 }
-.post-card-esp-hint{font-size:11px;color:var(--text-dim);font-weight:500;}
-.post-card-actions{display:flex;gap:6px;align-items:center;}
-.btn-usar{
-  background:var(--coral);color:#fff;border:none;font-family:inherit;
-  font-size:11px;font-weight:700;padding:5px 12px;border-radius:7px;cursor:pointer;transition:background .15s;
+.post-card-link {
+  font-size: 10px;
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
 }
-.btn-usar:hover{background:var(--coral-light);}
-.btn-icon{
-  background:transparent;border:var(--border);color:var(--text-dim);
-  font-size:13px;padding:4px 8px;border-radius:7px;cursor:pointer;transition:all .12s;
-  font-family:inherit;
+.post-card-edit {
+  font-size: 10px;
+  color: rgba(46,27,78,.3);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity .15s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
 }
-.btn-icon:hover{background:var(--surface2);color:var(--text);}
+.post-card:hover .post-card-edit {
+  opacity: 1;
+}
 
 /* Loading state */
-.banco-loading{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:48px;color:var(--text-dim);gap:12px;font-size:13px;font-weight:600;
-}
 .spinner-sm{
   width:28px;height:28px;border-radius:50%;
   border:3px solid var(--lavender);border-top-color:var(--coral);
@@ -373,16 +311,7 @@ body{
 }
 @keyframes spin{to{transform:rotate(360deg);}}
 
-.banco-empty{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:48px;color:var(--lavender);font-size:13px;font-weight:600;
-  text-align:center;gap:8px;
-}
-
 /* Load more */
-.banco-more{
-  padding:10px;flex-shrink:0;display:flex;justify-content:center;
-}
 .btn-loadmore{
   background:var(--surface2);border:var(--border);color:var(--purple);
   font-family:inherit;font-size:12px;font-weight:700;padding:8px 24px;
@@ -422,7 +351,32 @@ body{
 .modal-item-val a{color:var(--blue);text-decoration:none;font-weight:600;}
 .modal-item-val a:hover{text-decoration:underline;}
 .modal-item-val.green{color:var(--green);}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;align-items:center;}
+.status-selector{
+  display:flex;
+  gap:6px;
+  margin-top:4px;
+}
+.status-btn{
+  font-family:inherit;
+  font-size:10px;
+  font-weight:700;
+  padding:5px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  border:1.5px solid transparent;
+  transition:all .12s;
+}
+.status-btn.s-ideia{background:rgba(224,122,58,.1);color:var(--orange);}
+.status-btn.s-aprovado{background:rgba(47,185,137,.1);color:var(--green);}
+.status-btn.s-usado{background:rgba(191,168,217,.18);color:var(--purple);}
+.status-btn.active{border-color:currentColor;}
+.status-btn:hover{filter:brightness(.95);}
+.modal-status-hint{
+  font-size:10px;
+  color:rgba(46,27,78,.3);
+  flex:1;
+}
 .btn-usar-modal{
   background:var(--coral);color:#fff;border:none;font-family:inherit;
   font-size:13px;font-weight:700;padding:9px 20px;border-radius:10px;cursor:pointer;transition:background .15s;
@@ -484,7 +438,7 @@ body{
   </div>
   <div style="display:flex;gap:4px;flex:1;">
     <a class="elo-top-tab" href="index.html" style="text-decoration:none;">Home</a>
-    <a class="elo-top-tab" href="index.html#radar" style="text-decoration:none;">Radar</a>
+    <a class="elo-top-tab" href="index.html#radar" style="text-decoration:none;">Tarefas</a>
     <a class="elo-top-tab" href="index.html#resultado" style="text-decoration:none;">Resultado</a>
     <a class="elo-top-tab" href="index.html#clientes" style="text-decoration:none;">Clientes</a>
     <a class="elo-top-tab" href="index.html#financeiro" style="text-decoration:none;">Financeiro</a>
@@ -501,143 +455,58 @@ body{
 
 <!-- PAGE -->
 <div class="page">
-
-  <!-- KPI BAR -->
-  <div class="kpi-bar" id="kpi-bar">
-    <div class="kpi-card">
-      <div class="kpi-label">Total de Posts</div>
-      <div class="kpi-val" id="kpi-total">—</div>
-      <div class="kpi-hint">no banco de inspirações</div>
+  <!-- SEARCH BLOCK -->
+  <div class="search-block">
+    <div class="search-top-row">
+      <div class="search-title">Acervo de inspiração</div>
+      <div class="search-count" id="search-count">— posts</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Disponíveis</div>
-      <div class="kpi-val orange" id="kpi-ideia">—</div>
-      <div class="kpi-hint">status Ideia</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Aprovados</div>
-      <div class="kpi-val green" id="kpi-aprovado">—</div>
-      <div class="kpi-hint">prontos para usar</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Usados</div>
-      <div class="kpi-val lavender" id="kpi-usado">—</div>
-      <div class="kpi-hint">já publicados</div>
-    </div>
-  </div>
-
-  <!-- SEARCH BAR -->
-  <div class="search-bar">
-    <div class="search-input-wrap">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <div class="search-sub">Busque por tema, palavra-chave ou legenda nos posts salvos</div>
+    <div class="search-bar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
-      <input class="search-input" id="search-input" type="text" placeholder="Buscar por tema, palavra-chave ou legenda..." oninput="onSearchInput(this.value)">
+      <input class="search-input" id="search-input" type="text"
+        placeholder="Ex: ansiedade infantil, carrossel endócrino, reels pediatria..."
+        oninput="onSearchInput(this.value)">
     </div>
-    <div class="search-filters">
-      <select id="filter-esp" onchange="applyFilters()">
-        <option value="">Especialidades</option>
+    <div class="filters-row">
+      <select class="filter-select" id="filter-esp" onchange="applyFilters()">
+        <option value="">Especialidade</option>
       </select>
-      <select id="filter-fmt" onchange="applyFilters()">
-        <option value="">Formatos</option>
+      <select class="filter-select" id="filter-fmt" onchange="applyFilters()">
+        <option value="">Formato</option>
         <option value="Carrossel">Carrossel</option>
         <option value="Reels">Reels</option>
         <option value="Card único">Card único</option>
         <option value="Stories">Stories</option>
         <option value="Texto">Texto</option>
       </select>
-      <select id="filter-status" onchange="applyFilters()">
+      <select class="filter-select" id="filter-status" onchange="applyFilters()">
         <option value="">Status</option>
         <option value="Ideia">Disponíveis (Ideia)</option>
         <option value="Aprovado">Aprovados</option>
         <option value="Usado">Usados</option>
       </select>
       <button class="btn-limpar" onclick="limparFiltros()">Limpar</button>
+      <div class="filter-stats">
+        <span class="stat"><span class="stat-num green" id="stat-disp">—</span> disponíveis</span>
+        <span class="stat"><span class="stat-num lav" id="stat-usado">—</span> usados</span>
+      </div>
     </div>
   </div>
 
-  <!-- CONTENT AREA -->
-  <div class="content-area">
-
-    <!-- NOTEPAD -->
-    <div class="notepad">
-      <!-- Linha cliente -->
-      <div class="notepad-client-row">
-        <span class="client-label-txt">Cliente</span>
-        <div class="custom-select" id="customSelect">
-          <div class="select-trigger" id="selectTrigger" onclick="toggleDropdown()">
-            <span class="trigger-dot" id="triggerDot"></span>
-            <span class="trigger-text" id="triggerText">Selecionar cliente...</span>
-            <span class="trigger-arrow" id="triggerArrow">▼</span>
-          </div>
-          <div class="select-dropdown" id="selectDropdown">
-            <div class="dropdown-search-wrap">
-              <input class="dropdown-search" id="dropdownSearch" type="text" placeholder="Buscar..." oninput="filterDropdown(this.value)">
-            </div>
-            <div class="dropdown-list" id="dropdownList"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Toolbar formatação -->
-      <div class="notepad-toolbar">
-        <button class="toolbar-btn" title="Negrito" onclick="fmt('bold')"><b>B</b></button>
-        <button class="toolbar-btn" title="Itálico" onclick="fmt('italic')"><i>I</i></button>
-        <button class="toolbar-btn" title="Sublinhado" onclick="fmt('underline')"><u>U</u></button>
-        <div class="toolbar-sep"></div>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('•')">•</button>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('→')">→</button>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('★')">★</button>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('✓')">✓</button>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('💡')">💡</button>
-        <button class="toolbar-btn toolbar-sym" onclick="insertSym('📌')">📌</button>
-        <div class="toolbar-sep"></div>
-        <button class="toolbar-btn" title="Limpar formatação" onclick="fmt('removeFormat')" style="font-size:11px;">Limpar</button>
-      </div>
-
-      <!-- Header notas -->
-      <div class="notepad-header">
-        <span class="notepad-header-label">Bloco de notas</span>
-        <span class="notepad-header-hint" id="clientHint">nenhum cliente selecionado</span>
-      </div>
-
-      <!-- Editor -->
-      <div class="notepad-editor-wrap">
-        <div class="notepad-editor" id="editor" contenteditable="false"
-          data-placeholder="Selecione um cliente para começar a escrever..."
-          onkeydown="handleKey(event)">
-        </div>
-      </div>
-
-      <!-- Rodapé -->
-      <div class="notepad-footer">
-        <span class="notepad-footer-hint">Ctrl+S para salvar</span>
-        <button class="btn-salvar" id="btnSalvar" disabled onclick="salvar()">Salvar</button>
-      </div>
+  <!-- POST GRID -->
+  <div class="post-grid" id="post-grid">
+    <div class="grid-loading">
+      <div class="spinner-sm"></div>
+      Carregando acervo de inspirações...
     </div>
+  </div>
 
-    <!-- BANCO PANEL -->
-    <div class="banco-panel">
-      <div class="banco-header">
-        <div class="banco-header-info">
-          <div class="banco-header-title">📚 Banco de Inspirações</div>
-          <div class="banco-header-sub" id="banco-sub">Carregando posts...</div>
-        </div>
-        <span class="banco-counter" id="banco-counter">...</span>
-      </div>
-
-      <div class="banco-list" id="banco-list">
-        <div class="banco-loading">
-          <div class="spinner-sm"></div>
-          Carregando banco de inspirações...
-        </div>
-      </div>
-
-      <div class="banco-more" id="banco-more" style="display:none;">
-        <button class="btn-loadmore" id="btn-loadmore" onclick="loadMore()">Carregar mais 40 posts</button>
-      </div>
-    </div>
-
+  <!-- LOAD MORE -->
+  <div class="grid-more" id="grid-more" style="display:none;">
+    <button class="btn-loadmore" id="btn-loadmore" onclick="loadMore()">Carregar mais posts</button>
   </div>
 </div>
 
@@ -652,6 +521,7 @@ body{
     <div class="modal-legenda" id="m-legenda"></div>
     <div class="modal-grid" id="m-grid"></div>
     <div class="modal-footer">
+      <span class="modal-status-hint">Clique no status — salva automaticamente</span>
       <button class="btn-cancel-modal" onclick="closeModal()">Fechar</button>
     </div>
   </div>
@@ -761,19 +631,11 @@ function openConfirmModal(title, msg, onConfirm) {
 }
 
 // ── Estado global ──
-let clients = [];
-let selectedClient = null;
-let dropdownOpen = false;
-let dropdownFilter = '';
-let notesCache = {};
-
-// Estado banco
 let allPosts = [];
 let filteredPosts = [];
 let currentPage = 0;
 const PAGE_SIZE = 40;
 let totalCount = 0;
-let kpiCounts = { total:0, ideia:0, aprovado:0, usado:0 };
 let searchTimeout = null;
 let currentModalPost = null;
 let editingPostId = null;
@@ -786,141 +648,23 @@ let filterText = '';
 
 // ── Init ──
 async function init(){
-  await loadClients();
-  await loadKPIs();
   await loadSpecialties();
+  await loadStats();
   await loadPosts();
 }
 
-// ── Clientes ──
-async function loadClients(){
-  const { data, error } = await db(() => sb.from('clients')
-    .select('id,name,color,is_active')
-    .eq('is_active', true)
-    .order('name'), 'Erro ao carregar clientes');
-  if(error){ return; }
-  clients = data || [];
-  renderDropdown();
-}
-
-function renderDropdown(){
-  const list = document.getElementById('dropdownList');
-  const filtered = clients.filter(c =>
-    c.name.toLowerCase().includes(dropdownFilter.toLowerCase())
-  );
-  if(!filtered.length){
-    list.innerHTML = '<div class="dropdown-item" style="color:var(--lavender);cursor:default;">Nenhum cliente</div>';
-    return;
-  }
-  list.innerHTML = filtered.map(c => {
-    const sel = selectedClient && selectedClient.id === c.id ? ' selected' : '';
-    const color = c.color || '#BFA8D9';
-    return `<div class="dropdown-item${sel}" data-id="${c.id}">
-      <span class="item-dot" style="background:${color}"></span>
-      ${escHtml(c.name)}
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.dropdown-item[data-id]').forEach(el => {
-    el.addEventListener('click', () => selectClient(el.dataset.id));
-  });
-}
-
-function toggleDropdown(){
-  dropdownOpen = !dropdownOpen;
-  document.getElementById('selectDropdown').classList.toggle('open', dropdownOpen);
-  document.getElementById('selectTrigger').classList.toggle('open', dropdownOpen);
-  document.getElementById('triggerArrow').classList.toggle('up', dropdownOpen);
-  if(dropdownOpen){
-    setTimeout(()=>document.getElementById('dropdownSearch')?.focus(), 50);
-    renderDropdown();
-  }
-}
-
-function filterDropdown(v){
-  dropdownFilter = v;
-  renderDropdown();
-}
-
-async function selectClient(id){
-  const c = clients.find(x => String(x.id) === String(id));
-  if(!c) return;
-  selectedClient = c;
-  const color = c.color || '#BFA8D9';
-  document.getElementById('triggerText').textContent = c.name;
-  document.getElementById('triggerDot').style.background = color;
-  document.getElementById('btnSalvar').disabled = false;
-  document.getElementById('clientHint').textContent = c.name;
-  const ed = document.getElementById('editor');
-  ed.contentEditable = 'true';
-  toggleDropdown();
-  dropdownFilter = '';
-  document.getElementById('dropdownSearch').value = '';
-
-  // Carrega nota do banco
-  if(notesCache[id] !== undefined){
-    ed.innerHTML = notesCache[id];
-  } else {
-    ed.innerHTML = '<span style="color:var(--lavender);font-size:12px;">Carregando...</span>';
-    const { data } = await db(() => sb.from('content_notes')
-      .select('content').eq('client_id', id).maybeSingle(), 'Erro ao carregar notas');
-    notesCache[id] = data?.content || '';
-    ed.innerHTML = notesCache[id];
-  }
-}
-
-document.addEventListener('click', function(e){
-  const cs = document.getElementById('customSelect');
-  if(cs && !cs.contains(e.target) && dropdownOpen) toggleDropdown();
-});
-
-// ── Editor ──
-function fmt(cmd){ document.execCommand(cmd, false, null); }
-
-function insertSym(s){
-  const ed = document.getElementById('editor');
-  ed.focus();
-  document.execCommand('insertText', false, s);
-}
-
-function handleKey(e){
-  if(e.ctrlKey && e.key === 's'){ e.preventDefault(); salvar(); }
-}
-
-async function salvar(){
-  if(!selectedClient){ showToast('Selecione um cliente primeiro','warn'); return; }
-  const content = document.getElementById('editor').innerHTML;
-  notesCache[selectedClient.id] = content;
-  const btn = document.getElementById('btnSalvar');
-  btn.disabled = true; btn.textContent = 'Salvando...';
-  const { error } = await db(() => sb.from('content_notes').upsert(
-    { client_id: selectedClient.id, content, updated_at: new Date().toISOString() },
-    { onConflict: 'client_id' }
-  ), 'Erro ao salvar');
-  btn.disabled = false; btn.textContent = 'Salvar';
-  if(error){ return; }
-  showToast('Anotações salvas ✓','ok');
-}
-
-// ── KPIs ──
-async function loadKPIs(){
-  // Conta por status de forma eficiente
-  const statuses = ['Ideia','Aprovado','Usado'];
+// ── Stats ──
+async function loadStats(){
   const results = await Promise.all([
-    db(() => sb.from('inspiration_posts').select('*', {count:'exact',head:true}), 'Erro ao carregar KPIs'),
-    ...statuses.map(s => db(() => sb.from('inspiration_posts').select('*',{count:'exact',head:true}).eq('status',s), 'Erro ao carregar KPIs'))
+    db(() => sb.from('inspiration_posts').select('*', {count:'exact',head:true}), 'Erro contagem'),
+    db(() => sb.from('inspiration_posts').select('*', {count:'exact',head:true}).eq('status','Usado'), 'Erro contagem'),
   ]);
-  kpiCounts.total = results[0].count ?? 0;
-  kpiCounts.ideia = results[1].count ?? 0;
-  kpiCounts.aprovado = results[2].count ?? 0;
-  kpiCounts.usado = results[3].count ?? 0;
-  renderKPIs();
-}
-
-function renderKPIs(){
-  document.getElementById('kpi-total').textContent = kpiCounts.total.toLocaleString('pt-BR');
-  document.getElementById('kpi-ideia').textContent = kpiCounts.ideia.toLocaleString('pt-BR');
-  document.getElementById('kpi-aprovado').textContent = kpiCounts.aprovado.toLocaleString('pt-BR');
-  document.getElementById('kpi-usado').textContent = kpiCounts.usado.toLocaleString('pt-BR');
+  const total = results[0].count ?? 0;
+  const usado = results[1].count ?? 0;
+  const disp = total - usado;
+  document.getElementById('search-count').textContent = total.toLocaleString('pt-BR') + ' posts';
+  document.getElementById('stat-disp').textContent = disp.toLocaleString('pt-BR');
+  document.getElementById('stat-usado').textContent = usado.toLocaleString('pt-BR');
 }
 
 // ── Especialidades (filtro dinâmico) ──
@@ -942,8 +686,8 @@ async function loadPosts(reset=true){
     currentPage = 0;
     allPosts = [];
   }
-  const listEl = document.getElementById('banco-list');
-  if(reset) listEl.innerHTML = '<div class="banco-loading"><div class="spinner-sm"></div>Carregando...</div>';
+  const gridEl = document.getElementById('post-grid');
+  if(reset) gridEl.innerHTML = '<div class="grid-loading"><div class="spinner-sm"></div>Carregando...</div>';
 
   const btn = document.getElementById('btn-loadmore');
   if(btn) btn.disabled = true;
@@ -964,7 +708,7 @@ async function loadPosts(reset=true){
   const { data, count, error } = await db(() => query, 'Erro ao carregar posts');
 
   if(error){
-    listEl.innerHTML = '<div class="banco-empty">Erro ao carregar posts.<br>Tente novamente.</div>';
+    gridEl.innerHTML = '<div class="grid-empty">Erro ao carregar posts.<br>Tente novamente.</div>';
     return;
   }
 
@@ -976,27 +720,27 @@ async function loadPosts(reset=true){
   updateBancoMeta();
 
   const hasMore = allPosts.length < totalCount;
-  const moreEl = document.getElementById('banco-more');
+  const moreEl = document.getElementById('grid-more');
   moreEl.style.display = hasMore ? 'flex' : 'none';
-  if(btn){ btn.disabled = false; btn.textContent = 'Carregar mais 40 posts'; }
+  if(btn){ btn.disabled = false; btn.textContent = 'Carregar mais posts'; }
 }
 
 function renderPosts(reset=true){
-  const listEl = document.getElementById('banco-list');
+  const gridEl = document.getElementById('post-grid');
 
   if(!allPosts.length){
-    listEl.innerHTML = '<div class="banco-empty">Nenhum post encontrado<br><span style="font-size:12px;font-weight:400;">Tente limpar os filtros</span></div>';
+    gridEl.innerHTML = '<div class="grid-empty">Nenhum post encontrado<br><span style="font-size:12px;font-weight:400;">Tente limpar os filtros</span></div>';
     return;
   }
 
-  const startIdx = reset ? 0 : listEl.children.length;
+  const startIdx = reset ? 0 : gridEl.children.length;
   const newPosts = reset ? allPosts : allPosts.slice(startIdx);
 
-  if(reset) listEl.innerHTML = '';
+  if(reset) gridEl.innerHTML = '';
 
   newPosts.forEach(p => {
     const card = buildCard(p);
-    listEl.appendChild(card);
+    gridEl.appendChild(card);
   });
 }
 
@@ -1010,31 +754,44 @@ function buildCard(p){
   const esp = p.specialty || p.collection || '';
   const fmt = p.format || '';
   const title = escHtml(p.title || '(sem título)');
-  const caption = escHtml((p.caption || '').slice(0, 220));
+  const caption = escHtml((p.caption || '').slice(0, 280));
 
-  div.style.cursor = 'pointer';
   div.innerHTML = `
-    <div class="post-card-top">
-      <div class="post-card-tags">
-        ${esp ? `<span class="tag esp">${escHtml(esp)}</span>` : ''}
-        ${fmt ? `<span class="tag fmt">${escHtml(fmt)}</span>` : ''}
-      </div>
+    <div class="post-card-tags">
+      ${esp ? `<span class="tag esp">${escHtml(esp)}</span>` : ''}
+      ${fmt ? `<span class="tag fmt">${escHtml(fmt)}</span>` : ''}
       <span class="tag ${statusClass}">${statusLabel}</span>
     </div>
     <div class="post-card-title">${title}</div>
     <div class="post-card-preview">${caption}</div>
+    <div class="post-card-foot">
+      <span class="post-card-link" data-action="link" data-href="${escHtml(p.reference_link||'')}">↗ Ver post</span>
+      <button class="post-card-edit" data-action="edit">✏️ Editar</button>
+    </div>
   `;
 
-  div.addEventListener('click', () => openModal(p));
+  div.addEventListener('click', (e) => {
+    const action = e.target.dataset.action || e.target.closest('[data-action]')?.dataset.action;
+    if(action === 'link'){
+      e.stopPropagation();
+      const href = e.target.dataset.href || e.target.closest('[data-href]')?.dataset.href;
+      if(href) window.open(href, '_blank');
+      return;
+    }
+    if(action === 'edit'){
+      e.stopPropagation();
+      openEdit(p);
+      return;
+    }
+    openModal(p);
+  });
 
   return div;
 }
 
 function updateBancoMeta(){
-  document.getElementById('banco-sub').textContent =
-    `${allPosts.length} de ${totalCount.toLocaleString('pt-BR')} posts`;
-  document.getElementById('banco-counter').textContent =
-    totalCount.toLocaleString('pt-BR');
+  document.getElementById('search-count').textContent =
+    totalCount.toLocaleString('pt-BR') + ' posts';
 }
 
 function loadMore(){
@@ -1043,10 +800,9 @@ function loadMore(){
 }
 
 // ── Filtros ──
-let searchTimer = null;
 function onSearchInput(v){
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
     filterText = v.trim();
     applyFilters();
   }, 350);
@@ -1071,41 +827,41 @@ function limparFiltros(){
 // ── Modal visualizar ──
 function openModal(p){
   currentModalPost = p;
-  const statusClass = p.status === 'Aprovado' ? 'status-aprovado'
-    : p.status === 'Usado' ? 'status-usado' : 'status-ideia';
+  const esp = p.specialty || p.collection || '';
+  const fmt = p.format || '';
 
   document.getElementById('m-tags').innerHTML = `
-    ${p.specialty ? `<span class="tag esp">${escHtml(p.specialty)}</span>` : ''}
-    ${p.format ? `<span class="tag fmt">${escHtml(p.format)}</span>` : ''}
-    <span class="tag ${statusClass}">${p.status||'Ideia'}</span>
+    ${esp ? `<span class="tag esp">${escHtml(esp)}</span>` : ''}
+    ${fmt ? `<span class="tag fmt">${escHtml(fmt)}</span>` : ''}
   `;
   document.getElementById('m-title').textContent = p.title || '';
   document.getElementById('m-legenda').textContent = p.caption || '';
 
   const refLink = p.reference_link
-    ? `<a href="${escHtml(p.reference_link)}" target="_blank">↗ Ver post original</a>`
+    ? `<a href="${escHtml(p.reference_link)}" target="_blank" style="color:var(--blue);text-decoration:none;font-weight:600;">↗ ${escHtml(p.reference_link.replace(/^https?:\/\/(www\.)?/,'').slice(0,40))}...</a>`
     : '—';
 
+  const currentStatus = p.status || 'Ideia';
   document.getElementById('m-grid').innerHTML = `
     <div class="modal-item">
       <div class="modal-item-label">Formato</div>
-      <div class="modal-item-val">${escHtml(p.format||'—')}</div>
+      <div class="modal-item-val">${escHtml(fmt||'—')}</div>
     </div>
     <div class="modal-item">
       <div class="modal-item-label">Especialidade</div>
-      <div class="modal-item-val">${escHtml(p.specialty||'—')}</div>
-    </div>
-    <div class="modal-item">
-      <div class="modal-item-label">Coleção</div>
-      <div class="modal-item-val">${escHtml(p.collection||'—')}</div>
-    </div>
-    <div class="modal-item">
-      <div class="modal-item-label">Status</div>
-      <div class="modal-item-val">${escHtml(p.status||'—')}</div>
+      <div class="modal-item-val">${escHtml(esp||'—')}</div>
     </div>
     <div class="modal-item" style="grid-column:1/-1">
-      <div class="modal-item-label">Link de Referência</div>
+      <div class="modal-item-label">Link de referência</div>
       <div class="modal-item-val">${refLink}</div>
+    </div>
+    <div class="modal-item" style="grid-column:1/-1">
+      <div class="modal-item-label">Status — clique para alterar</div>
+      <div class="status-selector">
+        <button class="status-btn s-ideia ${currentStatus==='Ideia'?'active':''}" onclick="setStatus('Ideia')">Ideia</button>
+        <button class="status-btn s-aprovado ${currentStatus==='Aprovado'?'active':''}" onclick="setStatus('Aprovado')">Aprovado</button>
+        <button class="status-btn s-usado ${currentStatus==='Usado'?'active':''}" onclick="setStatus('Usado')">Usado</button>
+      </div>
     </div>
   `;
   document.getElementById('modal-overlay').classList.add('open');
@@ -1114,26 +870,31 @@ function openModal(p){
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
 function closeModalClick(e){ if(e.target === document.getElementById('modal-overlay')) closeModal(); }
 
-function usarBase(p){
-  const post = p || currentModalPost;
-  if(!post) return;
-  if(!selectedClient){ showToast('Selecione um cliente no editor primeiro','warn'); return; }
-  const ed = document.getElementById('editor');
-  const link = post.reference_link
-    ? `<a href="${escHtml(post.reference_link)}" target="_blank">↗ ver post</a>`
-    : '';
-  const linkStr = link ? ` (${link})` : '';
-  const html = `<p>• <strong>${escHtml(post.title||'')}</strong> — ${escHtml(post.format||'')}${linkStr}</p>`;
-  ed.focus();
-  const sel = window.getSelection();
-  const range = document.createRange();
-  range.selectNodeContents(ed);
-  range.collapse(false);
-  sel.removeAllRanges();
-  sel.addRange(range);
-  document.execCommand('insertHTML', false, html);
-  closeModal();
-  showToast('Tema adicionado ao editor ✓','ok');
+// ── Status auto-save ──
+async function setStatus(newStatus){
+  if(!currentModalPost) return;
+  const oldStatus = currentModalPost.status;
+  if(newStatus === oldStatus) return;
+
+  document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.status-btn.s-${newStatus.toLowerCase()}`)?.classList.add('active');
+
+  const { error } = await db(() =>
+    sb.from('inspiration_posts').update({ status: newStatus }).eq('id', currentModalPost.id),
+    'Erro ao atualizar status'
+  );
+  if(error){
+    document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.status-btn.s-${oldStatus.toLowerCase()}`)?.classList.add('active');
+    return;
+  }
+
+  currentModalPost.status = newStatus;
+  const idx = allPosts.findIndex(x => x.id === currentModalPost.id);
+  if(idx >= 0) allPosts[idx].status = newStatus;
+  renderPosts(true);
+  loadStats();
+  showToast('Status atualizado ✓', 'ok');
 }
 
 // ── Modal editar ──
@@ -1166,7 +927,7 @@ async function saveEdit(){
   renderPosts(true);
   closeEdit();
   showToast('Post atualizado ✓','ok');
-  loadKPIs(); // atualiza KPIs se status mudou
+  loadStats();
 }
 
 // ── Deletar ──
@@ -1179,7 +940,7 @@ async function deletePost(p){
     renderPosts(true);
     updateBancoMeta();
     showToast('Post excluído','ok');
-    loadKPIs();
+    loadStats();
   });
 }
 
