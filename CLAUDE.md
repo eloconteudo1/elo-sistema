@@ -8,7 +8,7 @@ Leia este arquivo **inteiro** antes de qualquer alteração.
 
 | Camada | Tecnologia |
 |---|---|
-| Interface | `index.html` único + **JavaScript puro** (sem React, sem build, sem Tailwind) |
+| Interface | `index.html` + `styles.css` + `app.js` (sem ES modules, sem build, **JavaScript puro**, sem React, sem Tailwind) |
 | Banco | **Supabase** (PostgreSQL, São Paulo) |
 | Acesso a dados | `@supabase/supabase-js` via CDN |
 | Auth | Supabase Auth |
@@ -134,6 +134,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 ---
 
 ## 7. Funcionalidades implementadas (V3.0)
+
+**Sessão SESSAO-FILE-SPLIT — Split estrutural do monolito (V3.85)**
+- `index.html` (~7.900 linhas) dividido em 3 arquivos: `index.html` (~1.180 linhas, só HTML + referências), `styles.css` (~490 linhas, todo o CSS incluindo os keyframes do banner de alarme) e `app.js` (~6.260 linhas, todo o JS)
+- `<link rel="stylesheet" href="styles.css?v=385">` no `<head>`; `<script src="app.js?v=385"></script>` antes do `</body>` — mesma ordem de carregamento de antes (CDNs no head, script principal no fim do body)
+- CDN scripts (`@supabase/supabase-js@2.110.0`, `chart.js@4.4.0`, `jszip@3.10.1`) mantidos no `<head>` do `index.html`, sem alteração
+- Zero mudança funcional — apenas extração mecânica dos blocos `<style>`/`<script>`; inline styles (`style="..."`) permanecem no HTML (migração para classes é sessão separada, INLINE-TO-CLASS)
+- `conteudo.html` não foi afetado — mantém seus próprios `<style>`/`<script>` independentes
+- Versionamento por query string (`?v=385`) adotado desde já — atualizar o número a cada commit futuro para evitar cache do navegador
+- Versão 3.85, data 30/07/2026
 
 ### Home (Timer)
 
