@@ -238,7 +238,45 @@ Deno.serve(async (req) => {
       }), { headers: { "Content-Type": "application/json" } });
     }
 
-    return new Response(JSON.stringify({ error: "view inválida. Use ?view=semana, ?view=produtividade ou ?view=financeiro" }), { status: 400 });
+    if (view === "anotacoes") {
+      const dataParam = url.searchParams.get("data");
+      const diasParam = url.searchParams.get("dias");
+
+      let query = sb
+        .from("notes")
+        .select("id, content, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      let periodo: string;
+      if (dataParam) {
+        const start = `${dataParam}T00:00:00-03:00`;
+        const end = `${dataParam}T23:59:59-03:00`;
+        query = query.gte("created_at", start).lte("created_at", end);
+        periodo = `dia ${dataParam}`;
+      } else {
+        const dias = parseInt(diasParam || "", 10) || 30;
+        const since = new Date();
+        since.setDate(since.getDate() - dias);
+        query = query.gte("created_at", since.toISOString());
+        periodo = `últimos ${dias} dias`;
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return new Response(JSON.stringify({
+        periodo,
+        total: (data || []).length,
+        anotacoes: (data || []).map((n: any) => ({
+          id: n.id,
+          conteudo: n.content,
+          criada_em: n.created_at,
+        })),
+      }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ error: "view inválida. Use ?view=semana, ?view=produtividade, ?view=financeiro ou ?view=anotacoes" }), { status: 400 });
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Erro interno" }), { status: 500 });
