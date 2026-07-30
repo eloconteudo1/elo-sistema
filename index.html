@@ -1380,7 +1380,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.83 · ELO Comunicação · Atualizado em 29/07/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.84 · ELO Comunicação · Atualizado em 30/07/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -1456,9 +1456,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.83</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.84</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">29/07/2026</span></span>
+    <span>Atualizado em <span id="build-date">30/07/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1886,7 +1886,7 @@ async function checkPersonalReminders() {
     }
   });
 }
-setInterval(checkPersonalReminders, 30000);
+let _itvReminders = setInterval(checkPersonalReminders, 30000);
 
 // ════════════════════════════════════════════════════════════════
 // CLOCK
@@ -1901,6 +1901,15 @@ updateClock(); setInterval(updateClock, 1000);
 // ════════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════════
+function _pauseHomeIntervals() {
+  if (_itvTodayPill) { clearInterval(_itvTodayPill); _itvTodayPill = null; }
+  if (_itvHero) { clearInterval(_itvHero); _itvHero = null; }
+}
+function _resumeHomeIntervals() {
+  if (!_itvTodayPill) _itvTodayPill = setInterval(refreshTodayPill, 30000);
+  if (!_itvHero) _itvHero = setInterval(renderAssistantHero, 60000);
+}
+
 function navigateTo(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.elo-top-tab').forEach(t=>t.classList.remove('active'));
@@ -1911,7 +1920,12 @@ function navigateTo(page) {
   document.querySelectorAll('#bottom-nav button').forEach(b=>b.classList.remove('active'));
   const bnavBtn = document.querySelector(`#bottom-nav [data-bnav="${page}"]`);
   if (bnavBtn) bnavBtn.classList.add('active');
-  if (page === 'home') startGlobalTimerTick();
+  if (page === 'home') {
+    startGlobalTimerTick();
+    _resumeHomeIntervals();
+  } else {
+    _pauseHomeIntervals();
+  }
   // Init pages on first visit
   if (page === 'resultado'  && appUser) initResultado();
   if (page === 'clientes'   && appUser) initClientes();
@@ -2395,7 +2409,7 @@ async function refreshTodayPill() {
     document.getElementById('today-pill').textContent = h>0 ? `${h}h ${m}m hoje` : `${m}m hoje`;
   } catch(_) {}
 }
-setInterval(refreshTodayPill, 30000);
+let _itvTodayPill = setInterval(refreshTodayPill, 30000);
 
 // ════════════════════════════════════════════════════════════════
 // HOME — INIT
@@ -3729,7 +3743,7 @@ async function sequencerPostponeItem(key) {
   if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
 }
 renderAssistantHero();
-setInterval(renderAssistantHero, 60000);
+let _itvHero = setInterval(renderAssistantHero, 60000);
 
 // ── Assistente: Parser de comandos ──
 function submitAssistantCommand() {
@@ -4802,10 +4816,9 @@ const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho'
 // ─────────────────────────────────────────────────────────────────
 // CALENDÁRIO
 // ─────────────────────────────────────────────────────────────────
-// Cache da aba Lembretes do modal Novo Registro (único uso vivo remanescente do antigo Calendário)
-const CAL = {
-  reminders: [],
-};
+// CAL removido — último resíduo do Calendário antigo.
+// Lembretes agora em T.reminders (mesmo padrão de tudo).
+T.reminders = [];
 
 // ── Modal unificado: Novo Registro ─────────────────────
 let _nrmRemType = 'interval';
@@ -4870,9 +4883,9 @@ function openNovoRegistro(tab, day) {
   document.getElementById('nrm-notif-form-title').textContent = 'Novo alarme';
   document.getElementById('nrm-rem-cancel-btn').style.display = 'none';
   document.getElementById('nrm-rem-save-btn').textContent = 'Salvar alarme';
-  if (!CAL.reminders || CAL.reminders.length === 0) {
+  if (!T.reminders || T.reminders.length === 0) {
     db(() => sb.from('reminders').select('id,name,icon,type,interval_minutes,daily_time,daily_times,once_at,is_active'), 'Erro ao carregar alarmes')
-      .then(res => { CAL.reminders = res.data || []; renderNrmRemList(); });
+      .then(res => { T.reminders = res.data || []; renderNrmRemList(); });
   } else {
     renderNrmRemList();
   }
@@ -4933,11 +4946,11 @@ function setNrmRemType(type) {
 function renderNrmRemList() {
   const container = document.getElementById('nrm-rem-list');
   if (!container) return;
-  if (!CAL.reminders || CAL.reminders.length === 0) {
+  if (!T.reminders || T.reminders.length === 0) {
     container.innerHTML = '<div style="text-align:center;padding:16px 0;color:#bbb;font-size:13px;">Nenhum alarme. Crie o primeiro acima.</div>';
     return;
   }
-  container.innerHTML = CAL.reminders.map(rem => {
+  container.innerHTML = T.reminders.map(rem => {
     const iconVal = rem.icon || (rem.name && rem.name.toLowerCase().includes('água') ? '💧' : rem.name && rem.name.toLowerCase().includes('whatsapp') ? '💬' : '🔔');
     let detail = '';
     if (rem.type === 'interval') detail = `A cada ${rem.interval_minutes} min`;
@@ -4969,7 +4982,7 @@ function renderNrmRemList() {
 
 function editNrmReminder(btn) {
   const id = Number(btn.dataset.remId);
-  const rem = CAL.reminders.find(r => r.id === id);
+  const rem = T.reminders.find(r => r.id === id);
   if (!rem) return;
   _nrmEditingRemId = id;
   document.getElementById('nrm-notif-form-title').textContent = 'Editar alarme';
@@ -5005,7 +5018,7 @@ async function toggleNrmReminder(btn) {
   const newActive = !isActive;
   const { error } = await db(() => sb.from('reminders').update({ is_active: newActive }).eq('id', id), 'Erro ao atualizar alarme');
   if (error) return;
-  CAL.reminders = CAL.reminders.map(r => r.id === id ? {...r, is_active: newActive} : r);
+  T.reminders = T.reminders.map(r => r.id === id ? {...r, is_active: newActive} : r);
   renderNrmRemList();
 }
 
@@ -5014,7 +5027,7 @@ async function deleteNrmReminder(btn) {
   openConfirmModal('Excluir alarme?', 'Essa ação não pode ser desfeita.', async () => {
     const { error } = await db(() => sb.from('reminders').delete().eq('id', id), 'Erro ao excluir alarme');
     if (error) return;
-    CAL.reminders = CAL.reminders.filter(r => r.id !== id);
+    T.reminders = T.reminders.filter(r => r.id !== id);
     showToast('Alarme excluído', 'ok');
     renderNrmRemList();
   });
@@ -5045,12 +5058,12 @@ async function saveNrmReminder() {
   if (_nrmEditingRemId) {
     const { error } = await db(() => sb.from('reminders').update(payload).eq('id', _nrmEditingRemId), 'Erro ao atualizar alarme');
     if (error) { saveBtn.textContent = 'Atualizar alarme'; saveBtn.disabled = false; return; }
-    CAL.reminders = CAL.reminders.map(r => r.id === _nrmEditingRemId ? {...r,...payload} : r);
+    T.reminders = T.reminders.map(r => r.id === _nrmEditingRemId ? {...r,...payload} : r);
     showToast('Alarme atualizado!', 'ok');
   } else {
     const { data, error } = await db(() => sb.from('reminders').insert({...payload, is_active: true, user_id: appUser.id}).select().single(), 'Erro ao criar alarme');
     if (error) { saveBtn.textContent = 'Salvar alarme'; saveBtn.disabled = false; return; }
-    CAL.reminders.push(data);
+    T.reminders.push(data);
     showToast('Alarme criado!', 'ok');
   }
   saveBtn.textContent = _nrmEditingRemId ? 'Atualizar alarme' : 'Salvar alarme';
@@ -6011,9 +6024,19 @@ const RES_PALETTE = ['#C4725A','#4A2976','#2FB989','#3B82F6','#E07A3A','#C4487A'
 let resViewMode = 'hoje';
 let resMonth = new Date().getMonth() + 1;
 let resYear = new Date().getFullYear();
+let _resLastLoad = 0;
+let _resCacheView = '';
+const RES_TTL = 2 * 60 * 1000;
 
 async function initResultado() {
+  const cacheKey = `${resViewMode}-${resMonth}-${resYear}`;
+  if (_resCacheView === cacheKey && Date.now() - _resLastLoad < RES_TTL) {
+    resSetView(resViewMode);
+    return;
+  }
   resSetView(resViewMode);
+  _resLastLoad = Date.now();
+  _resCacheView = cacheKey;
 }
 
 function resGoToday() {
@@ -6318,24 +6341,21 @@ function resMetaCalendar(year, month, goalMins, entriesByDay) {
 
 async function resRenderHoje() {
   const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const endOfDay = startOfDay + 86400000;
 
-  const { data: entries } = await db(() => sb.from('time_entries')
-    .select('*, clients(name)')
-    .gte('start_time', startOfDay)
-    .lt('start_time', endOfDay)
-    .order('start_time', { ascending: false }), 'Erro ao carregar registros de hoje');
+  // Reutiliza dados em memória — sem queries adicionais
+  const entries = (T.todayEntries || []).map(e => {
+    const client = T.clients.find(c => c.id === e.client_id);
+    return { ...e, clients: client ? { name: client.name } : null };
+  });
 
-  const validEntries = (entries||[]).filter(e => e.duration_minutes != null && e.duration_minutes > 0);
+  const validEntries = entries.filter(e => e.duration_minutes != null && e.duration_minutes > 0);
   const totalMins = validEntries.reduce((s,e) => s + e.duration_minutes, 0);
   const totalH = Math.floor(totalMins/60), totalM = totalMins%60;
 
-  // Settings para meta e custo/hora
-  const { data: settings } = await db(() => sb.from('settings').select('daily_goal_minutes,hourly_rate_min,hourly_rate_optimal').eq('id',1).single(), 'Erro ao carregar configurações');
-  const goalMins = settings?.daily_goal_minutes ?? 480;
-  const hourlyMin = settings?.hourly_rate_min ?? 0;
-  const hourlyOpt = settings?.hourly_rate_optimal ?? 0;
+  // Settings já em memória
+  const goalMins = T.settings.daily_goal_minutes ?? 480;
+  const hourlyMin = T.settings.hourly_rate_min ?? 0;
+  const hourlyOpt = T.settings.hourly_rate_optimal ?? 0;
   const goalPct = goalMins > 0 ? Math.min(Math.round((totalMins/goalMins)*100),100) : 0;
 
   // Por cliente
