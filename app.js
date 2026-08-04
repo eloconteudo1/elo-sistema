@@ -5841,6 +5841,26 @@ function radarEditTask(btn) {
   if (!id) return;
   openCalEditModal(id, type);
 }
+function radarSetupKeyboardHandlers(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || container._radarKeyDelegated) return;
+  container._radarKeyDelegated = true;
+  container.addEventListener('keydown', function(ev) {
+    const item = ev.target.closest('[data-radar-id]');
+    if (!item) return;
+    const id = Number(item.dataset.radarId);
+    const type = item.dataset.radarType;
+    if (ev.key === 'Delete' || ev.key === 'Backspace') {
+      ev.preventDefault();
+      const fakeBtn = { dataset: { id: String(id) } };
+      if (type === 'appointment') radarDeleteAppt(fakeBtn);
+      else radarDeleteTask(fakeBtn);
+    } else if (ev.key === 'e' || ev.key === 'E') {
+      ev.preventDefault();
+      radarEditTask({ dataset: { id: String(id), type } });
+    }
+  });
+}
 function radarProxClick(div) {
   const id = Number(div.dataset.id);
   if (!id) return;
@@ -5890,6 +5910,28 @@ async function radarMoverParaHoje(btn) {
   T.scheduledTasks = T.scheduledTasks.map(t => t.id === id ? { ...t, scheduled_date: novaData } : t);
   showToast('Tarefa remanejada para hoje', 'ok');
   radarRefreshCurrentPanel();
+}
+
+async function radarMoveAllAtrasadas() {
+  const todayDate = todayStr();
+  const atrasadas = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .map(t => t.id);
+  if (!atrasadas.length) { showToast('Nenhuma tarefa atrasada', 'warn'); return; }
+  openConfirmModal(
+    `Reagendar ${atrasadas.length} tarefa(s)`,
+    'Mover todas as atrasadas para hoje?',
+    async () => {
+      const { error } = await db(
+        () => sb.from('scheduled_tasks').update({ scheduled_date: todayDate }).in('id', atrasadas),
+        'Erro ao mover atrasadas'
+      );
+      if (error) return;
+      T.scheduledTasks = T.scheduledTasks.map(t => atrasadas.includes(t.id) ? { ...t, scheduled_date: todayDate } : t);
+      showToast(`${atrasadas.length} tarefa(s) reagendada(s)`, 'ok');
+      radarRefreshCurrentPanel();
+    }
+  );
 }
 
 async function radarSaveNotaHoje() {
@@ -5950,7 +5992,8 @@ function renderPanelHoje() {
     const statusLabel = it.done ? 'Feito' : it.type === 'appt' ? 'Compromisso' : (it.priority === 'alta' ? 'Alta prioridade' : '');
     const durText = it.dur ? fMin(it.dur) : '';
     const rtType = it.type === 'appt' ? 'appointment' : 'scheduled_task';
-    html += `<div class="radar-timeline-item" style="${strike}">
+    const seqKey = `${it.type}-${it.id}`;
+    html += `<div class="radar-timeline-item radar-item" tabindex="0" data-radar-id="${it.id}" data-radar-type="${rtType}" style="${strike}">
       <div class="radar-timeline-time">${esc(it.time === '23:59' ? '' : it.time)}</div>
       <div class="radar-timeline-dot" style="background:${color};left:-4px;"></div>
       <div class="radar-timeline-card">
@@ -5960,12 +6003,11 @@ function renderPanelHoje() {
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
           ${statusLabel ? `<span class="rt-status">${statusLabel}</span>` : ''}
-          <button data-id="${it.id}" data-type="${rtType}" onclick="radarEditTask(this)"
-            style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
-          <button data-id="${it.id}" onclick="${rtType === 'appointment' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}"
-            style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
+          <div class="radar-actions">
+            <button class="radar-action-btn" data-id="${it.id}" data-type="${rtType}" onclick="radarEditTask(this)" title="Editar (E)">✏️</button>
+            <button class="radar-action-btn" onclick="sequencerPostponeItem('${seqKey}')" title="Adiar">→</button>
+            <button class="radar-action-btn delete" data-id="${it.id}" onclick="${rtType === 'appointment' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}" title="Deletar (Del)">🗑</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -5979,6 +6021,7 @@ function renderPanelHoje() {
     </div>`;
   }
   bodyEl.innerHTML = html;
+  radarSetupKeyboardHandlers('radar-timeline-body');
 }
 function renderPanelSemana() {
   loadRadarPanelData();
@@ -6059,8 +6102,6 @@ function renderPanelSemana() {
 
   const diasSemW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const prioColors = { alta: '#DC2626', media: 'var(--purple)', baixa: 'var(--green)' };
-  const btnStyle = `flex-shrink:0;border:none;background:none;cursor:pointer;padding:4px 6px;font-size:15px;opacity:.7;transition:opacity .15s;`;
-  const btnHover = `onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'"`;
 
   if (allWeek.length === 0) {
     apptsEl.innerHTML = `<div class="radar-day-detail-empty">Sem itens esta semana.</div>`;
@@ -6080,20 +6121,22 @@ function renderPanelSemana() {
       const timeLabel = it.time ? `<span style="font-size:12.5px;color:var(--text-dim);margin-right:8px;">${it.time}</span>` : '';
       const durLabel = it.dur ? `<span style="font-size:11px;color:var(--text-dim);"> · ${fMin(it.dur)}</span>` : '';
 
-      const editBtn = `<button data-id="${it.id}" data-type="${it.type === 'appt' ? 'appointment' : 'scheduled_task'}" onclick="radarEditTask(this)"
-        style="${btnStyle}color:var(--text-dim);" ${btnHover} title="Editar">✏️</button>`;
-      const delBtn = `<button data-id="${it.id}" onclick="${it.type === 'appt' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}"
-        style="${btnStyle}color:#DC2626;" ${btnHover} title="Excluir">🗑</button>`;
+      const rtType = it.type === 'appt' ? 'appointment' : 'scheduled_task';
+      const seqKey = `${it.type}-${it.id}`;
+      const editBtn = `<button class="radar-action-btn" data-id="${it.id}" data-type="${rtType}" onclick="radarEditTask(this)" title="Editar (E)">✏️</button>`;
+      const postponeBtn = `<button class="radar-action-btn" onclick="sequencerPostponeItem('${seqKey}')" title="Adiar">→</button>`;
+      const delBtn = `<button class="radar-action-btn delete" data-id="${it.id}" onclick="${it.type === 'appt' ? 'radarDeleteAppt(this)' : 'radarDeleteTask(this)'}" title="Deletar (Del)">🗑</button>`;
 
-      return `${headerHtml}<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(74,41,118,.06);${strike}">
+      return `${headerHtml}<div class="radar-item" tabindex="0" data-radar-id="${it.id}" data-radar-type="${rtType}" style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(74,41,118,.06);${strike}">
         <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;"></span>
         <div style="flex:1;min-width:0;">
           ${timeLabel}<span style="font-size:14.5px;font-weight:600;color:var(--text);">${esc(it.title)}</span>${durLabel}
         </div>
-        ${editBtn}${delBtn}
+        <div class="radar-actions">${editBtn}${postponeBtn}${delBtn}</div>
       </div>`;
     }).join('');
   }
+  radarSetupKeyboardHandlers('radar-semana-appts');
 }
 function renderPanelMes() {
   loadRadarPanelData();

@@ -135,6 +135,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão S2-TAREFAS-SHORTCUTS-BULK — Atalhos teclado + focus ring + bulk reschedule Atrasadas (V3.87)**
+- Tarefas (Hoje/Semana, Radar): itens de `#radar-timeline-body` (Hoje) e `#radar-semana-appts` (Semana) ganharam `tabindex="0"`, `class="radar-item"`, `data-radar-id`, `data-radar-type` — navegáveis via Tab, focus ring coral (`box-shadow:inset 0 0 0 2px var(--coral)`)
+- `radarSetupKeyboardHandlers(containerId)`: listener único delegado por container (guard `_radarKeyDelegated`); `Del`/`Backspace` chama `radarDeleteTask`/`radarDeleteAppt` (que já abrem `openConfirmModal` internamente — sem confirmação dupla); `E` chama `radarEditTask`
+- Ações em hover/focus: editar (✏️) | adiar (→, reusa `sequencerPostponeItem(key)` do Para Hoje) | deletar (🗑) — via `.radar-actions` (`display:none` até `:hover`/`:focus`/`:focus-within` do `.radar-item`)
+- CSS novo: `.radar-item`, `.radar-actions`, `.radar-action-btn`, `.radar-action-btn.delete` em `styles.css`
+- Card "Atrasadas" (Radar → Hoje): botão "Todas → Hoje" no header → `radarMoveAllAtrasadas()` — batch update `scheduled_date` via `.in('id', atrasadas)`, confirmação com quantidade via `openConfirmModal`, reusa padrão de `radarMoverParaHoje()`
+- Mobile (`mni-*`) não tocado — fora de escopo
+- Versão 3.87, data 04/08/2026
+
 **Sessão PARA-HOJE-CHECKLIST — "Para Hoje" vira checklist puro, remove card AGORA (V3.86)**
 - `renderParaHoje()`: card `.ph-current` (borda coral, badge "AGORA", botão ▶ Iniciar) removido — todo item da fila usa o mesmo template `.ph-item` com checkbox
 - Checkbox `.ph-checkbox` (`data-seq-toggle="${key}"`) adicionado no início de cada item; clique chama `seqToggleComplete(key)` → `completeTask`/`completeAppt`

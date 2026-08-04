@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=386">
+  <link rel="stylesheet" href="styles.css?v=387">
 </head>
 <body>
 
@@ -494,8 +494,9 @@
           <!-- PAINEL HOJE -->
           <div class="radar-panel active" id="radar-panel-hoje">
             <div id="radar-atrasadas-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid #DC2626;padding:14px 16px;margin-bottom:16px;">
-              <div style="margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;">⚠ Atrasadas <span id="radar-atrasadas-count"></span></span>
+                <button onclick="radarMoveAllAtrasadas()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(220,38,38,.12);color:#DC2626;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(220,38,38,.2)'" onmouseout="this.style.background='rgba(220,38,38,.12)'">Todas → Hoje</button>
               </div>
               <div id="radar-atrasadas-list"></div>
             </div>
@@ -891,7 +892,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.86 · ELO Comunicação · Atualizado em 04/08/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.87 · ELO Comunicação · Atualizado em 04/08/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -967,7 +968,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.86</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.87</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">04/08/2026</span></span>
   </footer>
@@ -1176,6 +1177,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=386"></script>
+  <script src="app.js?v=387"></script>
 </body>
 </html>
