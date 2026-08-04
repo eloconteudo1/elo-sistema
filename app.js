@@ -1917,42 +1917,26 @@ function renderParaHoje() {
   }
   const { pending, done } = seqSortItems(data.items);
   let html = '';
-  pending.forEach((it, idx) => {
+  pending.forEach((it) => {
     const key = seqItemKey(it);
-    const hasClientTask = it.client_id && it.task_id;
     const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
     const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
     const sub = [it.time, tipoLabel, durLabel].filter(Boolean).join(' · ');
-    if (idx === 0) {
-      html += `
-        <div class="ph-current" style="border:2px solid var(--coral);border-radius:14px;padding:12px 14px;margin-bottom:10px;background:rgba(196,114,90,.05);">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-            <span style="font-size:9px;font-weight:900;letter-spacing:.5px;color:var(--coral);background:rgba(196,114,90,.14);padding:2px 8px;border-radius:8px;">AGORA</span>
-            ${sub ? `<span style="font-size:10px;color:var(--text-dim);">${esc(sub)}</span>` : ''}
-          </div>
-          <div style="font-size:14px;font-weight:800;color:var(--deep);margin-bottom:10px;">${esc(it.title)}</div>
-          <div style="display:flex;gap:6px;">
-            <button data-seq-start="${key}" style="flex:1;background:var(--coral);color:#fff;border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:800;cursor:pointer;">▶ Iniciar</button>
-            <button data-seq-complete="${key}" style="width:36px;background:var(--bg2);border:none;border-radius:10px;cursor:pointer;color:var(--green);font-size:14px;">✓</button>
-            <button data-seq-postpone="${key}" style="width:36px;background:var(--bg2);border:none;border-radius:10px;cursor:pointer;color:var(--purple);font-size:12px;">→</button>
-          </div>
-          ${!hasClientTask ? `<div style="font-size:10px;color:var(--orange);margin-top:6px;">Sem cliente/atividade — editar antes de iniciar direto.</div>` : ''}
-        </div>`;
-    } else {
-      html += `
-        <div class="ph-item" draggable="true" data-seq-key="${key}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;">
-          <span style="color:rgba(74,41,118,.3);font-size:12px;flex-shrink:0;">⠿</span>
-          <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:var(--text-dim);">${esc(it.time || '')}</span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
-          </div>
-          <button class="ph-start-btn" data-seq-start="${key}" title="Iniciar timer" style="flex-shrink:0;width:28px;height:28px;border-radius:8px;border:none;background:var(--coral);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
-          <div class="ph-actions" style="display:none;gap:2px;flex-shrink:0;">
-            <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
-            <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Excluir">🗑</button>
-          </div>
-        </div>`;
-    }
+    html += `
+      <div class="ph-item" draggable="true" data-seq-key="${key}" style="display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(74,41,118,.03)'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="ph-checkbox" data-seq-toggle="${key}" />
+        <span style="color:rgba(74,41,118,.3);font-size:12px;flex-shrink:0;">⠿</span>
+        <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:var(--text-dim);">${esc(it.time || '')}</span>
+        <div class="ph-title" style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+          ${sub ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${esc(sub)}</div>` : ''}
+        </div>
+        <div class="ph-actions" style="display:none;gap:4px;flex-shrink:0;">
+          <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.1)';this.style.color='var(--text-primary)'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">✏️</button>
+          <button class="note-action-btn" data-ph-postpone="${key}" title="Adiar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.1)';this.style.color='var(--text-primary)'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">→</button>
+          <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Deletar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(232,62,120,.1)';this.style.color='#E83E78'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">🗑</button>
+        </div>
+      </div>`;
   });
   if (done.length) {
     html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(74,41,118,.07);font-size:10px;font-weight:700;color:var(--text-dim);">Concluídos (${done.length})</div>`;
@@ -1966,6 +1950,12 @@ function renderParaHoje() {
   }
   timelineEl.innerHTML = html;
 }
+async function seqToggleComplete(key) {
+  const { type, id } = sequencerParseKey(key);
+  if (type === 'task') completeTask(id);
+  else completeAppt(id);
+}
+
 function paraHojeComplete(btn) {
   const id = Number(btn.dataset.id);
   const type = btn.dataset.type;
@@ -1979,6 +1969,12 @@ function paraHojeSetupActions() {
   if (!timeline || timeline._phDelegated) return;
   timeline._phDelegated = true;
   timeline.addEventListener('click', function(ev) {
+    const checkbox = ev.target.closest('.ph-checkbox');
+    if (checkbox) {
+      const key = checkbox.dataset.seqToggle;
+      if (key) seqToggleComplete(key);
+      return;
+    }
     const editBtn = ev.target.closest('[data-ph-edit]');
     if (editBtn) {
       const id = Number(editBtn.dataset.phEdit);
@@ -1995,11 +1991,7 @@ function paraHojeSetupActions() {
       else deleteAppt(id);
       return;
     }
-    const startBtn = ev.target.closest('[data-seq-start]');
-    if (startBtn) { sequencerStartItem(startBtn.dataset.seqStart); return; }
-    const completeBtn = ev.target.closest('[data-seq-complete]');
-    if (completeBtn) { sequencerCompleteItem(completeBtn.dataset.seqComplete); return; }
-    const postponeBtn = ev.target.closest('[data-seq-postpone]');
+    const postponeBtn = ev.target.closest('[data-ph-postpone]');
     if (postponeBtn) { sequencerPostponeItem(postponeBtn.dataset.seqPostpone); return; }
   });
   let dragKey = null;
@@ -2029,31 +2021,6 @@ function sequencerParseKey(key) {
 function sequencerFindItem(type, id) {
   if (type === 'task') return (T.scheduledTasks || []).find(t => t.id === id);
   return (T.appointments || []).find(a => a.id === id);
-}
-async function sequencerStartItem(key) {
-  const { type, id } = sequencerParseKey(key);
-  const item = sequencerFindItem(type, id);
-  if (!item) return;
-  if (!item.client_id || !item.task_id) {
-    showToast('Preencha cliente e atividade antes de iniciar direto', 'warn');
-    if (type === 'task') radarEditTask({ dataset: { id: String(id), type: 'task' } });
-    else radarEditTask({ dataset: { id: String(id), type: 'appointment' } });
-    return;
-  }
-  const activity = (T.tasks || []).find(t => t.id === item.task_id);
-  T.selectedClientId = item.client_id;
-  T.selectedTaskId = item.task_id;
-  T.selectedTaskName = activity ? activity.name : (item.title || '');
-  updateClientBtn();
-  renderTaskTree();
-  renderTimerCenter();
-  renderTimerButtons();
-  await startTimer();
-}
-async function sequencerCompleteItem(key) {
-  const { type, id } = sequencerParseKey(key);
-  if (type === 'task') completeTask(id);
-  else completeAppt(id);
 }
 async function sequencerPostponeItem(key) {
   const { type, id } = sequencerParseKey(key);

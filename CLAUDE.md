@@ -135,6 +135,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão PARA-HOJE-CHECKLIST — "Para Hoje" vira checklist puro, remove card AGORA (V3.86)**
+- `renderParaHoje()`: card `.ph-current` (borda coral, badge "AGORA", botão ▶ Iniciar) removido — todo item da fila usa o mesmo template `.ph-item` com checkbox
+- Checkbox `.ph-checkbox` (`data-seq-toggle="${key}"`) adicionado no início de cada item; clique chama `seqToggleComplete(key)` → `completeTask`/`completeAppt`
+- Botão adiar (→) agora presente em todo item, não só no primeiro (`data-ph-postpone`, antes só existia via `data-seq-postpone` no card AGORA)
+- Funções removidas: `sequencerStartItem()` (iniciava timer direto), `sequencerCompleteItem()` (substituída por `seqToggleComplete()`)
+- `paraHojeSetupActions()`: handler de `[data-seq-start]`/`[data-seq-complete]` trocado por handler de `.ph-checkbox`
+- CSS: `.ph-checkbox`, `.ph-item.ph-completed` (opacidade + riscado) adicionados após `.ph-item:hover .ph-actions`
+- Mantido: termômetro "Seu dia", drag-and-drop (`seqSortItems`/`seqMoveInOrder`), editar/deletar (hover reveal), lista de Concluídos
+- Mobile (`mni-*`) não tocado — fora de escopo
+- Versão 3.86, data 04/08/2026
+
 **Sessão SESSAO-FILE-SPLIT — Split estrutural do monolito (V3.85)**
 - `index.html` (~7.900 linhas) dividido em 3 arquivos: `index.html` (~1.180 linhas, só HTML + referências), `styles.css` (~490 linhas, todo o CSS incluindo os keyframes do banner de alarme) e `app.js` (~6.260 linhas, todo o JS)
 - `<link rel="stylesheet" href="styles.css?v=385">` no `<head>`; `<script src="app.js?v=385"></script>` antes do `</body>` — mesma ordem de carregamento de antes (CDNs no head, script principal no fim do body)
