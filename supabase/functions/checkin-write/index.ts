@@ -47,9 +47,15 @@ Deno.serve(async (req) => {
     const tasksInput = Array.isArray(body?.tasks) ? body.tasks : [];
     const apptsInput = Array.isArray(body?.appointments) ? body.appointments : [];
     const paymentsInput = Array.isArray(body?.payments) ? body.payments : [];
+    const deleteTaskIds = Array.isArray(body?.deletions?.task_ids)
+      ? body.deletions.task_ids.map((x: any) => Number(x)).filter((x: number) => Number.isInteger(x))
+      : [];
 
-    if (tasksInput.length === 0 && apptsInput.length === 0 && paymentsInput.length === 0) {
-      return new Response(JSON.stringify({ error: "Envie tasks, appointments e/ou payments" }), { status: 400 });
+    if (tasksInput.length === 0 && apptsInput.length === 0 && paymentsInput.length === 0 && deleteTaskIds.length === 0) {
+      return new Response(JSON.stringify({ error: "Envie tasks, appointments, payments e/ou deletions" }), { status: 400 });
+    }
+    if (deleteTaskIds.length > 50) {
+      return new Response(JSON.stringify({ error: "Máximo 50 ids em deletions.task_ids" }), { status: 400 });
     }
     if (tasksInput.length > 50 || apptsInput.length > 50) {
       return new Response(JSON.stringify({ error: "Máximo 50 itens por array por chamada" }), { status: 400 });
@@ -80,7 +86,7 @@ Deno.serve(async (req) => {
     }
 
     // ── Validar tasks ─────────────────────────────────────────────
-    const cleanedTasks: { title: string; scheduled_time: string | null; priority: string; date: string }[] = [];
+    const cleanedTasks: { title: string; scheduled_time: string | null; priority: string; date: string; sort_order: number | null }[] = [];
     for (const t of tasksInput) {
       const title = (t?.title || "").trim();
       if (!title) return new Response(JSON.stringify({ error: "Toda tarefa precisa de title" }), { status: 400 });
@@ -95,7 +101,8 @@ Deno.serve(async (req) => {
         date = t.scheduled_date;
       }
       const priority = VALID_PRIORITIES.includes(t?.priority) ? t.priority : "media";
-      cleanedTasks.push({ title, scheduled_time, priority, date });
+      const sort_order = Number.isInteger(t?.sort_order) ? t.sort_order : null;
+      cleanedTasks.push({ title, scheduled_time, priority, date, sort_order });
     }
 
     // ── Validar appointments ──────────────────────────────────────
@@ -119,26 +126,51 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ── Dedup tasks ───────────────────────────────────────────────
-    const uniqueTaskDates = [...new Set(cleanedTasks.map(t => t.date))];
-    let existingTasksSet = new Set<string>();
-    if (uniqueTaskDates.length > 0) {
-      const { data: existingTasks, error: etErr } = await sb
+    // ── Dedup tasks (cross-dia: tarefa não concluída de qualquer data conta) ──
+    let existingOpenTasks: { id: number; title: string; scheduled_date: string }[] = [];
+    if (cleanedTasks.length > 0) {
+      const { data, error: etErr } = await sb
         .from("scheduled_tasks")
-        .select("title,scheduled_date")
-        .in("scheduled_date", uniqueTaskDates);
+        .select("id,title,scheduled_date")
+        .eq("is_done", false);
       if (etErr) throw etErr;
-      existingTasksSet = new Set((existingTasks || []).map((e) => `${e.scheduled_date}|${normalize(e.title)}`));
+      existingOpenTasks = data || [];
+    }
+    const existingByTitle = new Map<string, { id: number; title: string; scheduled_date: string }>();
+    for (const e of existingOpenTasks) {
+      const key = normalize(e.title);
+      const prev = existingByTitle.get(key);
+      if (!prev || e.scheduled_date < prev.scheduled_date) existingByTitle.set(key, e);
     }
 
     const toInsertTasks: any[] = [];
     const skippedTasks: string[] = [];
+    const rescheduledTasks: { title: string; de: string; para: string }[] = [];
     const seenTasks = new Set<string>();
     for (const t of cleanedTasks) {
-      const key = `${t.date}|${normalize(t.title)}`;
-      if (existingTasksSet.has(key) || seenTasks.has(key)) { skippedTasks.push(t.title); continue; }
-      seenTasks.add(key);
-      toInsertTasks.push({ scheduled_date: t.date, scheduled_time: t.scheduled_time, title: t.title, priority: t.priority, is_done: false, user_id: 1 });
+      const normTitle = normalize(t.title);
+      if (seenTasks.has(normTitle)) { skippedTasks.push(t.title); continue; }
+
+      const existing = existingByTitle.get(normTitle);
+      if (existing) {
+        seenTasks.add(normTitle);
+        if (existing.scheduled_date < t.date) {
+          const { error: upErr } = await sb
+            .from("scheduled_tasks")
+            .update({ scheduled_date: t.date })
+            .eq("id", existing.id);
+          if (upErr) throw upErr;
+          rescheduledTasks.push({ title: t.title, de: existing.scheduled_date, para: t.date });
+        } else {
+          skippedTasks.push(t.title);
+        }
+        continue;
+      }
+
+      seenTasks.add(normTitle);
+      const row: any = { scheduled_date: t.date, scheduled_time: t.scheduled_time, title: t.title, priority: t.priority, is_done: false, user_id: 1 };
+      if (t.sort_order !== null) row.sort_order = t.sort_order;
+      toInsertTasks.push(row);
     }
 
     // ── Dedup appointments ────────────────────────────────────────
@@ -239,11 +271,27 @@ Deno.serve(async (req) => {
       insertedAppts = data || [];
     }
 
+    // ── Deleções de tarefas (Check-in) ──────────────────────────────
+    let deletedCount = 0;
+    if (deleteTaskIds.length > 0) {
+      const { error: delErr, count } = await sb
+        .from("scheduled_tasks")
+        .delete({ count: "exact" })
+        .in("id", deleteTaskIds)
+        .eq("user_id", 1);
+      if (delErr) throw delErr;
+      deletedCount = count || 0;
+    }
+
     return new Response(JSON.stringify({
       data_referencia: today,
-      tarefas: { inseridas: insertedTasks, puladas: skippedTasks, total_inseridas: insertedTasks.length, total_puladas: skippedTasks.length },
+      tarefas: {
+        inseridas: insertedTasks, puladas: skippedTasks, reagendadas: rescheduledTasks,
+        total_inseridas: insertedTasks.length, total_puladas: skippedTasks.length, total_reagendadas: rescheduledTasks.length,
+      },
       compromissos: { inseridos: insertedAppts, pulados: skippedAppts, total_inseridos: insertedAppts.length, total_pulados: skippedAppts.length },
       pagamentos: { baixados, ja_pagos: jaPagos, nao_encontrados: naoEncontrados, ambiguos, total_baixados: baixados.length },
+      deletions: { total_deletadas: deletedCount },
     }), { headers: { "Content-Type": "application/json" } });
 
   } catch (err) {

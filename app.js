@@ -5934,6 +5934,28 @@ async function radarMoveAllAtrasadas() {
   );
 }
 
+async function radarDeleteAllAtrasadas() {
+  const todayDate = todayStr();
+  const atrasadas = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .map(t => t.id);
+  if (!atrasadas.length) { showToast('Nenhuma tarefa atrasada', 'warn'); return; }
+  openConfirmModal(
+    `Excluir ${atrasadas.length} tarefa(s)`,
+    `${atrasadas.length} tarefa${atrasadas.length > 1 ? 's' : ''} atrasada${atrasadas.length > 1 ? 's' : ''} será${atrasadas.length > 1 ? 'ão' : ''} deletada${atrasadas.length > 1 ? 's' : ''} permanentemente.`,
+    async () => {
+      const { error } = await db(
+        () => sb.from('scheduled_tasks').delete().in('id', atrasadas),
+        'Erro ao limpar tarefas'
+      );
+      if (error) return;
+      T.scheduledTasks = T.scheduledTasks.filter(t => !atrasadas.includes(t.id));
+      showToast(`${atrasadas.length} tarefa(s) deletada(s)`, 'ok');
+      radarRefreshCurrentPanel();
+    }
+  );
+}
+
 async function radarSaveNotaHoje() {
   const inp = document.getElementById('radar-nota-hoje-input');
   if (!inp) return;

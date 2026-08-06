@@ -135,6 +135,16 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão CHECKIN-DEDUP-CLEANUP — Dedup cross-dia + sort_order + limpeza em batch (V3.88)**
+- `checkin-write/index.ts`: dedup de tarefas deixa de olhar só a mesma data — busca todas `scheduled_tasks` com `is_done=false` (qualquer data) e casa por título normalizado; se já existe tarefa aberta mais antiga com mesmo título, reagenda ela (`UPDATE scheduled_date`) em vez de inserir duplicata; se a existente já é da mesma data ou mais recente, pula (sem duplicar)
+- Resposta do endpoint ganhou `tarefas.reagendadas` (lista `{title, de, para}`) além de `inseridas`/`puladas`
+- `checkin-write`: aceita `deletions.task_ids` (array de ids, máx 50) — `DELETE` em `scheduled_tasks` no fim do processamento, retorna `deletions.total_deletadas`
+- `checkin-write`: tarefas aceitam `sort_order` opcional por item — só incluído no INSERT se enviado (SQL pendente abaixo, coluna ainda não existe)
+- `app.js`: nova função `radarDeleteAllAtrasadas()` (espelha `radarMoveAllAtrasadas()`) — `DELETE .in('id', atrasadas)` com `openConfirmModal`, atualiza `T.scheduledTasks` em memória, chama `radarRefreshCurrentPanel()`
+- `index.html`: botão "🗑 Limpar" adicionado ao lado de "Todas → Hoje" no card `#radar-atrasadas-card` (Radar → Hoje)
+- **SQL pendente (Helô roda manual):** `ALTER TABLE scheduled_tasks ADD COLUMN IF NOT EXISTS sort_order integer;` — necessário antes do Check-in começar a enviar `sort_order` nas tarefas
+- Versão 3.88, data 06/08/2026
+
 **Sessão S2-TAREFAS-SHORTCUTS-BULK — Atalhos teclado + focus ring + bulk reschedule Atrasadas (V3.87)**
 - Tarefas (Hoje/Semana, Radar): itens de `#radar-timeline-body` (Hoje) e `#radar-semana-appts` (Semana) ganharam `tabindex="0"`, `class="radar-item"`, `data-radar-id`, `data-radar-type` — navegáveis via Tab, focus ring coral (`box-shadow:inset 0 0 0 2px var(--coral)`)
 - `radarSetupKeyboardHandlers(containerId)`: listener único delegado por container (guard `_radarKeyDelegated`); `Del`/`Backspace` chama `radarDeleteTask`/`radarDeleteAppt` (que já abrem `openConfirmModal` internamente — sem confirmação dupla); `E` chama `radarEditTask`
@@ -518,6 +528,7 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 | S-FIX-RADAR | ~~S-FIX-RADAR: Race condition boot + sync desktop/mobile do Radar + carga por tempo (não contagem)~~ | **Concluído** |
 | S-CAMPO-CLIENTE-ATIVIDADE | ~~S-CAMPO-CLIENTE-ATIVIDADE: campo Cliente/Atividade em agenda e tarefa (desktop + mobile), pré-requisito Sequenciador~~ | **Concluído** |
 | S-FIX-COMANDOS | ~~S-FIX-COMANDOS: Assistente ELO — fix resposta síncrona apagada + fix /pago sem atualizar status~~ | **Concluído** |
+| CHECKIN-DEDUP-CLEANUP | ~~CHECKIN-DEDUP-CLEANUP: dedup cross-dia + sort_order + limpeza em batch de atrasadas~~ | **Concluído** |
 | E | Comparativo mês anterior vs atual no Resultado | Alta |
 | 3 | Backup — exportar dados JSON/CSV | Média |
 | 5 | Analytics — gráfico linha 6 meses horas por cliente | Média |
