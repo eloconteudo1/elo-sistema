@@ -1,4 +1,4 @@
-// app.js — Sistema ELO V3.85
+// app.js — Sistema ELO V3.89
 // Extraído de index.html. Sem ES modules, sem build step.
 // ════════════════════════════════════════════════════════════════
 // SUPABASE
@@ -38,6 +38,7 @@ const T = {
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
   settings: { daily_goal_minutes: 480 },
   notes: [],
+  paraHoje: [],        // lista livre de lembretes (tabela para_hoje_items)
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
   expandedCats: new Set(), // populado com as categorias reais na primeira carga (ver loadHomeData) — não é mais lista fixa
@@ -874,6 +875,15 @@ async function loadHomeData() {
     else if (diff <= 5) alerts.push({ type:'avencer', clientName: name, dueDay, clientId: p.client_id||p.id, amount: p.amount, daysLeft: diff });
   }
   T.paymentAlerts = alerts;
+
+  // Para Hoje — lista livre
+  const { data: phData } = await db(() =>
+    sb.from('para_hoje_items').select('id,text,is_done,sort_order,created_at')
+      .eq('user_id', 1)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    'Erro ao carregar Para Hoje');
+  T.paraHoje = phData || [];
 }
 
 function updateAlertBadge() {
@@ -1854,49 +1864,14 @@ function renderAssistantHero() {
   dtEl.innerHTML = `<b>${diaSemana}</b><span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span>${dataStr}<span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span><b>${hora}</b>`;
 }
 
-// ── Sequenciador: ordem manual do dia (localStorage, por data) ──
-function seqOrderKey() { return `elo_seq_order_${todayStr()}`; }
-function seqLoadOrder() {
-  try { return JSON.parse(localStorage.getItem(seqOrderKey()) || '[]'); }
-  catch(_) { return []; }
-}
-function seqSaveOrder(order) {
-  try { localStorage.setItem(seqOrderKey(), JSON.stringify(order)); } catch(_) {}
-}
-function seqItemKey(it) { return `${it._type}-${it.id}`; }
-function seqSortItems(items) {
-  const order = seqLoadOrder();
-  const pending = items.filter(i => !i.is_done);
-  const done = items.filter(i => i.is_done);
-  pending.sort((a, b) => {
-    const ia = order.indexOf(seqItemKey(a));
-    const ib = order.indexOf(seqItemKey(b));
-    if (ia === -1 && ib === -1) return (a.sortTime||'').localeCompare(b.sortTime||'');
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    return ia - ib;
-  });
-  return { pending, done };
-}
-function seqMoveInOrder(draggedKey, targetKey) {
-  const data = getRadarData();
-  const allKeys = data.items.filter(i => !i.is_done).map(seqItemKey);
-  let order = seqLoadOrder().filter(k => allKeys.includes(k));
-  allKeys.forEach(k => { if (!order.includes(k)) order.push(k); });
-  const from = order.indexOf(draggedKey);
-  const to = order.indexOf(targetKey);
-  if (from === -1 || to === -1 || from === to) return;
-  order.splice(from, 1);
-  order.splice(to, 0, draggedKey);
-  seqSaveOrder(order);
-}
+// ── Para Hoje: lista livre de lembretes (Supabase: para_hoje_items) ──
 
-// ── Render: Para Hoje (dados reais via getRadarData) ──
 function renderParaHoje() {
-  const data = getRadarData();
+  const listEl = document.getElementById('para-hoje-list');
   const progressEl = document.getElementById('para-hoje-progress');
-  const timelineEl = document.getElementById('para-hoje-timeline');
-  if (!timelineEl) return;
+  if (!listEl) return;
+
+  // Termômetro do dia (mantido)
   const minutesWorked = (T.todayEntries || []).reduce((s, e) => s + (e.duration_minutes || 0), 0);
   const goalMin = (T.settings && T.settings.daily_goal_minutes) || 480;
   const pctDone = goalMin ? Math.min(100, Math.round((minutesWorked / goalMin) * 100)) : 0;
@@ -1911,109 +1886,156 @@ function renderParaHoje() {
         <div style="height:100%;background:${barColor};width:${pctDone}%;transition:width .4s;"></div>
       </div>`;
   }
-  if (!data.items.length) {
-    timelineEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
+
+  const items = T.paraHoje || [];
+  if (!items.length) {
+    listEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nenhum lembrete.<br>Adicione abaixo o que não pode esquecer.</div>`;
     return;
   }
-  const { pending, done } = seqSortItems(data.items);
+
+  const pending = items.filter(i => !i.is_done);
+  const done = items.filter(i => i.is_done);
   let html = '';
-  pending.forEach((it) => {
-    const key = seqItemKey(it);
-    const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
-    const tipoLabel = it._type === 'appt' ? 'compromisso' : it.priority === 'alta' ? 'prioridade alta' : null;
-    const sub = [it.time, tipoLabel, durLabel].filter(Boolean).join(' · ');
+
+  pending.forEach(it => {
     html += `
-      <div class="ph-item" draggable="true" data-seq-key="${key}" style="display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(74,41,118,.03)'" onmouseout="this.style.background=''">
-        <input type="checkbox" class="ph-checkbox" data-seq-toggle="${key}" />
-        <span style="color:rgba(74,41,118,.3);font-size:12px;flex-shrink:0;">⠿</span>
-        <span style="width:36px;flex-shrink:0;font-size:11px;font-weight:800;color:var(--text-dim);">${esc(it.time || '')}</span>
-        <div class="ph-title" style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
-          ${sub ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">${esc(sub)}</div>` : ''}
-        </div>
-        <div class="ph-actions" style="display:none;gap:4px;flex-shrink:0;">
-          <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.1)';this.style.color='var(--text-primary)'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">✏️</button>
-          <button class="note-action-btn" data-ph-postpone="${key}" title="Adiar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.1)';this.style.color='var(--text-primary)'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">→</button>
-          <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Deletar" style="padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;transition:all .15s;" onmouseover="this.style.background='rgba(232,62,120,.1)';this.style.color='#E83E78'" onmouseout="this.style.background='';this.style.color='var(--text-secondary)'">🗑</button>
-        </div>
+      <div class="ph-item" draggable="true" data-ph-id="${it.id}" style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(74,41,118,.03)'" onmouseout="this.style.background=''">
+        <span style="color:var(--lavender);font-size:14px;flex-shrink:0;user-select:none;">⠿</span>
+        <input type="checkbox" class="ph-checkbox" data-ph-toggle="${it.id}" style="cursor:pointer;" />
+        <span style="flex:1;font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.text)}</span>
+        <button data-ph-del="${it.id}" title="Excluir" style="padding:4px;border:none;background:transparent;color:rgba(74,41,118,.3);cursor:pointer;font-size:14px;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='#DC2626'" onmouseout="this.style.color='rgba(74,41,118,.3)'">
+          <span style="font-size:13px;">🗑</span>
+        </button>
       </div>`;
   });
+
   if (done.length) {
-    html += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(74,41,118,.07);font-size:10px;font-weight:700;color:var(--text-dim);">Concluídos (${done.length})</div>`;
+    html += `<div style="height:1px;background:rgba(74,41,118,.08);margin:6px 0;"></div>`;
     done.forEach(it => {
       html += `
-        <div class="ph-item" style="display:flex;align-items:center;gap:8px;padding:5px 0;opacity:.6;">
-          <span style="width:20px;text-align:center;color:var(--green);font-size:12px;">✓</span>
-          <div style="flex:1;min-width:0;font-size:12px;text-decoration:line-through;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.title)}</div>
+        <div class="ph-item" data-ph-id="${it.id}" style="display:flex;align-items:center;gap:8px;padding:8px 4px;opacity:.5;">
+          <span style="color:var(--lavender);font-size:14px;flex-shrink:0;">⠿</span>
+          <input type="checkbox" class="ph-checkbox" data-ph-toggle="${it.id}" checked style="cursor:pointer;" />
+          <span style="flex:1;font-size:14px;color:var(--text-dim);text-decoration:line-through;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.text)}</span>
+          <button data-ph-del="${it.id}" title="Excluir" style="padding:4px;border:none;background:transparent;color:rgba(74,41,118,.25);cursor:pointer;font-size:14px;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='#DC2626'" onmouseout="this.style.color='rgba(74,41,118,.25)'">
+            <span style="font-size:13px;">🗑</span>
+          </button>
         </div>`;
     });
   }
-  timelineEl.innerHTML = html;
-}
-async function seqToggleComplete(key) {
-  const { type, id } = sequencerParseKey(key);
-  if (type === 'task') completeTask(id);
-  else completeAppt(id);
+
+  listEl.innerHTML = html;
 }
 
-function paraHojeComplete(btn) {
-  const id = Number(btn.dataset.id);
-  const type = btn.dataset.type;
-  if (!id) return;
-  if (type === 'task') completeTask(id);
-  else if (type === 'appt') completeAppt(id);
+async function phAddItem() {
+  const input = document.getElementById('ph-add-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const maxOrder = (T.paraHoje || []).reduce((m, i) => Math.max(m, i.sort_order || 0), 0);
+  const newItem = { user_id: 1, text, is_done: false, sort_order: maxOrder + 1 };
+
+  const { data, error } = await db(() =>
+    sb.from('para_hoje_items').insert(newItem).select('id,text,is_done,sort_order,created_at').single(),
+    'Erro ao adicionar lembrete');
+  if (error) return;
+  T.paraHoje.push(data);
+  renderParaHoje();
+}
+
+async function phToggleItem(id) {
+  const item = (T.paraHoje || []).find(i => i.id === id);
+  if (!item) return;
+  const newDone = !item.is_done;
+  const { error } = await db(() =>
+    sb.from('para_hoje_items').update({ is_done: newDone }).eq('id', id),
+    'Erro ao atualizar lembrete');
+  if (error) return;
+  item.is_done = newDone;
+  // Reordenar: pendentes primeiro, depois concluídos
+  T.paraHoje.sort((a, b) => {
+    if (a.is_done !== b.is_done) return a.is_done ? 1 : -1;
+    return (a.sort_order || 0) - (b.sort_order || 0);
+  });
+  renderParaHoje();
+}
+
+async function phDeleteItem(id) {
+  const { error } = await db(() =>
+    sb.from('para_hoje_items').delete().eq('id', id),
+    'Erro ao excluir lembrete');
+  if (error) return;
+  T.paraHoje = T.paraHoje.filter(i => i.id !== id);
+  renderParaHoje();
+}
+
+async function phReorder(draggedId, targetId) {
+  const pending = (T.paraHoje || []).filter(i => !i.is_done);
+  const ids = pending.map(i => i.id);
+  const from = ids.indexOf(draggedId);
+  const to = ids.indexOf(targetId);
+  if (from === -1 || to === -1 || from === to) return;
+  ids.splice(from, 1);
+  ids.splice(to, 0, draggedId);
+  // Atualizar sort_order local
+  ids.forEach((itemId, idx) => {
+    const it = T.paraHoje.find(i => i.id === itemId);
+    if (it) it.sort_order = idx;
+  });
+  renderParaHoje();
+  // Persistir no banco (batch update — sem await bloqueante pra UX)
+  for (let idx = 0; idx < ids.length; idx++) {
+    db(() => sb.from('para_hoje_items').update({ sort_order: idx }).eq('id', ids[idx]),
+      'Erro ao salvar ordem');
+  }
 }
 
 function paraHojeSetupActions() {
-  const timeline = document.getElementById('para-hoje-timeline');
-  if (!timeline || timeline._phDelegated) return;
-  timeline._phDelegated = true;
-  timeline.addEventListener('click', function(ev) {
+  const listEl = document.getElementById('para-hoje-list');
+  if (!listEl || listEl._phDelegated) return;
+  listEl._phDelegated = true;
+
+  // Checkbox toggle
+  listEl.addEventListener('click', function(ev) {
     const checkbox = ev.target.closest('.ph-checkbox');
     if (checkbox) {
-      const key = checkbox.dataset.seqToggle;
-      if (key) seqToggleComplete(key);
-      return;
-    }
-    const editBtn = ev.target.closest('[data-ph-edit]');
-    if (editBtn) {
-      const id = Number(editBtn.dataset.phEdit);
-      const type = editBtn.dataset.phType;
-      if (type === 'task') openCalEditModal(id, 'task');
-      else openCalEditModal(id, 'appointment');
+      ev.preventDefault();
+      const id = Number(checkbox.dataset.phToggle);
+      if (id) phToggleItem(id);
       return;
     }
     const delBtn = ev.target.closest('[data-ph-del]');
     if (delBtn) {
       const id = Number(delBtn.dataset.phDel);
-      const type = delBtn.dataset.phType;
-      if (type === 'task') deleteTask(id);
-      else deleteAppt(id);
+      if (id) phDeleteItem(id);
       return;
     }
-    const postponeBtn = ev.target.closest('[data-ph-postpone]');
-    if (postponeBtn) { sequencerPostponeItem(postponeBtn.dataset.seqPostpone); return; }
   });
-  let dragKey = null;
-  timeline.addEventListener('dragstart', ev => {
-    const row = ev.target.closest('[data-seq-key]');
+
+  // Drag and drop
+  let dragId = null;
+  listEl.addEventListener('dragstart', ev => {
+    const row = ev.target.closest('[data-ph-id]');
     if (!row) return;
-    dragKey = row.dataset.seqKey;
+    dragId = Number(row.dataset.phId);
     ev.dataTransfer.effectAllowed = 'move';
   });
-  timeline.addEventListener('dragover', ev => {
-    if (ev.target.closest('[data-seq-key]')) ev.preventDefault();
+  listEl.addEventListener('dragover', ev => {
+    if (ev.target.closest('[data-ph-id]')) ev.preventDefault();
   });
-  timeline.addEventListener('drop', ev => {
-    const row = ev.target.closest('[data-seq-key]');
-    if (!row || !dragKey) return;
+  listEl.addEventListener('drop', ev => {
+    const row = ev.target.closest('[data-ph-id]');
+    if (!row || !dragId) return;
     ev.preventDefault();
-    seqMoveInOrder(dragKey, row.dataset.seqKey);
-    dragKey = null;
-    renderParaHoje();
+    const targetId = Number(row.dataset.phId);
+    phReorder(dragId, targetId);
+    dragId = null;
   });
 }
 
+// ── Usadas pelo Radar/Tarefas (botão "Adiar" nos painéis Hoje/Semana) ──
 function sequencerParseKey(key) {
   const [type, idStr] = key.split('-');
   return { type, id: Number(idStr) };

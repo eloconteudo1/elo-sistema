@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=388">
+  <link rel="stylesheet" href="styles.css?v=389">
 </head>
 <body>
 
@@ -241,17 +241,19 @@
             </div>
           </div>
 
-          <!-- BLOCO 2 — PARA HOJE -->
-          <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:380px;display:flex;flex-direction:column;">
+          <!-- BLOCO 2 — PARA HOJE (lista livre de lembretes) -->
+          <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:420px;display:flex;flex-direction:column;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <span class="sec-label">Para hoje</span>
-              <div style="display:flex;gap:6px;">
-                <button onclick="openNovoRegistro('task')" style="font-size:10px;font-weight:800;color:var(--coral);background:rgba(196,114,90,.12);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">+ novo</button>
-                <button onclick="navigateTo('radar')" style="font-size:10px;font-weight:800;color:var(--purple);background:var(--surface2);border:none;padding:4px 10px;border-radius:20px;cursor:pointer;">ver +</button>
-              </div>
             </div>
             <div id="para-hoje-progress"></div>
-            <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
+            <div id="para-hoje-list" style="flex:1;overflow-y:auto;"></div>
+            <div style="margin-top:8px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:12px;cursor:text;" onclick="document.getElementById('ph-add-input').focus()">
+                <span style="font-size:15px;color:var(--lavender);">+</span>
+                <input id="ph-add-input" type="text" placeholder="Adicionar lembrete..." maxlength="200" style="border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);outline:none;flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();phAddItem();}">
+              </div>
+            </div>
           </div>
 
           <!-- BLOCO 3 — FALA COMIGO, BB (ocupa o resto da tela) -->
@@ -895,7 +897,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.88 · ELO Comunicação · Atualizado em 06/08/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.89 · ELO Comunicação · Atualizado em 10/08/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -971,9 +973,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.88</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.89</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">06/08/2026</span></span>
+    <span>Atualizado em <span id="build-date">10/08/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1180,6 +1182,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=388"></script>
+  <script src="app.js?v=389"></script>
 </body>
 </html>
