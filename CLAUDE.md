@@ -135,6 +135,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão PARA-HOJE-LISTA-LIVRE — Card "Para Hoje" vira lista livre de lembretes (V3.89)**
+- Tabela nova `para_hoje_items` (id, user_id default 1, text, is_done, sort_order, created_at) — RLS `authenticated` full access
+- Card "Para Hoje" da Home desacoplado de `scheduled_tasks`/`appointments`: agora é lista livre (texto + checkbox + arrastar pra reordenar + excluir), input "Adicionar lembrete..." fixo no rodapé do card
+- `T.paraHoje` novo no estado global; carregado em `loadHomeData()` via `sb.from('para_hoje_items')`
+- Funções novas: `renderParaHoje()` (reescrita, lê `T.paraHoje` em vez de `getRadarData()`), `phAddItem()`, `phToggleItem()`, `phDeleteItem()`, `phReorder()`, `paraHojeSetupActions()` (reescrita)
+- Removidas: `seqOrderKey/seqLoadOrder/seqSaveOrder/seqItemKey/seqSortItems/seqMoveInOrder` (ordenação via localStorage), `seqToggleComplete`, `paraHojeComplete` — ordenação agora via `sort_order` no banco
+- `sequencerParseKey`/`sequencerFindItem`/`sequencerPostponeItem` mantidas (não removidas) — descobertas em uso pelo botão "Adiar (→)" dos painéis Hoje/Semana do Radar/Tarefas (`renderPanelHoje`/`renderPanelSemana`), dependência não documentada na sessão original
+- `getRadarData()` intacta — segue usada só por Tarefas/Radar
+- Botões `+ novo`/`ver +` removidos do card; agendar segue via aba Tarefas ou modais `nrm-*`/`mni-*`
+- Versão 3.89, data 10/08/2026
+
 **Sessão CHECKIN-DEDUP-CLEANUP — Dedup cross-dia + sort_order + limpeza em batch (V3.88)**
 - `checkin-write/index.ts`: dedup de tarefas deixa de olhar só a mesma data — busca todas `scheduled_tasks` com `is_done=false` (qualquer data) e casa por título normalizado; se já existe tarefa aberta mais antiga com mesmo título, reagenda ela (`UPDATE scheduled_date`) em vez de inserir duplicata; se a existente já é da mesma data ou mais recente, pula (sem duplicar)
 - Resposta do endpoint ganhou `tarefas.reagendadas` (lista `{title, de, para}`) além de `inseridas`/`puladas`
