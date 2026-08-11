@@ -857,7 +857,7 @@ async function loadHomeData() {
   // reais só na primeira carga da sessão; depois disso respeita o que a Helô abriu/fechou manualmente.
   if (!T._catsSeeded) {
     const realCats = [...new Set(T.tasks.map(t => t.category).filter(Boolean))];
-    T.expandedCats = new Set(realCats);
+    T.expandedCats = new Set(['__favs__', ...realCats]);
     T._catsSeeded = true;
   }
 
