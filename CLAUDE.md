@@ -135,6 +135,12 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão FIX-FAVS-EXPAND — Fix grupo Favoritas sempre colapsado no boot (V3.89)**
+- Bug: grupo "⭐ FAVORITAS" na lista de tarefas do timer sempre aparecia colapsado ao abrir/recarregar
+- Causa: seed inicial de `T.expandedCats` (linha 859) populava o Set só com categorias reais do banco, sem a chave especial `'__favs__'` do grupo de favoritas
+- Fix: `T.expandedCats = new Set(['__favs__', ...realCats]);` — 1 linha, `app.js`
+- Versão 3.89, data 11/08/2026
+
 **Sessão PARA-HOJE-LISTA-LIVRE — Card "Para Hoje" vira lista livre de lembretes (V3.89)**
 - Tabela nova `para_hoje_items` (id, user_id default 1, text, is_done, sort_order, created_at) — RLS `authenticated` full access
 - Card "Para Hoje" da Home desacoplado de `scheduled_tasks`/`appointments`: agora é lista livre (texto + checkbox + arrastar pra reordenar + excluir), input "Adicionar lembrete..." fixo no rodapé do card
