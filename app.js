@@ -38,7 +38,6 @@ const T = {
   activeEntry: null, scheduledTasks: [], appointments: [], paymentAlerts: [],
   settings: { daily_goal_minutes: 480 },
   notes: [],
-  paraHoje: [],        // lista livre de lembretes (tabela para_hoje_items)
   selectedClientId: null, selectedTaskId: null, selectedTaskName: null,
   clientDropOpen: false,
   expandedCats: new Set(), // populado com as categorias reais na primeira carga (ver loadHomeData) — não é mais lista fixa
@@ -875,15 +874,6 @@ async function loadHomeData() {
     else if (diff <= 5) alerts.push({ type:'avencer', clientName: name, dueDay, clientId: p.client_id||p.id, amount: p.amount, daysLeft: diff });
   }
   T.paymentAlerts = alerts;
-
-  // Para Hoje — lista livre
-  const { data: phData } = await db(() =>
-    sb.from('para_hoje_items').select('id,text,is_done,sort_order,created_at')
-      .eq('user_id', 1)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    'Erro ao carregar Para Hoje');
-  T.paraHoje = phData || [];
 }
 
 function updateAlertBadge() {
@@ -1864,174 +1854,184 @@ function renderAssistantHero() {
   dtEl.innerHTML = `<b>${diaSemana}</b><span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span>${dataStr}<span style="color:rgba(255,255,255,.3);margin:0 5px;">·</span><b>${hora}</b>`;
 }
 
-// ── Para Hoje: lista livre de lembretes (Supabase: para_hoje_items) ──
+// ── Para Hoje: tarefas e compromissos do dia (via getRadarData) ──
+
+// Ordem manual do dia (localStorage, por data)
+function seqOrderKey() { return `elo_seq_order_${todayStr()}`; }
+function seqLoadOrder() {
+  try { return JSON.parse(localStorage.getItem(seqOrderKey()) || '[]'); }
+  catch(_) { return []; }
+}
+function seqSaveOrder(order) {
+  try { localStorage.setItem(seqOrderKey(), JSON.stringify(order)); } catch(_) {}
+}
+function seqItemKey(it) { return `${it._type}-${it.id}`; }
+function seqSortItems(items) {
+  const order = seqLoadOrder();
+  const pending = items.filter(i => !i.is_done);
+  const done = items.filter(i => i.is_done);
+  pending.sort((a, b) => {
+    const ia = order.indexOf(seqItemKey(a));
+    const ib = order.indexOf(seqItemKey(b));
+    if (ia === -1 && ib === -1) return (a.sortTime||'').localeCompare(b.sortTime||'');
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  return { pending, done };
+}
+function seqMoveInOrder(draggedKey, targetKey) {
+  const data = getRadarData();
+  const allKeys = data.items.filter(i => !i.is_done).map(seqItemKey);
+  let order = seqLoadOrder().filter(k => allKeys.includes(k));
+  allKeys.forEach(k => { if (!order.includes(k)) order.push(k); });
+  const from = order.indexOf(draggedKey);
+  const to = order.indexOf(targetKey);
+  if (from === -1 || to === -1 || from === to) return;
+  order.splice(from, 1);
+  order.splice(to, 0, draggedKey);
+  seqSaveOrder(order);
+}
+async function seqToggleComplete(key) {
+  const { type, id } = sequencerParseKey(key);
+  if (type === 'task') completeTask(id);
+  else completeAppt(id);
+}
+
+function priorityBadge(it) {
+  if (it._type === 'appt') return { cls: 'compromisso', label: 'Compromisso' };
+  const p = it.priority || 'media';
+  const labels = { alta: 'Alta', media: 'Média', baixa: 'Baixa' };
+  return { cls: p, label: labels[p] || 'Média' };
+}
 
 function renderParaHoje() {
-  const listEl = document.getElementById('para-hoje-list');
+  const data = getRadarData();
   const progressEl = document.getElementById('para-hoje-progress');
-  if (!listEl) return;
+  const timelineEl = document.getElementById('para-hoje-timeline');
+  if (!timelineEl) return;
 
-  // Termômetro do dia (mantido)
   const minutesWorked = (T.todayEntries || []).reduce((s, e) => s + (e.duration_minutes || 0), 0);
   const goalMin = (T.settings && T.settings.daily_goal_minutes) || 480;
   const pctDone = goalMin ? Math.min(100, Math.round((minutesWorked / goalMin) * 100)) : 0;
   const barColor = pctDone < 60 ? 'var(--green)' : pctDone < 100 ? 'var(--orange)' : '#DC2626';
+  const plannedMin = data.items.reduce((s, it) => s + (it.duration_minutes || 0), 0);
+
   if (progressEl) {
     progressEl.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-        <span style="font-size:11px;font-weight:700;color:var(--text-dim);">Seu dia</span>
-        <span style="font-size:11px;color:var(--text-dim);">${fMin(minutesWorked)} de ${fMin(goalMin)}</span>
+      <div class="ph-progress-line">
+        <span class="ph-progress-title">Seu dia</span>
+        <span class="ph-progress-num"><b>${fMin(plannedMin)}</b> planejadas · ${fMin(minutesWorked)} registradas de ${fMin(goalMin)}</span>
       </div>
-      <div style="height:8px;border-radius:20px;overflow:hidden;background:var(--bg2);margin-bottom:12px;">
-        <div style="height:100%;background:${barColor};width:${pctDone}%;transition:width .4s;"></div>
-      </div>`;
+      <div class="ph-bar"><div class="ph-bar-fill" style="background:${barColor};width:${pctDone}%;"></div></div>`;
   }
 
-  const items = T.paraHoje || [];
-  if (!items.length) {
-    listEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nenhum lembrete.<br>Adicione abaixo o que não pode esquecer.</div>`;
+  if (!data.items.length) {
+    timelineEl.innerHTML = `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">Nada agendado pra hoje.<br>Use <b>/plano</b> ou <b>/tarefa</b> pra começar.</div>`;
     return;
   }
 
-  const pending = items.filter(i => !i.is_done);
-  const done = items.filter(i => i.is_done);
+  const { pending, done } = seqSortItems(data.items);
   let html = '';
 
-  pending.forEach(it => {
+  pending.forEach((it) => {
+    const key = seqItemKey(it);
+    const client = it.client_id ? (T.clients || []).find(c => c.id === it.client_id) : null;
+    const subLabel = client ? `Cliente: ${client.name}` : (it._type === 'task' ? 'Sem cliente' : '');
+    const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
+    const badge = priorityBadge(it);
     html += `
-      <div class="ph-item" draggable="true" data-ph-id="${it.id}" style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(74,41,118,.05);cursor:grab;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(74,41,118,.03)'" onmouseout="this.style.background=''">
-        <span style="color:var(--lavender);font-size:14px;flex-shrink:0;user-select:none;">⠿</span>
-        <input type="checkbox" class="ph-checkbox" data-ph-toggle="${it.id}" style="cursor:pointer;" />
-        <span style="flex:1;font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.text)}</span>
-        <button data-ph-del="${it.id}" title="Excluir" style="padding:4px;border:none;background:transparent;color:rgba(74,41,118,.3);cursor:pointer;font-size:14px;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='#DC2626'" onmouseout="this.style.color='rgba(74,41,118,.3)'">
-          <span style="font-size:13px;">🗑</span>
-        </button>
+      <div class="ph-item" draggable="true" data-seq-key="${key}">
+        <span class="ph-drag">⠿</span>
+        <input type="checkbox" class="ph-checkbox" data-seq-toggle="${key}" />
+        <div class="ph-body">
+          <div class="ph-card-title">${esc(it.title)}</div>
+          ${subLabel ? `<div class="ph-card-sub">${esc(subLabel)}</div>` : ''}
+        </div>
+        <div class="ph-right">
+          ${durLabel ? `<div class="ph-dur">🕐 ${esc(durLabel)}</div>` : (it.time ? `<div class="ph-dur">🕐 ${esc(it.time)}</div>` : '')}
+          <div class="ph-badge ${badge.cls}">${badge.label}</div>
+        </div>
+        <div class="ph-actions">
+          <button class="note-action-btn" data-ph-edit="${it.id}" data-ph-type="${it._type}" title="Editar">✏️</button>
+          <button class="note-action-btn" data-ph-postpone="${key}" title="Adiar">→</button>
+          <button class="note-action-btn" data-ph-del="${it.id}" data-ph-type="${it._type}" title="Deletar">🗑</button>
+        </div>
       </div>`;
   });
 
   if (done.length) {
-    html += `<div style="height:1px;background:rgba(74,41,118,.08);margin:6px 0;"></div>`;
+    html += `<div class="ph-done-sep">Concluída (${done.length})</div>`;
     done.forEach(it => {
+      const client = it.client_id ? (T.clients || []).find(c => c.id === it.client_id) : null;
+      const subLabel = client ? `Cliente: ${client.name}` : '';
+      const durLabel = it.duration_minutes ? fMin(it.duration_minutes) : null;
       html += `
-        <div class="ph-item" data-ph-id="${it.id}" style="display:flex;align-items:center;gap:8px;padding:8px 4px;opacity:.5;">
-          <span style="color:var(--lavender);font-size:14px;flex-shrink:0;">⠿</span>
-          <input type="checkbox" class="ph-checkbox" data-ph-toggle="${it.id}" checked style="cursor:pointer;" />
-          <span style="flex:1;font-size:14px;color:var(--text-dim);text-decoration:line-through;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(it.text)}</span>
-          <button data-ph-del="${it.id}" title="Excluir" style="padding:4px;border:none;background:transparent;color:rgba(74,41,118,.25);cursor:pointer;font-size:14px;flex-shrink:0;transition:color .15s;" onmouseover="this.style.color='#DC2626'" onmouseout="this.style.color='rgba(74,41,118,.25)'">
-            <span style="font-size:13px;">🗑</span>
-          </button>
+        <div class="ph-item ph-completed">
+          <span class="ph-drag" style="visibility:hidden;">⠿</span>
+          <input type="checkbox" class="ph-checkbox" data-seq-toggle="${seqItemKey(it)}" checked />
+          <div class="ph-body">
+            <div class="ph-card-title">${esc(it.title)}</div>
+            ${subLabel ? `<div class="ph-card-sub">${esc(subLabel)}</div>` : ''}
+          </div>
+          <div class="ph-right">
+            ${durLabel ? `<div class="ph-dur">🕐 ${esc(durLabel)}</div>` : ''}
+            <div class="ph-badge done">Feita</div>
+          </div>
         </div>`;
     });
   }
 
-  listEl.innerHTML = html;
-}
-
-async function phAddItem() {
-  const input = document.getElementById('ph-add-input');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  const maxOrder = (T.paraHoje || []).reduce((m, i) => Math.max(m, i.sort_order || 0), 0);
-  const newItem = { user_id: 1, text, is_done: false, sort_order: maxOrder + 1 };
-
-  const { data, error } = await db(() =>
-    sb.from('para_hoje_items').insert(newItem).select('id,text,is_done,sort_order,created_at').single(),
-    'Erro ao adicionar lembrete');
-  if (error) return;
-  T.paraHoje.push(data);
-  renderParaHoje();
-}
-
-async function phToggleItem(id) {
-  const item = (T.paraHoje || []).find(i => i.id === id);
-  if (!item) return;
-  const newDone = !item.is_done;
-  const { error } = await db(() =>
-    sb.from('para_hoje_items').update({ is_done: newDone }).eq('id', id),
-    'Erro ao atualizar lembrete');
-  if (error) return;
-  item.is_done = newDone;
-  // Reordenar: pendentes primeiro, depois concluídos
-  T.paraHoje.sort((a, b) => {
-    if (a.is_done !== b.is_done) return a.is_done ? 1 : -1;
-    return (a.sort_order || 0) - (b.sort_order || 0);
-  });
-  renderParaHoje();
-}
-
-async function phDeleteItem(id) {
-  const { error } = await db(() =>
-    sb.from('para_hoje_items').delete().eq('id', id),
-    'Erro ao excluir lembrete');
-  if (error) return;
-  T.paraHoje = T.paraHoje.filter(i => i.id !== id);
-  renderParaHoje();
-}
-
-async function phReorder(draggedId, targetId) {
-  const pending = (T.paraHoje || []).filter(i => !i.is_done);
-  const ids = pending.map(i => i.id);
-  const from = ids.indexOf(draggedId);
-  const to = ids.indexOf(targetId);
-  if (from === -1 || to === -1 || from === to) return;
-  ids.splice(from, 1);
-  ids.splice(to, 0, draggedId);
-  // Atualizar sort_order local
-  ids.forEach((itemId, idx) => {
-    const it = T.paraHoje.find(i => i.id === itemId);
-    if (it) it.sort_order = idx;
-  });
-  renderParaHoje();
-  // Persistir no banco (batch update — sem await bloqueante pra UX)
-  for (let idx = 0; idx < ids.length; idx++) {
-    db(() => sb.from('para_hoje_items').update({ sort_order: idx }).eq('id', ids[idx]),
-      'Erro ao salvar ordem');
-  }
+  timelineEl.innerHTML = html;
 }
 
 function paraHojeSetupActions() {
-  const listEl = document.getElementById('para-hoje-list');
-  if (!listEl || listEl._phDelegated) return;
-  listEl._phDelegated = true;
-
-  // Checkbox toggle
-  listEl.addEventListener('click', function(ev) {
+  const timeline = document.getElementById('para-hoje-timeline');
+  if (!timeline || timeline._phDelegated) return;
+  timeline._phDelegated = true;
+  timeline.addEventListener('click', function(ev) {
     const checkbox = ev.target.closest('.ph-checkbox');
     if (checkbox) {
-      ev.preventDefault();
-      const id = Number(checkbox.dataset.phToggle);
-      if (id) phToggleItem(id);
+      const key = checkbox.dataset.seqToggle;
+      if (key) seqToggleComplete(key);
+      return;
+    }
+    const editBtn = ev.target.closest('[data-ph-edit]');
+    if (editBtn) {
+      const id = Number(editBtn.dataset.phEdit);
+      const type = editBtn.dataset.phType;
+      if (type === 'task') openCalEditModal(id, 'task');
+      else openCalEditModal(id, 'appointment');
       return;
     }
     const delBtn = ev.target.closest('[data-ph-del]');
     if (delBtn) {
       const id = Number(delBtn.dataset.phDel);
-      if (id) phDeleteItem(id);
+      const type = delBtn.dataset.phType;
+      if (type === 'task') deleteTask(id);
+      else deleteAppt(id);
       return;
     }
+    const postponeBtn = ev.target.closest('[data-ph-postpone]');
+    if (postponeBtn) { sequencerPostponeItem(postponeBtn.dataset.phPostpone); return; }
   });
-
-  // Drag and drop
-  let dragId = null;
-  listEl.addEventListener('dragstart', ev => {
-    const row = ev.target.closest('[data-ph-id]');
+  let dragKey = null;
+  timeline.addEventListener('dragstart', ev => {
+    const row = ev.target.closest('[data-seq-key]');
     if (!row) return;
-    dragId = Number(row.dataset.phId);
+    dragKey = row.dataset.seqKey;
     ev.dataTransfer.effectAllowed = 'move';
   });
-  listEl.addEventListener('dragover', ev => {
-    if (ev.target.closest('[data-ph-id]')) ev.preventDefault();
+  timeline.addEventListener('dragover', ev => {
+    if (ev.target.closest('[data-seq-key]')) ev.preventDefault();
   });
-  listEl.addEventListener('drop', ev => {
-    const row = ev.target.closest('[data-ph-id]');
-    if (!row || !dragId) return;
+  timeline.addEventListener('drop', ev => {
+    const row = ev.target.closest('[data-seq-key]');
+    if (!row || !dragKey) return;
     ev.preventDefault();
-    const targetId = Number(row.dataset.phId);
-    phReorder(dragId, targetId);
-    dragId = null;
+    seqMoveInOrder(dragKey, row.dataset.seqKey);
+    dragKey = null;
+    renderParaHoje();
   });
 }
 

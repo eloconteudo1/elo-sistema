@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=389">
+  <link rel="stylesheet" href="styles.css?v=390">
 </head>
 <body>
 
@@ -241,18 +241,16 @@
             </div>
           </div>
 
-          <!-- BLOCO 2 — PARA HOJE (lista livre de lembretes) -->
-          <div class="right-card" id="para-hoje-card" style="min-height:260px;max-height:420px;display:flex;flex-direction:column;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <!-- BLOCO 2 — PARA HOJE (tarefas e compromissos do dia) -->
+          <div class="right-card" id="para-hoje-card" style="min-height:420px;max-height:60vh;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <span class="sec-label">Para hoje</span>
             </div>
             <div id="para-hoje-progress"></div>
-            <div id="para-hoje-list" style="flex:1;overflow-y:auto;"></div>
-            <div style="margin-top:8px;">
-              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:12px;cursor:text;" onclick="document.getElementById('ph-add-input').focus()">
-                <span style="font-size:15px;color:var(--lavender);">+</span>
-                <input id="ph-add-input" type="text" placeholder="Adicionar lembrete..." maxlength="200" style="border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);outline:none;flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();phAddItem();}">
-              </div>
+            <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
+            <div class="ph-footer">
+              <button class="ph-btn-purple ph-btn-add" onclick="openNovoRegistro('task')">+ Adicionar</button>
+              <button class="ph-btn-purple ph-btn-ver" onclick="navigateTo('radar')">Ver +</button>
             </div>
           </div>
 
@@ -897,7 +895,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.89 · ELO Comunicação · Atualizado em 11/08/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.90 · ELO Comunicação · Atualizado em 11/08/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -973,7 +971,7 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.89</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.90</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
     <span>Atualizado em <span id="build-date">11/08/2026</span></span>
   </footer>
@@ -1182,6 +1180,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=389"></script>
+  <script src="app.js?v=390"></script>
 </body>
 </html>
