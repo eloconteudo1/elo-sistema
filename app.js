@@ -2107,7 +2107,7 @@ function loteParseDuracao(str) {
 }
 
 function loteParseLine(line) {
-  const parts = line.split(' - ').map(s => s.trim()).filter(s => s);
+  const parts = line.replace(/\s*[—–]\s*/g, ' - ').split(' - ').map(s => s.trim()).filter(s => s);
   if (parts.length >= 3) {
     const durTest = loteParseDuracao(parts[parts.length - 1]);
     if (durTest !== null) {
