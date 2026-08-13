@@ -2139,7 +2139,7 @@ async function saveLote() {
       ? (T.clients || []).find(c => c.name.toLowerCase().startsWith(parsed.clientName.toLowerCase())) || null
       : null;
     return {
-      title: parsed.title,
+      title: parsed.clientName ? `${parsed.clientName} - ${parsed.title}` : parsed.title,
       scheduled_date: hoje,
       is_done: false,
       priority: 'media',
