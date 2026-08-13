@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=390">
+  <link rel="stylesheet" href="styles.css?v=391">
 </head>
 <body>
 
@@ -250,6 +250,7 @@
             <div id="para-hoje-timeline" style="flex:1;overflow-y:auto;"></div>
             <div class="ph-footer">
               <button class="ph-btn-purple ph-btn-add" onclick="openNovoRegistro('task')">+ Adicionar</button>
+              <button class="ph-btn-purple ph-btn-add" onclick="openLoteModal()" title="Cadastrar várias tarefas de uma vez">⚡ Lote</button>
               <button class="ph-btn-purple ph-btn-ver" onclick="navigateTo('radar')">Ver +</button>
             </div>
           </div>
@@ -493,6 +494,17 @@
 
           <!-- PAINEL HOJE -->
           <div class="radar-panel active" id="radar-panel-hoje">
+            <!-- CARD PENDENTES SEM DATA -->
+            <div id="radar-pendentes-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid var(--purple);padding:14px 16px;margin-bottom:16px;">
+              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--purple);">📋 Pendentes <span id="radar-pendentes-count"></span></span>
+                <div style="display:flex;gap:6px;">
+                  <button onclick="radarMoveAllPendentes()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(74,41,118,.12);color:var(--purple);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.22)'" onmouseout="this.style.background='rgba(74,41,118,.12)'">Todas → Hoje</button>
+                </div>
+              </div>
+              <div id="radar-pendentes-list"></div>
+            </div>
+
             <div id="radar-atrasadas-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid #DC2626;padding:14px 16px;margin-bottom:16px;">
               <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;">⚠ Atrasadas <span id="radar-atrasadas-count"></span></span>
@@ -895,7 +907,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.90 · ELO Comunicação · Atualizado em 11/08/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.91 · ELO Comunicação · Atualizado em 13/08/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -971,9 +983,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.90</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.91</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">11/08/2026</span></span>
+    <span>Atualizado em <span id="build-date">13/08/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1180,6 +1192,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=390"></script>
+  <script src="app.js?v=391"></script>
 </body>
 </html>

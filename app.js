@@ -836,7 +836,7 @@ async function loadHomeData() {
     db(() => sb.from('clients').select('*').eq('is_active',true).order('is_internal',{ascending:true}).order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar clientes'),
     db(() => sb.from('tasks').select('*').order('is_favorite',{ascending:false}).order('name',{ascending:true}), 'Erro ao carregar tarefas'),
     db(() => sb.from('time_entries').select('*').gte('start_time',startOfToday()).lt('start_time',endOfToday()).order('start_time',{ascending:false}), 'Erro ao carregar atividades'),
-    db(() => sb.from('scheduled_tasks').select('*').gte('scheduled_date', new Date(Date.now()-30*86400000).toISOString().split('T')[0]).lte('scheduled_date', new Date(Date.now()+60*86400000).toISOString().split('T')[0]).order('scheduled_date',{ascending:true}), 'Erro ao carregar agenda'),
+    db(() => sb.from('scheduled_tasks').select('*').or(`and(scheduled_date.gte.${new Date(Date.now()-30*86400000).toISOString().split('T')[0]},scheduled_date.lte.${new Date(Date.now()+60*86400000).toISOString().split('T')[0]}),scheduled_date.is.null`).order('scheduled_date',{ascending:true,nullsFirst:false}), 'Erro ao carregar agenda'),
     db(() => sb.from('monthly_payments').select('*').eq('month',now.getMonth()+1).eq('year',now.getFullYear()).eq('is_paid',false), 'Erro ao carregar financeiro'),
     db(() => sb.from('settings').select('*').eq('id',1).single(), 'Erro ao carregar configurações'),
     db(() => sb.from('appointments').select('*').gte('scheduled_at', todayTs).lte('scheduled_at', futureTs).order('scheduled_at'), 'Erro ao carregar compromissos'),
@@ -2033,6 +2033,64 @@ function paraHojeSetupActions() {
     dragKey = null;
     renderParaHoje();
   });
+}
+
+// ── Para Hoje: cadastro em lote ──
+function openLoteModal() {
+  const mc = document.getElementById('modal-container');
+  mc.className = 'open';
+  mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">⚡ Lote — Para Hoje</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Uma tarefa por linha</label>
+        <textarea id="lote-input" class="field-input" rows="8"
+          placeholder="Responder e-mails&#10;Revisar contrato Dr. Silva&#10;Postar stories clínica&#10;Reunião de pauta"
+          style="resize:vertical;font-size:14px;line-height:1.6;"></textarea>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">
+        Todas serão criadas sem horário e sem cliente. Edite depois se precisar.
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" id="lote-save-btn" onclick="saveLote()">Criar tarefas</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(() => document.getElementById('lote-input')?.focus(), 80);
+}
+
+async function saveLote() {
+  const raw = (document.getElementById('lote-input')?.value || '').trim();
+  if (!raw) { showToast('Digite ao menos uma tarefa', 'warn'); return; }
+  const titles = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (titles.length === 0) { showToast('Nenhuma tarefa válida', 'warn'); return; }
+  const btn = document.getElementById('lote-save-btn');
+  btn.disabled = true; btn.textContent = 'Criando...';
+  const hoje = todayStr();
+  const rows = titles.map(title => ({
+    title,
+    scheduled_date: hoje,
+    is_done: false,
+    priority: 'media',
+    user_id: appUser.id,
+    client_id: null,
+    task_id: null,
+    scheduled_time: null,
+  }));
+  const { data, error } = await db(
+    () => sb.from('scheduled_tasks').insert(rows).select(),
+    'Erro ao criar tarefas'
+  );
+  if (error) { btn.disabled = false; btn.textContent = 'Criar tarefas'; return; }
+  (data || []).forEach(t => T.scheduledTasks.push(t));
+  showToast(`${titles.length} tarefa${titles.length > 1 ? 's' : ''} criada${titles.length > 1 ? 's' : ''} ✓`, 'ok');
+  closeModal();
+  renderParaHoje();
+  if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
 }
 
 // ── Usadas pelo Radar/Tarefas (botão "Adiar" nos painéis Hoje/Semana) ──
@@ -5934,6 +5992,76 @@ async function radarMoverParaHoje(btn) {
   radarRefreshCurrentPanel();
 }
 
+function renderRadarPendentes() {
+  const card = document.getElementById('radar-pendentes-card');
+  const list = document.getElementById('radar-pendentes-list');
+  const count = document.getElementById('radar-pendentes-count');
+  if (!card || !list) return;
+  const pendentes = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && !t.scheduled_date)
+    .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  if (pendentes.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  if (count) count.textContent = `(${pendentes.length})`;
+  list.innerHTML = pendentes.map((t, i) => {
+    const client = t.client_id ? (T.clients || []).find(c => c.id === t.client_id) : null;
+    const sub = client ? `<div style="font-size:11.5px;color:var(--text-dim);">${esc(client.name)}</div>` : '';
+    const borda = i < pendentes.length - 1 ? 'border-bottom:1px solid rgba(74,41,118,.08);' : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;${borda}">
+      <div style="min-width:0;">
+        <div style="font-size:13.5px;font-weight:600;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
+        ${sub}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <button data-id="${t.id}" onclick="radarMoverPendenteParaHoje(this)"
+          style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;border:none;background:rgba(74,41,118,.12);color:var(--purple);cursor:pointer;font-family:inherit;">→ Hoje</button>
+        <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
+          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
+        <button data-id="${t.id}" onclick="radarDeleteTask(this)"
+          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function radarMoverPendenteParaHoje(btn) {
+  const id = Number(btn.dataset.id);
+  if (!id) return;
+  btn.disabled = true;
+  const novaData = todayStr();
+  const { error } = await db(() => sb.from('scheduled_tasks').update({ scheduled_date: novaData }).eq('id', id), 'Erro ao agendar tarefa');
+  if (error) { btn.disabled = false; return; }
+  T.scheduledTasks = T.scheduledTasks.map(t => t.id === id ? { ...t, scheduled_date: novaData } : t);
+  showToast('Tarefa agendada para hoje', 'ok');
+  radarRefreshCurrentPanel();
+  renderParaHoje();
+}
+
+async function radarMoveAllPendentes() {
+  const pendentes = (T.scheduledTasks || [])
+    .filter(t => !t.is_done && !t.scheduled_date)
+    .map(t => t.id);
+  if (!pendentes.length) { showToast('Nenhuma tarefa pendente', 'warn'); return; }
+  openConfirmModal(
+    `Agendar ${pendentes.length} tarefa(s)`,
+    'Mover todas as pendentes para hoje?',
+    async () => {
+      const novaData = todayStr();
+      const { error } = await db(
+        () => sb.from('scheduled_tasks').update({ scheduled_date: novaData }).in('id', pendentes),
+        'Erro ao mover pendentes'
+      );
+      if (error) return;
+      T.scheduledTasks = T.scheduledTasks.map(t => pendentes.includes(t.id) ? { ...t, scheduled_date: novaData } : t);
+      showToast(`${pendentes.length} tarefa(s) agendada(s) para hoje`, 'ok');
+      radarRefreshCurrentPanel();
+      renderParaHoje();
+    }
+  );
+}
+
 async function radarMoveAllAtrasadas() {
   const todayDate = todayStr();
   const atrasadas = (T.scheduledTasks || [])
@@ -5994,6 +6122,7 @@ async function radarSaveNotaHoje() {
 
 function renderPanelHoje() {
   loadRadarPanelData();
+  renderRadarPendentes();
   renderRadarAtrasadas();
   renderCalNotes();
   const todayDate = todayStr();
