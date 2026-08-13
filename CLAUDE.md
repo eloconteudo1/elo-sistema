@@ -135,6 +135,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão LOTE-PARSE + PENDENTES-ATRASADAS — Parse cliente/título/tempo no lote + split Pendentes/Atrasadas (V3.92)**
+- "+ Adicionar" (Para Hoje) vira menu popup: "📝 Tarefa" / "⚡ Em lote" — botão "⚡ Lote" separado removido do footer
+- `toggleAddMenu()`/`closeAddMenu()`/`_closeAddMenuOutside()` novas; CSS `.ph-add-menu` em `styles.css`
+- Lote (`openLoteModal`/`saveLote`): cada linha passa por `loteParseLine()` — formatos `cliente - título - tempo`, `título - tempo` ou só título; `loteParseDuracao()` aceita `Xmin`, `Xh`, `XhYmin`, número puro
+- `loteParseLine()`: casa cliente por nome (`T.clients`, case-insensitive) — se não achar, cria sem `client_id`; duração salva em `scheduled_tasks.duration_minutes`
+- Helper `yesterdayStr()` novo, ao lado de `todayStr()`
+- Card "📋 Pendentes" (roxo) redefinido: tarefas de ONTEM não concluídas + sem data (era só sem data); sub-label mostra cliente, "era ontem"/"sem data" e duração
+- Card "⚠ Atrasadas" (vermelho) redefinido: só tarefas com 2+ dias de atraso (`scheduled_date < ontem`, era `< hoje`)
+- `radarMoveAllPendentes`, `radarMoveAllAtrasadas`, `radarDeleteAllAtrasadas`: filtros ajustados ao mesmo corte ontem/2+dias
+- Versão 3.92, data 13/08/2026
+
 **Sessão PENDENTES-SEM-DATA + LOTE-PARA-HOJE — Card Pendentes + cadastro em lote (V3.91)**
 - Card "📋 Pendentes" novo em Tarefas > Hoje, acima do card Atrasadas — lista `scheduled_tasks` com `is_done=false` e `scheduled_date IS NULL`
 - Botão "→ Hoje" por item (`radarMoverPendenteParaHoje`) e "Todas → Hoje" no cabeçalho (`radarMoveAllPendentes`, com `openConfirmModal`) — mesmo padrão do card Atrasadas

@@ -82,6 +82,11 @@ function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function tsToLocalDateStr(ts) {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -2035,6 +2040,26 @@ function paraHojeSetupActions() {
   });
 }
 
+// ── Para Hoje: menu "+ Adicionar" ──
+function toggleAddMenu(btn) {
+  const menu = document.getElementById('ph-add-menu');
+  if (!menu) return;
+  if (menu.style.display === 'none') {
+    menu.style.display = '';
+    setTimeout(() => document.addEventListener('click', _closeAddMenuOutside, { once: true }), 0);
+  } else {
+    menu.style.display = 'none';
+  }
+}
+function closeAddMenu() {
+  const menu = document.getElementById('ph-add-menu');
+  if (menu) menu.style.display = 'none';
+}
+function _closeAddMenuOutside(e) {
+  const menu = document.getElementById('ph-add-menu');
+  if (menu && !menu.parentElement.contains(e.target)) menu.style.display = 'none';
+}
+
 // ── Para Hoje: cadastro em lote ──
 function openLoteModal() {
   const mc = document.getElementById('modal-container');
@@ -2042,17 +2067,21 @@ function openLoteModal() {
   mc.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <span class="modal-title">⚡ Lote — Para Hoje</span>
+        <span class="modal-title">⚡ Lote — Para hoje</span>
         <button class="modal-close" onclick="closeModal()">×</button>
       </div>
       <div class="field-group">
         <label class="field-label">Uma tarefa por linha</label>
         <textarea id="lote-input" class="field-input" rows="8"
-          placeholder="Responder e-mails&#10;Revisar contrato Dr. Silva&#10;Postar stories clínica&#10;Reunião de pauta"
+          placeholder="Fernanda - correção de post - 15min&#10;IDC - feedback stories - 30min&#10;Reunião com Andrey - 1h&#10;Comprar papel A4"
           style="resize:vertical;font-size:14px;line-height:1.6;"></textarea>
       </div>
-      <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">
-        Todas serão criadas sem horário e sem cliente. Edite depois se precisar.
+      <div style="padding:10px 12px;background:var(--bg);border-radius:12px;margin-top:8px;">
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">
+          <b style="color:var(--text);">Cliente - título - tempo</b> → Fernanda - correção - 30min<br>
+          <b style="color:var(--text);">Título - tempo</b> → Reunião - 1h<br>
+          <b style="color:var(--text);">Só título</b> → Comprar papel A4
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -2063,31 +2092,71 @@ function openLoteModal() {
   setTimeout(() => document.getElementById('lote-input')?.focus(), 80);
 }
 
+function loteParseDuracao(str) {
+  if (!str || !str.trim()) return null;
+  str = str.trim().toLowerCase();
+  const hm = str.match(/^(\d+)\s*h\s*(\d+)?\s*(?:min)?$/);
+  if (hm) return parseInt(hm[1]) * 60 + parseInt(hm[2] || 0);
+  const m = str.match(/^(\d+)\s*min$/);
+  if (m) return parseInt(m[1]);
+  const h = str.match(/^(\d+)\s*h$/);
+  if (h) return parseInt(h[1]) * 60;
+  const n = parseInt(str);
+  if (!isNaN(n) && n > 0) return n;
+  return null;
+}
+
+function loteParseLine(line) {
+  const parts = line.split(' - ').map(s => s.trim()).filter(s => s);
+  if (parts.length >= 3) {
+    const durTest = loteParseDuracao(parts[parts.length - 1]);
+    if (durTest !== null) {
+      const clientName = parts[0];
+      const title = parts.slice(1, -1).join(' - ');
+      return { clientName, title, duration: durTest };
+    }
+    return { clientName: null, title: line, duration: null };
+  }
+  if (parts.length === 2) {
+    const durTest = loteParseDuracao(parts[1]);
+    if (durTest !== null) return { clientName: null, title: parts[0], duration: durTest };
+    return { clientName: null, title: line, duration: null };
+  }
+  return { clientName: null, title: line, duration: null };
+}
+
 async function saveLote() {
   const raw = (document.getElementById('lote-input')?.value || '').trim();
   if (!raw) { showToast('Digite ao menos uma tarefa', 'warn'); return; }
-  const titles = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  if (titles.length === 0) { showToast('Nenhuma tarefa válida', 'warn'); return; }
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length === 0) { showToast('Nenhuma tarefa válida', 'warn'); return; }
   const btn = document.getElementById('lote-save-btn');
   btn.disabled = true; btn.textContent = 'Criando...';
   const hoje = todayStr();
-  const rows = titles.map(title => ({
-    title,
-    scheduled_date: hoje,
-    is_done: false,
-    priority: 'media',
-    user_id: appUser.id,
-    client_id: null,
-    task_id: null,
-    scheduled_time: null,
-  }));
+  const rows = lines.map(line => {
+    const parsed = loteParseLine(line);
+    const client = parsed.clientName
+      ? (T.clients || []).find(c => c.name.toLowerCase() === parsed.clientName.toLowerCase()) || null
+      : null;
+    return {
+      title: parsed.title,
+      scheduled_date: hoje,
+      is_done: false,
+      priority: 'media',
+      user_id: appUser.id,
+      client_id: client ? client.id : null,
+      task_id: null,
+      scheduled_time: null,
+      duration_minutes: parsed.duration,
+    };
+  });
   const { data, error } = await db(
     () => sb.from('scheduled_tasks').insert(rows).select(),
     'Erro ao criar tarefas'
   );
   if (error) { btn.disabled = false; btn.textContent = 'Criar tarefas'; return; }
   (data || []).forEach(t => T.scheduledTasks.push(t));
-  showToast(`${titles.length} tarefa${titles.length > 1 ? 's' : ''} criada${titles.length > 1 ? 's' : ''} ✓`, 'ok');
+  showToast(`${lines.length} tarefa${lines.length > 1 ? 's' : ''} criada${lines.length > 1 ? 's' : ''} ✓`, 'ok');
   closeModal();
   renderParaHoje();
   if (document.getElementById('page-radar')?.classList.contains('active')) radarRefreshCurrentPanel();
@@ -5951,9 +6020,9 @@ function renderRadarAtrasadas() {
   const list = document.getElementById('radar-atrasadas-list');
   const count = document.getElementById('radar-atrasadas-count');
   if (!card || !list) return;
-  const todayDate = todayStr();
+  const ontem = yesterdayStr();
   const atrasadas = (T.scheduledTasks || [])
-    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < ontem)
     .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
   if (atrasadas.length === 0) { card.style.display = 'none'; return; }
   card.style.display = '';
@@ -5997,20 +6066,27 @@ function renderRadarPendentes() {
   const list = document.getElementById('radar-pendentes-list');
   const count = document.getElementById('radar-pendentes-count');
   if (!card || !list) return;
+  const ontem = yesterdayStr();
   const pendentes = (T.scheduledTasks || [])
-    .filter(t => !t.is_done && !t.scheduled_date)
-    .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    .filter(t => !t.is_done && (!t.scheduled_date || t.scheduled_date === ontem))
+    .sort((a, b) => {
+      if (!a.scheduled_date && b.scheduled_date) return 1;
+      if (a.scheduled_date && !b.scheduled_date) return -1;
+      return (a.title || '').localeCompare(b.title || '');
+    });
   if (pendentes.length === 0) { card.style.display = 'none'; return; }
   card.style.display = '';
   if (count) count.textContent = `(${pendentes.length})`;
   list.innerHTML = pendentes.map((t, i) => {
     const client = t.client_id ? (T.clients || []).find(c => c.id === t.client_id) : null;
-    const sub = client ? `<div style="font-size:11.5px;color:var(--text-dim);">${esc(client.name)}</div>` : '';
+    const durLabel = t.duration_minutes ? ` · ${fMin(t.duration_minutes)}` : '';
+    const dateLabel = t.scheduled_date ? `era ${esc(dbDateToDisplay(t.scheduled_date))}` : 'sem data';
+    const clientLabel = client ? `${esc(client.name)} · ` : '';
     const borda = i < pendentes.length - 1 ? 'border-bottom:1px solid rgba(74,41,118,.08);' : '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;${borda}">
       <div style="min-width:0;">
         <div style="font-size:13.5px;font-weight:600;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
-        ${sub}
+        <div style="font-size:11.5px;color:var(--text-dim);">${clientLabel}${dateLabel}${durLabel}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
         <button data-id="${t.id}" onclick="radarMoverPendenteParaHoje(this)"
@@ -6041,7 +6117,7 @@ async function radarMoverPendenteParaHoje(btn) {
 
 async function radarMoveAllPendentes() {
   const pendentes = (T.scheduledTasks || [])
-    .filter(t => !t.is_done && !t.scheduled_date)
+    .filter(t => !t.is_done && (!t.scheduled_date || t.scheduled_date === yesterdayStr()))
     .map(t => t.id);
   if (!pendentes.length) { showToast('Nenhuma tarefa pendente', 'warn'); return; }
   openConfirmModal(
@@ -6065,7 +6141,7 @@ async function radarMoveAllPendentes() {
 async function radarMoveAllAtrasadas() {
   const todayDate = todayStr();
   const atrasadas = (T.scheduledTasks || [])
-    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < yesterdayStr())
     .map(t => t.id);
   if (!atrasadas.length) { showToast('Nenhuma tarefa atrasada', 'warn'); return; }
   openConfirmModal(
@@ -6087,7 +6163,7 @@ async function radarMoveAllAtrasadas() {
 async function radarDeleteAllAtrasadas() {
   const todayDate = todayStr();
   const atrasadas = (T.scheduledTasks || [])
-    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < todayDate)
+    .filter(t => !t.is_done && t.scheduled_date && t.scheduled_date < yesterdayStr())
     .map(t => t.id);
   if (!atrasadas.length) { showToast('Nenhuma tarefa atrasada', 'warn'); return; }
   openConfirmModal(
