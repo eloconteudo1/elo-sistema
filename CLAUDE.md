@@ -135,6 +135,15 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão PENDENTES-SEM-DATA + LOTE-PARA-HOJE — Card Pendentes + cadastro em lote (V3.91)**
+- Card "📋 Pendentes" novo em Tarefas > Hoje, acima do card Atrasadas — lista `scheduled_tasks` com `is_done=false` e `scheduled_date IS NULL`
+- Botão "→ Hoje" por item (`radarMoverPendenteParaHoje`) e "Todas → Hoje" no cabeçalho (`radarMoveAllPendentes`, com `openConfirmModal`) — mesmo padrão do card Atrasadas
+- `renderRadarPendentes()` chamada em `renderPanelHoje()`, antes de `renderRadarAtrasadas()`
+- `loadHomeData()`: query de `scheduled_tasks` trocou `.gte()/.lte()` simples por `.or('and(gte,lte),scheduled_date.is.null')` — passa a trazer também tarefas sem data (antes ficavam invisíveis em todo o sistema)
+- Para Hoje: botão "⚡ Lote" no footer (ao lado de "+ Adicionar") abre modal com textarea — uma tarefa por linha, `openLoteModal()`/`saveLote()`
+- `saveLote()`: split por linha, filtra vazias, insert em lote (`.insert(rows).select()`) em `scheduled_tasks` com `scheduled_date=hoje`, sem cliente/horário, `priority:'media'`
+- Versão 3.91, data 13/08/2026
+
 **Sessão FIX-FAVS-EXPAND — Fix grupo Favoritas sempre colapsado no boot (V3.89)**
 - Bug: grupo "⭐ FAVORITAS" na lista de tarefas do timer sempre aparecia colapsado ao abrir/recarregar
 - Causa: seed inicial de `T.expandedCats` (linha 859) populava o Set só com categorias reais do banco, sem a chave especial `'__favs__'` do grupo de favoritas
