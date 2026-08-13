@@ -2136,7 +2136,7 @@ async function saveLote() {
   const rows = lines.map(line => {
     const parsed = loteParseLine(line);
     const client = parsed.clientName
-      ? (T.clients || []).find(c => c.name.toLowerCase() === parsed.clientName.toLowerCase()) || null
+      ? (T.clients || []).find(c => c.name.toLowerCase().startsWith(parsed.clientName.toLowerCase())) || null
       : null;
     return {
       title: parsed.title,
