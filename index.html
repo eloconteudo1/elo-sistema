@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=392">
+  <link rel="stylesheet" href="styles.css?v=393">
 </head>
 <body>
 
@@ -440,16 +440,17 @@
 
       <!-- Toggle abas -->
       <div class="radar-tabs" style="margin-bottom:18px;">
-        <button class="radar-tab active" data-rtab="hoje"    onclick="setRadarTab('hoje',this)">Hoje</button>
-        <button class="radar-tab"        data-rtab="semana"  onclick="setRadarTab('semana',this)">Semana</button>
-        <button class="radar-tab"        data-rtab="mes"     onclick="setRadarTab('mes',this)" style="display:none;">Mês</button>
+        <button class="radar-tab active" data-rtab="hoje"     onclick="setRadarTab('hoje',this)">Hoje</button>
+        <button class="radar-tab"        data-rtab="semana"   onclick="setRadarTab('semana',this)">Semana</button>
+        <button class="radar-tab"        data-rtab="pendente" onclick="setRadarTab('pendente',this)">Pendente</button>
+        <button class="radar-tab"        data-rtab="mes"      onclick="setRadarTab('mes',this)" style="display:none;">Mês</button>
       </div>
 
       <!-- Grid principal: calendário (esq) + painel contextual (dir) -->
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
+      <div id="radar-grid" style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
 
         <!-- COLUNA ESQUERDA — calendário fixo -->
-        <div>
+        <div id="radar-left-col">
           <div id="radar-cal-month-wrap" style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
             <!-- Navegação de mês -->
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -475,22 +476,24 @@
               <div id="radar-day-detail-body"></div>
             </div>
           </div>
-          <div id="radar-cal-week-wrap" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-              <span id="radar-week-label" style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;"></span>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <button onclick="radarGoTodayWeek()" style="border:none;background:var(--coral);color:#fff;font-family:inherit;font-weight:800;font-size:10.5px;padding:6px 12px;border-radius:8px;cursor:pointer;">hoje</button>
-                <button onclick="radarPrevWeek()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--purple);font-weight:900;font-size:14px;cursor:pointer;">&#8249;</button>
-                <button onclick="radarNextWeek()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--purple);font-weight:900;font-size:14px;cursor:pointer;">&#8250;</button>
+          <div id="radar-semana-row" style="display:none;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+            <div id="radar-cal-week-wrap" style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <span id="radar-week-label" style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;"></span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button onclick="radarGoTodayWeek()" style="border:none;background:var(--coral);color:#fff;font-family:inherit;font-weight:800;font-size:10.5px;padding:6px 12px;border-radius:8px;cursor:pointer;">hoje</button>
+                  <button onclick="radarPrevWeek()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--purple);font-weight:900;font-size:14px;cursor:pointer;">&#8249;</button>
+                  <button onclick="radarNextWeek()" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--purple);font-weight:900;font-size:14px;cursor:pointer;">&#8250;</button>
+                </div>
               </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;" id="radar-week-grid"></div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;" id="radar-week-grid"></div>
-          </div>
-          <div id="radar-week-agenda-wrap" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;margin-top:20px;">
-            <div style="margin-bottom:14px;">
-              <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda da semana</span>
+            <div id="radar-week-agenda-wrap" style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
+              <div style="margin-bottom:14px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Agenda da semana</span>
+              </div>
+              <div id="radar-semana-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
             </div>
-            <div id="radar-semana-appts"><div class="radar-day-detail-empty">Carregando...</div></div>
           </div>
         </div>
 
@@ -499,27 +502,6 @@
 
           <!-- PAINEL HOJE -->
           <div class="radar-panel active" id="radar-panel-hoje">
-            <!-- CARD PENDENTES SEM DATA -->
-            <div id="radar-pendentes-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid var(--purple);padding:14px 16px;margin-bottom:16px;">
-              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--purple);">📋 Pendentes <span id="radar-pendentes-count"></span></span>
-                <div style="display:flex;gap:6px;">
-                  <button onclick="radarMoveAllPendentes()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(74,41,118,.12);color:var(--purple);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.22)'" onmouseout="this.style.background='rgba(74,41,118,.12)'">Todas → Hoje</button>
-                </div>
-              </div>
-              <div id="radar-pendentes-list"></div>
-            </div>
-
-            <div id="radar-atrasadas-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid #DC2626;padding:14px 16px;margin-bottom:16px;">
-              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
-                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;">⚠ Atrasadas <span id="radar-atrasadas-count"></span></span>
-                <div style="display:flex;gap:6px;">
-                  <button onclick="radarMoveAllAtrasadas()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(220,38,38,.12);color:#DC2626;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(220,38,38,.2)'" onmouseout="this.style.background='rgba(220,38,38,.12)'">Todas → Hoje</button>
-                  <button onclick="radarDeleteAllAtrasadas()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(120,120,120,.12);color:#666;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(120,120,120,.22)'" onmouseout="this.style.background='rgba(120,120,120,.12)'">🗑 Limpar</button>
-                </div>
-              </div>
-              <div id="radar-atrasadas-list"></div>
-            </div>
             <div style="background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:18px 20px;">
               <div style="margin-bottom:16px;">
                 <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-dim);">Linha do dia</span>
@@ -560,6 +542,32 @@
                 <div class="radar-legend-item"><span class="radar-legend-dot" style="background:#DC2626;"></span>sobrecarga</div>
               </div>
             </div>
+          </div>
+
+          <!-- PAINEL PENDENTE -->
+          <div class="radar-panel" id="radar-panel-pendente">
+            <div id="radar-atrasadas-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid #DC2626;padding:14px 16px;margin-bottom:16px;">
+              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#DC2626;">⚠ Atrasadas <span id="radar-atrasadas-count"></span></span>
+                <div style="display:flex;gap:6px;">
+                  <button onclick="radarMoveAllAtrasadas()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(220,38,38,.12);color:#DC2626;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(220,38,38,.2)'" onmouseout="this.style.background='rgba(220,38,38,.12)'">Todas → Hoje</button>
+                  <button onclick="radarDeleteAllAtrasadas()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(120,120,120,.12);color:#666;cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(120,120,120,.22)'" onmouseout="this.style.background='rgba(120,120,120,.12)'">🗑 Limpar</button>
+                </div>
+              </div>
+              <div id="radar-atrasadas-list"></div>
+            </div>
+
+            <div id="radar-pendentes-card" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:2px solid var(--purple);padding:14px 16px;">
+              <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--purple);">📋 Pendentes <span id="radar-pendentes-count"></span></span>
+                <div style="display:flex;gap:6px;">
+                  <button onclick="radarMoveAllPendentes()" style="font-size:10px;font-weight:800;padding:6px 12px;border-radius:16px;border:none;background:rgba(74,41,118,.12);color:var(--purple);cursor:pointer;font-family:inherit;transition:all .15s;" onmouseover="this.style.background='rgba(74,41,118,.22)'" onmouseout="this.style.background='rgba(74,41,118,.12)'">Todas → Hoje</button>
+                </div>
+              </div>
+              <div id="radar-pendentes-list"></div>
+            </div>
+
+            <div id="radar-pendente-empty" style="display:none;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:var(--border);padding:28px 20px;text-align:center;color:var(--text-dim);font-size:13px;font-weight:600;">Tudo em dia! Nenhuma tarefa pendente ou atrasada.</div>
           </div>
 
           <!-- PAINEL MÊS -->
@@ -912,7 +920,7 @@
               <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--coral),var(--coral-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:white">E</div>
               <div>
                 <div style="font-weight:900;font-size:18px;color:var(--deep)">Sistema ELO</div>
-                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.92 · ELO Comunicação · Atualizado em 13/08/2026</div>
+                <div style="font-size:12px;color:var(--text-dim);font-weight:600" id="sobre-version">Versão 3.93 · ELO Comunicação · Atualizado em 17/08/2026</div>
               </div>
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.7">
@@ -988,9 +996,9 @@
 
   <footer class="elo-footer">
     <span>Sistema ELO</span><span class="sep">|</span>
-    <span id="version-number">Versão 3.92</span><span class="sep">|</span>
+    <span id="version-number">Versão 3.93</span><span class="sep">|</span>
     <span>ELO Comunicação · Umuarama-PR</span><span class="sep">|</span>
-    <span>Atualizado em <span id="build-date">13/08/2026</span></span>
+    <span>Atualizado em <span id="build-date">17/08/2026</span></span>
   </footer>
 
   <!-- Bottom nav (mobile) -->
@@ -1197,6 +1205,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=392"></script>
+  <script src="app.js?v=393"></script>
 </body>
 </html>

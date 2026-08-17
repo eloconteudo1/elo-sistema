@@ -5686,9 +5686,10 @@ function loadRadarPanelData() {
 function radarRefreshCurrentPanel() {
   renderRadarGrid();
   radarCloseDetail();
-  if (RADAR.tab === 'hoje')   renderPanelHoje();
-  if (RADAR.tab === 'semana') renderPanelSemana();
-  if (RADAR.tab === 'mes')    renderPanelMes();
+  if (RADAR.tab === 'hoje')     renderPanelHoje();
+  if (RADAR.tab === 'semana')   renderPanelSemana();
+  if (RADAR.tab === 'pendente') renderPanelPendente();
+  if (RADAR.tab === 'mes')      renderPanelMes();
 }
 function radarDeleteTask(btn) {
   const id = Number(btn.dataset.id);
@@ -5799,7 +5800,6 @@ function renderRadarWeekGrid() {
   wrap.innerHTML = html;
 }
 function setRadarTab(tab, el) {
-  if (tab === 'mes') tab = 'hoje'; // Mês oculto no modo enxuto (V3.74)
   RADAR.tab = tab;
   document.querySelectorAll('.radar-tab').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -5809,22 +5809,26 @@ function setRadarTab(tab, el) {
   const subs = {
     hoje: 'Linha do dia de hoje',
     semana: 'Carga e compromissos dos próximos 7 dias',
+    pendente: 'Tarefas pendentes, atrasadas e sem data',
     mes: 'Visão mensal'
   };
   const subEl = document.getElementById('radar-sub');
   if (subEl) subEl.textContent = subs[tab] || '';
+  const gridEl = document.getElementById('radar-grid');
+  if (gridEl) gridEl.style.gridTemplateColumns = (tab === 'semana' || tab === 'pendente') ? '1fr' : '1fr 340px';
+  const leftCol = document.getElementById('radar-left-col');
+  if (leftCol) leftCol.style.display = tab === 'pendente' ? 'none' : '';
   const monthWrap = document.getElementById('radar-cal-month-wrap');
-  const weekWrap = document.getElementById('radar-cal-week-wrap');
-  const weekAgendaWrap = document.getElementById('radar-week-agenda-wrap');
+  const semanaRow = document.getElementById('radar-semana-row');
   if (monthWrap) monthWrap.style.display = tab === 'semana' ? 'none' : 'block';
-  if (weekWrap) weekWrap.style.display = tab === 'semana' ? 'block' : 'none';
-  if (weekAgendaWrap) weekAgendaWrap.style.display = tab === 'semana' ? 'block' : 'none';
+  if (semanaRow) semanaRow.style.display = tab === 'semana' ? 'grid' : 'none';
   radarCloseDetail();
   renderRadarGrid();
   loadRadarPanelData();
-  if (tab === 'hoje')    renderPanelHoje();
-  if (tab === 'semana')  { renderPanelSemana(); renderRadarWeekGrid(); }
-  if (tab === 'mes')     renderPanelMes();
+  if (tab === 'hoje')     renderPanelHoje();
+  if (tab === 'semana')   { renderPanelSemana(); renderRadarWeekGrid(); }
+  if (tab === 'pendente') renderPanelPendente();
+  if (tab === 'mes')      renderPanelMes();
 }
 function renderRadarGrid() {
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -6035,12 +6039,12 @@ function renderRadarAtrasadas() {
         <div style="font-size:13.5px;font-weight:600;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
         <div style="font-size:11.5px;color:#DC2626;">era ${esc(dbDateToDisplay(t.scheduled_date))}${prio}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-        <button data-id="${t.id}" onclick="radarMoverParaHoje(this)"
-          style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;border:none;background:#FDE8E8;color:#DC2626;cursor:pointer;font-family:inherit;">→ Hoje</button>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
-          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
+          style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:7px 12px;border-radius:20px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">✏ Reprogramar</button>
+        <button data-id="${t.id}" onclick="radarMoverParaHoje(this)"
+          style="font-size:10.5px;font-weight:700;padding:5px 8px;border-radius:16px;border:none;background:none;color:var(--purple);cursor:pointer;font-family:inherit;opacity:.65;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.65'">hoje</button>
         <button data-id="${t.id}" onclick="radarDeleteTask(this)"
           style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
@@ -6088,12 +6092,12 @@ function renderRadarPendentes() {
         <div style="font-size:13.5px;font-weight:600;color:var(--deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.title)}</div>
         <div style="font-size:11.5px;color:var(--text-dim);">${clientLabel}${dateLabel}${durLabel}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-        <button data-id="${t.id}" onclick="radarMoverPendenteParaHoje(this)"
-          style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;border:none;background:rgba(74,41,118,.12);color:var(--purple);cursor:pointer;font-family:inherit;">→ Hoje</button>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <button data-id="${t.id}" data-type="scheduled_task" onclick="radarEditTask(this)"
-          style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
-          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Editar">✏</button>
+          style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:7px 12px;border-radius:20px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">✏ Reprogramar</button>
+        <button data-id="${t.id}" onclick="radarMoverPendenteParaHoje(this)"
+          style="font-size:10.5px;font-weight:700;padding:5px 8px;border-radius:16px;border:none;background:none;color:var(--purple);cursor:pointer;font-family:inherit;opacity:.65;transition:opacity .15s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.65'">hoje</button>
         <button data-id="${t.id}" onclick="radarDeleteTask(this)"
           style="border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text-dim);font-size:12px;opacity:.5;transition:opacity .15s;"
           onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Excluir">🗑</button>
@@ -6196,10 +6200,22 @@ async function radarSaveNotaHoje() {
   showToast('Anotação salva ✓','ok');
 }
 
+function renderPanelPendente() {
+  loadRadarPanelData();
+  renderRadarAtrasadas();
+  renderRadarPendentes();
+  const atrasadasCard = document.getElementById('radar-atrasadas-card');
+  const pendentesCard = document.getElementById('radar-pendentes-card');
+  const empty = document.getElementById('radar-pendente-empty');
+  if (empty) {
+    const semAtrasadas = !atrasadasCard || atrasadasCard.style.display === 'none';
+    const semPendentes = !pendentesCard || pendentesCard.style.display === 'none';
+    empty.style.display = (semAtrasadas && semPendentes) ? 'block' : 'none';
+  }
+}
+
 function renderPanelHoje() {
   loadRadarPanelData();
-  renderRadarPendentes();
-  renderRadarAtrasadas();
   renderCalNotes();
   const todayDate = todayStr();
   const bodyEl = document.getElementById('radar-timeline-body');

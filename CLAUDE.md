@@ -135,6 +135,17 @@ ALTER TABLE notes DISABLE ROW LEVEL SECURITY;
 
 ## 7. Funcionalidades implementadas (V3.0)
 
+**Sessão V3.93 — Tarefas: aba Pendente + redesign Semana (V3.93)**
+- Nova aba "Pendente" no toggle de Tarefas/Radar (`data-rtab="pendente"`, `#radar-panel-pendente`), entre Semana e Mês, full-width (grid principal vira `1fr` nessa aba, coluna esquerda `#radar-left-col` escondida)
+- Cards "⚠ Atrasadas" e "📋 Pendentes" migrados do painel Hoje para o painel Pendente (mesmos ids: `radar-atrasadas-card`, `radar-pendentes-card`, `-list`, `-count` — funções JS inalteradas), Atrasadas primeiro
+- Painel Hoje volta a mostrar só "Linha do dia" + "Anotações"
+- Botão por item trocado: era "→ Hoje" pequeno; agora "✏ Reprogramar" (roxo, chama `radarEditTask` → abre modal de edição com data) + link menor "hoje" (mesma ação de antes, `radarMoverParaHoje`/`radarMoverPendenteParaHoje`) + 🗑
+- Card vazio `#radar-pendente-empty` ("Tudo em dia!") quando não há atrasadas nem pendentes
+- Novas funções `renderPanelPendente()` (chama `renderRadarAtrasadas`/`renderRadarPendentes`, controla o empty state); `radarRefreshCurrentPanel()` e `setRadarTab()` passam a tratar a aba `pendente`
+- `setRadarTab()`: removido remap `mes→hoje` (morto, botão Mês já `display:none`); grid principal (`#radar-grid`) e coluna esquerda alternam via JS conforme aba
+- Redesign aba Semana: calendário da semana (`#radar-cal-week-wrap`) e agenda da semana (`#radar-week-agenda-wrap`) agora lado a lado dentro de `#radar-semana-row` (grid `1fr 300px`, `display:none` por padrão, liga em `display:grid` só na aba Semana); "Carga dos 7 dias" (coluna direita do painel Semana) cai pra baixo automaticamente por já estar fora do grid principal quando este vira coluna única
+- Versão 3.93, data 17/08/2026
+
 **Sessão LOTE-PARSE + PENDENTES-ATRASADAS — Parse cliente/título/tempo no lote + split Pendentes/Atrasadas (V3.92)**
 - "+ Adicionar" (Para Hoje) vira menu popup: "📝 Tarefa" / "⚡ Em lote" — botão "⚡ Lote" separado removido do footer
 - `toggleAddMenu()`/`closeAddMenu()`/`_closeAddMenuOutside()` novas; CSS `.ph-add-menu` em `styles.css`
